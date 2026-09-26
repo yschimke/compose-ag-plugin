@@ -22,6 +22,7 @@ detection_keys = (
 )
 record = {
     "event": event,
+    "probe": "SPIKE-SESSION-START" if event == "session-start" else None,
     "environmentKeys": sorted(os.environ),
     "detectionEnvironment": {key: os.environ[key] for key in detection_keys if key in os.environ},
     "stdin": stdin,
@@ -30,6 +31,10 @@ log_path = Path(os.environ.get("SPIKE_HOOK_LOG_PATH", "/tmp/spike-hooks.log"))
 with log_path.open("a", encoding="utf-8") as log:
     log.write(json.dumps(record, sort_keys=True) + "\n")
 ' "$event_name"
+
+if [[ "$event_name" == "session-start" ]]; then
+  printf '%s\n' 'SPIKE-SESSION-START'
+fi
 
 # The hosts' decision contracts differ. Keep the default non-blocking so this fixture only observes.
 if [[ "${SPIKE_HOOK_DECISION:-}" == "continue" ]]; then

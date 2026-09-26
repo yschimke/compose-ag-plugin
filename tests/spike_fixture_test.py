@@ -34,6 +34,10 @@ def assert_cached_plugin(plugin_name: str, server_name: str, cache_root: Path) -
     logger = cached_plugin / "echo-mcp" / "hook-log.sh"
     assert server.is_file(), server
     assert logger.is_file(), logger
+    if plugin_name == "p1":
+        reviewer = cached_plugin / "agents" / "spike-reviewer.md"
+        assert reviewer.is_file(), reviewer
+        assert "SPIKE-REVIEWER-LOADED" in reviewer.read_text(encoding="utf-8")
 
     mcp = json.loads((cached_plugin / ".mcp.json").read_text(encoding="utf-8"))
     configured_server = Path(
@@ -67,6 +71,12 @@ def assert_cached_plugin(plugin_name: str, server_name: str, cache_root: Path) -
     record = json.loads(log_path.read_text(encoding="utf-8"))
     assert record["event"] == "post-tool-use"
     assert record["stdin"] == payload
+    session_start_result = subprocess.run(
+        [str(logger), "session-start"], input="", text=True, env=environment, capture_output=True, check=True
+    )
+    assert session_start_result.stdout == "SPIKE-SESSION-START\n"
+    session_start = json.loads(log_path.read_text(encoding="utf-8").splitlines()[-1])
+    assert session_start["probe"] == "SPIKE-SESSION-START"
 
 
 def main() -> None:

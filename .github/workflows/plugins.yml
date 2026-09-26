@@ -15,6 +15,8 @@ jobs:
         run: python3 scripts/generate.py && git diff --exit-code
       - name: Validate JSON and plugin contracts
         run: scripts/check-plugins.sh
+      - name: Run plugin drift regression tests
+        run: tests/check_plugins_test.sh
       - name: Lint Markdown
         uses: DavidAnson/markdownlint-cli2-action@v20
         with:

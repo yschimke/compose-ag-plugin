@@ -5,7 +5,7 @@ repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repository_root"
 
 python3 scripts/generate.py
-git diff --exit-code -- . ':!src/plugins.json'
+python3 scripts/check_generated.py
 
 while IFS= read -r -d '' json_file; do
   python3 -m json.tool "$json_file" >/dev/null

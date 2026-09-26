@@ -34,6 +34,9 @@ a host pass.
 The direct protocol smoke test passed at the recorded `d37dd66d` revision for
 both elicitation-capable exchanges. A separate fixture-only rerun at `c0f4f04`
 verified the explicit form/URL text fallbacks with elicitation omitted from
-client capabilities. Neither control is a host pass. H1–H8 and H10–H11 still
+client capabilities. A further fixture-only rerun at `9c3d633` added the
+dedicated `access_status` operation and exercised it after the URL/code
+fallback, proving that the documented polling step is executable. These
+controls are not host passes. H1–H8 and H10–H11 still
 need real host runs, H9 still needs its full state scenarios, and every
 behavioral feature still needs a second harness even after a Codex run passes.

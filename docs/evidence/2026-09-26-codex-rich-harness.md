@@ -70,8 +70,12 @@ tool names, the image plus text/resource-link result, the MCP App resource,
 both elicitation-capable exchanges, and the prompt protocol. It did not test an
 unsupported client at that revision. A fixture-only rerun at `c0f4f04` added a
 second client with no elicitation capability and verified the explicit form and
-URL text fallbacks. These controls prove the fixture paths they exercised; they
-do not upgrade any blocked host result to a pass.
+URL text fallbacks. That revision verified the fallback copy but did not execute
+the polling operation it named. A further fixture-only rerun at `9c3d633` added
+the dedicated `access_status` operation and exercised it after the URL/code
+fallback, verifying a self-contained completion path. These controls prove the
+fixture paths they exercised; they do not upgrade any blocked host result to a
+pass.
 
 ## Unavailable harnesses
 

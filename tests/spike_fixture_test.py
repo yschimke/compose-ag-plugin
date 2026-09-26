@@ -25,6 +25,13 @@ def hook_commands(hooks: dict) -> list[str]:
     return commands
 
 
+def assert_session_start_hook(hooks: dict) -> None:
+    session_start = hooks["hooks"]["SessionStart"]
+    assert len(session_start) == 1
+    command = session_start[0]["hooks"][0]["command"]
+    assert command == "${CLAUDE_PLUGIN_ROOT}/echo-mcp/hook-log.sh session-start"
+
+
 def assert_cached_plugin(plugin_name: str, server_name: str, cache_root: Path) -> None:
     plugin = cache_root / plugin_name
     cached_plugin = cache_root / "cached" / plugin_name
@@ -47,6 +54,7 @@ def assert_cached_plugin(plugin_name: str, server_name: str, cache_root: Path) -
     assert configured_server.is_file(), configured_server
 
     hooks = json.loads((cached_plugin / "hooks" / "hooks.json").read_text(encoding="utf-8"))
+    assert_session_start_hook(hooks)
     for command in hook_commands(hooks):
         executable = Path(command.split(" ", 1)[0].replace("${CLAUDE_PLUGIN_ROOT}", str(cached_plugin)))
         assert executable == logger

@@ -27,6 +27,24 @@ assert_status() {
   fi
 }
 
+assert_json_continue() {
+  expected_decision=$1
+  reason=$2
+  description=$3
+  output=$(harness_emit_continue "$reason")
+  if ! printf '%s\n' "$output" | python3 -c '
+import json
+import sys
+
+actual = json.load(sys.stdin)
+expected = {"decision": sys.argv[1], "reason": sys.argv[2]}
+if actual != expected:
+    raise SystemExit(f"expected {expected!r}, got {actual!r}")
+' "$expected_decision" "$reason"; then
+    fail "$description must be valid JSON with an unchanged reason"
+  fi
+}
+
 clear_harness_environment() {
   unset CLAUDECODE CLAUDE_PLUGIN_ROOT CODEX_THREAD_ID __CFBundleIdentifier ANTIGRAVITY_CLI_ALIAS OPENCODE GEMINI_CLI HARNESS
 }
@@ -78,11 +96,24 @@ fi
 
 harness_detect --harness=claude
 claude_output=$(harness_emit_continue 'continue "carefully" \\ now')
-assert_equal '{"decision":"block","reason":"continue \\"carefully\\" \\\\ now"}' "$claude_output" 'Claude output contract'
+assert_equal '{"decision":"block","reason":"continue \"carefully\" \\\\ now"}' "$claude_output" 'Claude output contract'
 
 harness_detect --harness=antigravity
 antigravity_output=$(harness_emit_continue 'continue "carefully" \\ now')
-assert_equal '{"decision":"continue","reason":"continue \\"carefully\\" \\\\ now"}' "$antigravity_output" 'Antigravity output contract'
+assert_equal '{"decision":"continue","reason":"continue \"carefully\" \\\\ now"}' "$antigravity_output" 'Antigravity output contract'
+
+for continue_harness in claude antigravity; do
+  harness_detect --harness="$continue_harness"
+  case "$continue_harness" in
+    claude) expected_decision=block ;;
+    antigravity) expected_decision=continue ;;
+  esac
+  assert_json_continue "$expected_decision" 'a\b' "$continue_harness escapes one backslash"
+  assert_json_continue "$expected_decision" 'C:\path' "$continue_harness escapes a path"
+  assert_json_continue "$expected_decision" 'say "hi"' "$continue_harness escapes quotes"
+  assert_json_continue "$expected_decision" 'two\\x' "$continue_harness escapes consecutive backslashes"
+  assert_json_continue "$expected_decision" 'mix "q" \ end' "$continue_harness escapes mixed punctuation"
+done
 
 for no_stop_harness in codex opencode gemini unknown; do
   harness_detect --harness="$no_stop_harness"

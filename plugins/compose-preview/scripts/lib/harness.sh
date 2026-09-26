@@ -83,7 +83,7 @@ harness_emit_continue() {
       ;;
   esac
 
-  harness_json_reason=$(printf '%s' "$harness_reason" | sed 's/\\\\/\\\\\\\\/g; s/"/\\\\"/g')
+  harness_json_reason=$(printf '%s' "$harness_reason" | sed 's/\\/\\\\/g; s/"/\\"/g')
   case "${HARNESS-}" in
     antigravity)
       printf '{"decision":"continue","reason":"%s"}\n' "$harness_json_reason"

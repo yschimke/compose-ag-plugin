@@ -51,7 +51,7 @@ not.
   tested, so Q1 remains untested.
 - An earlier isolated Codex session, before the compatibility overlays and
   package-relative MCP working directories, loaded skills and hooks but no MCP
-  servers. At plugin commit `56a1d59`, a fresh isolated install initialized
+  servers. At plugin commit `dec6a63`, a fresh isolated install initialized
   both servers and completed approved `alpha/status` and
   `beta/render_preview` calls. This establishes Codex CLI transport, not MCP
   App presentation, elicitation, prompts, or packaged-agent discovery. See the

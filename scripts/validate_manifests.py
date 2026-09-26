@@ -25,7 +25,7 @@ SCHEMA_ASSERTIONS = {
     "type",
 }
 JSON_SCHEMA_TYPES = {"array", "boolean", "integer", "null", "number", "object", "string"}
-ECMASCRIPT_PORTABLE_ESCAPES = frozenset("dDwWbBfnrtv\\.^$|?*+()[]{}-/")
+ECMASCRIPT_PORTABLE_ESCAPES = frozenset("dDwWbfnrtv\\.^$|?*+()[]{}-/")
 
 
 def read_json(path: Path) -> object:
@@ -92,6 +92,7 @@ def compile_json_schema_pattern(pattern: str) -> re.Pattern[str]:
     """
     translated: list[str] = []
     in_character_class = False
+    previous_was_quantifier = False
     index = 0
     while index < len(pattern):
         character = pattern[index]
@@ -104,6 +105,7 @@ def compile_json_schema_pattern(pattern: str) -> re.Pattern[str]:
             if escaped not in ECMASCRIPT_PORTABLE_ESCAPES:
                 raise ValueError(f"unsupported ECMAScript escape: \\{escaped}")
             translated.extend((character, escaped))
+            previous_was_quantifier = False
             index += 2
             continue
         if in_character_class:
@@ -112,6 +114,7 @@ def compile_json_schema_pattern(pattern: str) -> re.Pattern[str]:
             translated.append(character)
             if character == "]":
                 in_character_class = False
+                previous_was_quantifier = False
             index += 1
             continue
         if character == "[":
@@ -123,8 +126,11 @@ def compile_json_schema_pattern(pattern: str) -> re.Pattern[str]:
             raise ValueError("wildcard '.' has incompatible line-terminator semantics")
         elif character in "(){}":
             raise ValueError(f"unsupported ECMAScript construct: {character}")
+        elif character == "+" and previous_was_quantifier:
+            raise ValueError("possessive quantifiers are not valid ECMAScript")
         else:
             translated.append(character)
+        previous_was_quantifier = character in "*+?"
         index += 1
     if in_character_class:
         raise ValueError("unterminated character class")

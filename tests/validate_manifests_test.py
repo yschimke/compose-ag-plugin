@@ -101,10 +101,14 @@ class ManifestSchemaValidationTest(unittest.TestCase):
             self.validate("١", {"pattern": r"^\d$"})
 
     def test_rejects_pattern_constructs_without_portable_ecmascript_semantics(self) -> None:
-        for pattern in (".", r"\s", "(group)", "a{1,2}"):
+        for pattern in (".", r"\s", r"\B", "(group)", "a{1,2}", "a++", "a*+", "a?+"):
             with self.subTest(pattern=pattern):
                 with self.assertRaisesRegex(ValueError, "invalid pattern"):
                     self.validate("anything", {"pattern": pattern})
+
+        for pattern in ("a*?", "a+?", "a??"):
+            with self.subTest(pattern=pattern):
+                self.validate("a", {"pattern": pattern})
 
     def test_rejects_unsupported_keywords_in_unvisited_child_schemas(self) -> None:
         schemas_and_values = [

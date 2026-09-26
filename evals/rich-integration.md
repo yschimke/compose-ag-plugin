@@ -61,6 +61,14 @@ Pass when supported harnesses expose one concise summary naming all three
 conditions without leaking credentials or dumping full diagnostics. In an
 unsupported harness, `design-status` must return the same complete summary.
 
+This PR delivers only the bounded doctor-readiness slice; issue #18 remains
+open for workspace-linked comment acknowledgements and temporary-copy
+inventory. Until those contracts exist, the hook must not infer either fact or
+inject a constant placeholder line. A healthy CLI, or a current CLI that does
+not advertise `mcp doctor`, is a silent no-op. A missing CLI, timed-out probe,
+or failed doctor emits one concise actionable line without including either
+command's output.
+
 ## Deep links
 
 Prompt: "Show where this accessibility finding lives in both the design and

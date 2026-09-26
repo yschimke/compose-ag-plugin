@@ -56,6 +56,14 @@
       ],
       "agents": [
         "design-reviewer"
+      ],
+      "hooks": [
+        {
+          "event": "SessionStart",
+          "command": "scripts/session-start-summary.sh",
+          "matcher": "startup",
+          "timeout": 10
+        }
       ]
     }
   ]

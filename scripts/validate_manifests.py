@@ -9,7 +9,7 @@ import re
 import sys
 from pathlib import Path
 
-from generate import ANTIGRAVITY_SCHEMA, SKILL_SOURCE_ROOT, render_mcp_servers
+from generate import ANTIGRAVITY_SCHEMA, HOOK_SOURCE_ROOT, SKILL_SOURCE_ROOT, render_hooks, render_mcp_servers
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -386,6 +386,21 @@ def main() -> None:
                 )
             if skill_path.read_bytes() != shared_source.read_bytes():
                 raise ValueError(f"{skill_path}: generated copy differs from shared source")
+        hooks = plugin.get("hooks", [])
+        if hooks:
+            hook_manifest = root / "hooks" / "hooks.json"
+            if read_json(hook_manifest) != render_hooks(name, hooks):
+                raise ValueError(f"{hook_manifest} does not match the hook contract")
+            for hook in hooks:
+                command = hook["command"]
+                generated_hook = root / command
+                shared_hook = HOOK_SOURCE_ROOT / Path(command).name
+                if not generated_hook.is_file():
+                    raise ValueError(f"{generated_hook}: missing generated hook script")
+                if generated_hook.read_bytes() != shared_hook.read_bytes():
+                    raise ValueError(f"{generated_hook}: generated hook differs from shared source")
+        elif (root / "hooks" / "hooks.json").exists():
+            raise ValueError(f"{root} contains stale hook configuration")
         mcp = plugin.get("mcp", [])
         if mcp:
             antigravity_mcp = read_json(root / "mcp_config.json")

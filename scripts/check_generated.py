@@ -93,10 +93,29 @@ def previous_hook_paths(source: object) -> list[Path]:
     return paths
 
 
+def previous_asset_paths(source: object) -> list[Path]:
+    """Return asset outputs tracked by HEAD, including a just-deleted final asset and ledger."""
+    paths: list[Path] = []
+    for plugin in source["plugins"]:
+        name = plugin["name"]
+        ledger = Path("plugins") / name / "assets" / ASSET_LEDGER_NAME
+        previous = git("show", f"HEAD:{ledger}")
+        if previous.returncode:
+            continue
+        data = json.loads(previous.stdout)
+        assets = data.get("assets")
+        if not isinstance(assets, list) or not all(isinstance(asset, str) for asset in assets):
+            raise ValueError(f"tracked {ledger} assets must be a list of strings")
+        paths.append(ROOT / ledger)
+        paths.extend(ROOT / "plugins" / name / "assets" / asset for asset in assets)
+    return paths
+
+
 def main() -> None:
     source = json.loads(SOURCE.read_text(encoding="utf-8"))
     paths, plugin_names = generated_paths(source)
     paths.extend(previous_hook_paths(source))
+    paths.extend(previous_asset_paths(source))
     paths = list(dict.fromkeys(paths))
     errors = []
 

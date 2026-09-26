@@ -29,12 +29,12 @@ assert GENERATED_PROVENANCE.read_bytes() == provenance_bytes
 assert provenance == {
     "repository": "https://github.com/yschimke/compose-preview-server",
     "pullRequest": "https://github.com/yschimke/compose-preview-server/pull/1135",
-    "commit": "35acbab3e451a98c1a9ed85162ef1be0b6c428ca",
+    "commit": "91129990392e787ffbfb612d5bba026105bea10e",
     "path": "mcp-app/compose-preview-viewer.html",
     # Stable MCP Apps UI protocol revision:
     # https://github.com/modelcontextprotocol/ext-apps/tree/main/specification/2026-01-26
     "mcpAppsProtocolVersion": "2026-01-26",
-    "sha256": "c3a1b53ccaf638a06c09c7351142cb9c2de72253060e522f346f278fe043c2f5",
+    "sha256": "19d496dac0b3128e563972d488191eb266b1aeee1612667095820b33418b999e",
 }
 assert hashlib.sha256(source_bytes).hexdigest() == provenance["sha256"]
 assert f"protocolVersion: '{provenance['mcpAppsProtocolVersion']}'," in source
@@ -54,6 +54,7 @@ required = (
     "binary.length > MAX_STATIC_RESULT_BYTES",
     "envelope.version !== 1",
     "credentialKeyIn(envelope)",
+    "|cookie|session)/i",
     "const bridgeReady = staticMode ? Promise.resolve() : initializeBridge();",
     "protocolVersion: '2026-01-26',",
     "Viewer unavailable; use the complete text fallback.",

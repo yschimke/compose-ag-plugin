@@ -108,7 +108,7 @@ test -f "$fallback_asset"
 grep -q '#compose-preview-result=<unpadded-base64url-envelope>' "$fallback_asset"
 grep -q 'Text fallback' "$fallback_asset"
 cmp "$provenance_source" "$provenance_asset"
-grep -q 'c3a1b53ccaf638a06c09c7351142cb9c2de72253060e522f346f278fe043c2f5' "$provenance_asset"
+grep -q '19d496dac0b3128e563972d488191eb266b1aeee1612667095820b33418b999e' "$provenance_asset"
 test -f "$fixture/plugins/compose-preview/skills/antigravity-viewer-card/SKILL.md"
 test ! -e "$fixture/plugins/compose-catalogs/skills/antigravity-viewer-card/SKILL.md"
 
@@ -140,6 +140,28 @@ if test -e "$viewer_asset"; then
 fi
 test -f "$fallback_asset"
 mv "$fixture/src/plugins.json.assets-saved" "$fixture/src/plugins.json"
+python3 "$fixture/scripts/generate.py"
+cmp "$viewer_source" "$viewer_asset"
+
+cp "$fixture/src/plugins.json" "$fixture/src/plugins.json.all-assets-saved"
+python3 -c '
+import json
+import sys
+from pathlib import Path
+
+source = Path(sys.argv[1])
+data = json.loads(source.read_text(encoding="utf-8"))
+next(plugin for plugin in data["plugins"] if plugin["name"] == "compose-preview")["assets"] = []
+source.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+' "$fixture/src/plugins.json"
+python3 "$fixture/scripts/generate.py"
+test ! -e "$fixture/plugins/compose-preview/assets/.generated-assets.json"
+if python3 "$fixture/scripts/check_generated.py" >"$fixture/deleted-assets.out" 2>"$fixture/deleted-assets.err"; then
+  printf '%s\n' 'FAIL: deleting the final generated assets and ledger must fail the drift check' >&2
+  exit 1
+fi
+grep -q 'generated files differ from their checked-out versions' "$fixture/deleted-assets.err"
+mv "$fixture/src/plugins.json.all-assets-saved" "$fixture/src/plugins.json"
 python3 "$fixture/scripts/generate.py"
 cmp "$viewer_source" "$viewer_asset"
 

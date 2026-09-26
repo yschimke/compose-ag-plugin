@@ -63,6 +63,30 @@ class ManifestSchemaValidationTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unsupported schema keywords.*minLength"):
             self.validate("x", {"type": "string", "minLength": 2})
 
+    def test_rejects_unsupported_keywords_in_unvisited_child_schemas(self) -> None:
+        schemas_and_values = [
+            (
+                {
+                    "type": "object",
+                    "properties": {"optional": {"type": "string", "minLength": 2}},
+                },
+                {},
+            ),
+            ({"type": "array", "items": {"type": "string", "minLength": 2}}, []),
+            (
+                {
+                    "type": "object",
+                    "additionalProperties": {"type": "string", "minLength": 2},
+                },
+                {},
+            ),
+        ]
+
+        for schema, value in schemas_and_values:
+            with self.subTest(schema=schema):
+                with self.assertRaisesRegex(ValueError, "unsupported schema keywords.*minLength"):
+                    self.validate(value, schema)
+
 
 if __name__ == "__main__":
     unittest.main()

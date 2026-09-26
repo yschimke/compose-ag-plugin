@@ -23,6 +23,7 @@ SCHEMA_ASSERTIONS = {
     "required",
     "type",
 }
+JSON_SCHEMA_TYPES = {"array", "boolean", "integer", "null", "number", "object", "string"}
 
 
 def read_json(path: Path) -> object:
@@ -51,26 +52,72 @@ def matches_json_type(value: object, expected: str) -> bool:
             raise ValueError(f"unsupported JSON Schema type: {expected}")
 
 
-def validate_against_schema(
-    value: object, schema: object, *, manifest_path: Path, value_path: str = "$"
-) -> None:
-    """Validate every assertion keyword used by the vendored manifest schemas.
-
-    This is deliberately a small stdlib validator rather than a partial draft
-    implementation. Failing on unknown keywords prevents a future schema edit
-    from silently declaring a constraint that CI does not enforce.
-    """
+def validate_schema_shape(schema: object, *, manifest_path: Path, schema_path: str = "$") -> None:
+    """Verify that every node in a vendored schema uses the supported subset."""
     if not isinstance(schema, dict):
-        raise ValueError(f"{manifest_path}: schema at {value_path} must be an object")
+        raise ValueError(f"{manifest_path}: schema at {schema_path} must be an object")
     unsupported = set(schema) - SCHEMA_ANNOTATIONS - SCHEMA_ASSERTIONS
     if unsupported:
         names = ", ".join(sorted(unsupported))
-        raise ValueError(f"{manifest_path}: unsupported schema keywords at {value_path}: {names}")
+        raise ValueError(f"{manifest_path}: unsupported schema keywords at {schema_path}: {names}")
 
     expected_type = schema.get("type")
     if expected_type is not None:
         if not isinstance(expected_type, str):
-            raise ValueError(f"{manifest_path}: schema type at {value_path} must be a string")
+            raise ValueError(f"{manifest_path}: schema type at {schema_path} must be a string")
+        if expected_type not in JSON_SCHEMA_TYPES:
+            raise ValueError(
+                f"{manifest_path}: unsupported JSON Schema type at {schema_path}: {expected_type}"
+            )
+
+    pattern = schema.get("pattern")
+    if pattern is not None:
+        if not isinstance(pattern, str):
+            raise ValueError(f"{manifest_path}: pattern at {schema_path} must be a string")
+        try:
+            re.compile(pattern)
+        except re.error as error:
+            raise ValueError(f"{manifest_path}: invalid pattern at {schema_path}: {error}") from error
+
+    required = schema.get("required", [])
+    if not isinstance(required, list) or not all(isinstance(field, str) for field in required):
+        raise ValueError(f"{manifest_path}: required at {schema_path} must be a string array")
+
+    properties = schema.get("properties", {})
+    if not isinstance(properties, dict):
+        raise ValueError(f"{manifest_path}: properties at {schema_path} must be an object")
+    for name, child_schema in properties.items():
+        validate_schema_shape(
+            child_schema,
+            manifest_path=manifest_path,
+            schema_path=f"{schema_path}.{name}",
+        )
+
+    if "items" in schema:
+        validate_schema_shape(
+            schema["items"],
+            manifest_path=manifest_path,
+            schema_path=f"{schema_path}[]",
+        )
+
+    additional = schema.get("additionalProperties", True)
+    if isinstance(additional, dict):
+        validate_schema_shape(
+            additional,
+            manifest_path=manifest_path,
+            schema_path=f"{schema_path}.*",
+        )
+    elif not isinstance(additional, bool):
+        raise ValueError(
+            f"{manifest_path}: additionalProperties at {schema_path} must be a boolean or schema"
+        )
+
+
+def _validate_value_against_schema(
+    value: object, schema: dict[str, object], *, manifest_path: Path, value_path: str
+) -> None:
+    expected_type = schema.get("type")
+    if isinstance(expected_type, str):
         if not matches_json_type(value, expected_type):
             raise ValueError(f"{manifest_path}: {value_path} must have type {expected_type}")
 
@@ -79,15 +126,15 @@ def validate_against_schema(
 
     pattern = schema.get("pattern")
     if pattern is not None:
-        if not isinstance(value, str) or not isinstance(pattern, str):
+        if not isinstance(value, str):
             raise ValueError(f"{manifest_path}: pattern at {value_path} requires strings")
+        assert isinstance(pattern, str)
         if re.search(pattern, value) is None:
             raise ValueError(f"{manifest_path}: {value_path} does not match {pattern!r}")
 
     if isinstance(value, dict):
         required = schema.get("required", [])
-        if not isinstance(required, list) or not all(isinstance(field, str) for field in required):
-            raise ValueError(f"{manifest_path}: required at {value_path} must be a string array")
+        assert isinstance(required, list)
         missing = [field for field in required if field not in value]
         if missing:
             raise ValueError(
@@ -95,11 +142,11 @@ def validate_against_schema(
             )
 
         properties = schema.get("properties", {})
-        if not isinstance(properties, dict):
-            raise ValueError(f"{manifest_path}: properties at {value_path} must be an object")
+        assert isinstance(properties, dict)
         for name, child_schema in properties.items():
             if name in value:
-                validate_against_schema(
+                assert isinstance(child_schema, dict)
+                _validate_value_against_schema(
                     value[name],
                     child_schema,
                     manifest_path=manifest_path,
@@ -113,26 +160,42 @@ def validate_against_schema(
             raise ValueError(f"{manifest_path}: {value_path} has additional properties: {names}")
         if isinstance(additional, dict):
             for name in extras:
-                validate_against_schema(
+                _validate_value_against_schema(
                     value[name],
                     additional,
                     manifest_path=manifest_path,
                     value_path=f"{value_path}.{name}",
                 )
-        elif not isinstance(additional, bool):
-            raise ValueError(
-                f"{manifest_path}: additionalProperties at {value_path} must be a boolean or schema"
-            )
 
     if isinstance(value, list) and "items" in schema:
         item_schema = schema["items"]
+        assert isinstance(item_schema, dict)
         for index, item in enumerate(value):
-            validate_against_schema(
+            _validate_value_against_schema(
                 item,
                 item_schema,
                 manifest_path=manifest_path,
                 value_path=f"{value_path}[{index}]",
             )
+
+
+def validate_against_schema(
+    value: object, schema: object, *, manifest_path: Path, value_path: str = "$"
+) -> None:
+    """Validate every assertion keyword used by the vendored manifest schemas.
+
+    This is deliberately a small stdlib validator rather than a partial draft
+    implementation. Failing on unknown keywords prevents a future schema edit
+    from silently declaring a constraint that CI does not enforce.
+    """
+    validate_schema_shape(schema, manifest_path=manifest_path, schema_path=value_path)
+    assert isinstance(schema, dict)
+    _validate_value_against_schema(
+        value,
+        schema,
+        manifest_path=manifest_path,
+        value_path=value_path,
+    )
 
 
 def validate_manifest_schema(manifest: object, schema_file: str, path: Path) -> None:

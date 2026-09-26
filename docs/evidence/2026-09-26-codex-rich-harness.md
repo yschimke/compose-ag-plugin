@@ -17,6 +17,17 @@ The local `spike/` marketplace was added to that temporary home. Both `p1` and
 `p2` then appeared in `codex plugin list --json` as installed and enabled at
 version 0.0.1.
 
+Run metadata required by `evals/README.md`:
+
+- Canonical-skills commit: n/a; this probe used only the fixture's `spike-p1`
+  and `spike-p2` skills.
+- Server commit: fixture echo server at plugin commit `d37dd66d`.
+- Tool sequence: p1 SessionStart, p2 SessionStart, read `spike-p1`, read
+  `spike-p2`, attempt the prompt-supplied reviewer name (failed), p1 Stop, p2
+  Stop. No fixture MCP tool call was available.
+- Image count: 0.
+- Follow-up: issues #6 and #18.
+
 ## Probe
 
 The prompt required observed-only answers, no file edits, both `spike check`

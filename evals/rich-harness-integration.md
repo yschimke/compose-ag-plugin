@@ -24,12 +24,12 @@ a host pass.
 
 ## Recorded runs
 
-| Date | Harness | Version | Plugin commit | Cases | Result | Evidence |
-| --- | --- | --- | --- | --- | --- | --- |
-| 2026-09-26 | Codex exec | 0.151.0 | `d37dd66d` | H1, H3, H5–H9, H11 fixture probes | Blocked; lifecycle transport observed | Both spike plugins installed; skills and lifecycle hooks loaded. Fixture MCP tools did not, so viewer, action, elicitation, prompt, and fallback cases could not run. The named reviewer invocation failed with `no thread with id` without establishing packaged-agent discovery. SessionStart delivered the shared fixture marker from at least one of the two logged hooks, and both Stop observers ran; none of H9's state-summary conditions was exercised. See [evidence](../docs/evidence/2026-09-26-codex-rich-harness.md). |
-| 2026-09-26 | Claude Code | 2.1.205 | `d37dd66d` | — | Environment unavailable | A minimal JSON prompt was killed with exit 137 and no output, including outside the restricted sandbox. This is not a product result. |
-| 2026-09-26 | Antigravity | unavailable | `d37dd66d` | — | Environment unavailable | Neither the desktop harness nor `agy` is available. |
-| 2026-09-26 | OpenCode | unavailable | `d37dd66d` | — | Environment unavailable | No OpenCode executable is installed; the matrix's earlier config-parser observation is not a model-turn eval. |
+| Date | Harness | Version | Canonical skills | Plugin commit | Server commit | Cases | Result | Tool sequence | Images | Follow-up | Evidence |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 2026-09-26 | Codex exec | 0.151.0 | n/a — fixture skills only | `d37dd66d` | fixture server at `d37dd66d` | H1, H3, H5–H9, H11 fixture probes | Blocked; lifecycle transport observed | p1 SessionStart → p2 SessionStart → read `spike-p1` → read `spike-p2` → attempt named reviewer (failed) → p1 Stop → p2 Stop; no fixture MCP tool call | 0 | #6, #18 | Both spike plugins installed; skills and lifecycle hooks loaded. Fixture MCP tools did not, so viewer, action, elicitation, prompt, and fallback cases could not run. The named reviewer invocation failed with `no thread with id` without establishing packaged-agent discovery. SessionStart delivered the shared fixture marker from at least one of the two logged hooks, and both Stop observers ran; none of H9's state-summary conditions was exercised. See [evidence](../docs/evidence/2026-09-26-codex-rich-harness.md). |
+| 2026-09-26 | Claude Code | 2.1.205 | n/a — harness did not start | `d37dd66d` | n/a | — | Environment unavailable | n/a | n/a | #6, #18 | A minimal JSON prompt was killed with exit 137 and no output, including outside the restricted sandbox. This is not a product result. |
+| 2026-09-26 | Antigravity | unavailable | n/a — harness unavailable | `d37dd66d` | n/a | — | Environment unavailable | n/a | n/a | #6, #18 | Neither the desktop harness nor `agy` is available. |
+| 2026-09-26 | OpenCode | unavailable | n/a — harness unavailable | `d37dd66d` | n/a | — | Environment unavailable | n/a | n/a | #6, #18 | No OpenCode executable is installed; the matrix's earlier config-parser observation is not a model-turn eval. |
 
 The direct protocol smoke test passes for the rich fixture, including complete
 fallback payloads. It is a fixture control only. H1–H8 and H10–H11 still need

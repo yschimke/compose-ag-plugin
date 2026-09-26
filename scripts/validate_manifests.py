@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 import sys
 from pathlib import Path
@@ -13,6 +14,17 @@ from generate import ANTIGRAVITY_SCHEMA, SKILL_SOURCE_ROOT, render_mcp_servers
 
 ROOT = Path(__file__).resolve().parents[1]
 NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+SCHEMA_ANNOTATIONS = {"$schema", "title"}
+SCHEMA_ASSERTIONS = {
+    "additionalProperties",
+    "const",
+    "items",
+    "pattern",
+    "properties",
+    "required",
+    "type",
+}
+JSON_SCHEMA_TYPES = {"array", "boolean", "integer", "null", "number", "object", "string"}
 
 
 def read_json(path: Path) -> object:
@@ -20,14 +32,205 @@ def read_json(path: Path) -> object:
         return json.load(file)
 
 
-def require_schema_fields(manifest: object, schema_file: str, path: Path) -> None:
-    schema = read_json(ROOT / "schemas" / schema_file)
-    if not isinstance(manifest, dict) or not isinstance(schema, dict):
-        raise ValueError(f"{path}: manifest and schema must be objects")
+def matches_json_type(value: object, expected: str) -> bool:
+    """Return whether a Python JSON value has the requested JSON Schema type."""
+    match expected:
+        case "object":
+            return isinstance(value, dict)
+        case "array":
+            return isinstance(value, list)
+        case "string":
+            return isinstance(value, str)
+        case "number":
+            return isinstance(value, (int, float)) and not isinstance(value, bool)
+        case "integer":
+            return (
+                isinstance(value, int)
+                and not isinstance(value, bool)
+                or isinstance(value, float)
+                and math.isfinite(value)
+                and value.is_integer()
+            )
+        case "boolean":
+            return isinstance(value, bool)
+        case "null":
+            return value is None
+        case _:
+            raise ValueError(f"unsupported JSON Schema type: {expected}")
+
+
+def json_values_equal(left: object, right: object) -> bool:
+    """Compare JSON values without conflating booleans and numbers as Python does."""
+    left_number = isinstance(left, (int, float)) and not isinstance(left, bool)
+    right_number = isinstance(right, (int, float)) and not isinstance(right, bool)
+    if left_number or right_number:
+        return left_number and right_number and left == right
+    if type(left) is not type(right):
+        return False
+    if isinstance(left, dict):
+        assert isinstance(right, dict)
+        return left.keys() == right.keys() and all(
+            json_values_equal(left[key], right[key]) for key in left
+        )
+    if isinstance(left, list):
+        assert isinstance(right, list)
+        return len(left) == len(right) and all(
+            json_values_equal(left_item, right_item)
+            for left_item, right_item in zip(left, right, strict=True)
+        )
+    return left == right
+
+
+def validate_schema_shape(schema: object, *, manifest_path: Path, schema_path: str = "$") -> None:
+    """Verify that every node in a vendored schema uses the supported subset."""
+    if not isinstance(schema, dict):
+        raise ValueError(f"{manifest_path}: schema at {schema_path} must be an object")
+    unsupported = set(schema) - SCHEMA_ANNOTATIONS - SCHEMA_ASSERTIONS
+    if unsupported:
+        names = ", ".join(sorted(unsupported))
+        raise ValueError(f"{manifest_path}: unsupported schema keywords at {schema_path}: {names}")
+
+    expected_type = schema.get("type")
+    if expected_type is not None:
+        if not isinstance(expected_type, str):
+            raise ValueError(f"{manifest_path}: schema type at {schema_path} must be a string")
+        if expected_type not in JSON_SCHEMA_TYPES:
+            raise ValueError(
+                f"{manifest_path}: unsupported JSON Schema type at {schema_path}: {expected_type}"
+            )
+
+    pattern = schema.get("pattern")
+    if pattern is not None:
+        if not isinstance(pattern, str):
+            raise ValueError(f"{manifest_path}: pattern at {schema_path} must be a string")
+        try:
+            re.compile(pattern)
+        except re.error as error:
+            raise ValueError(f"{manifest_path}: invalid pattern at {schema_path}: {error}") from error
+
     required = schema.get("required", [])
-    missing = [field for field in required if field not in manifest]
-    if missing:
-        raise ValueError(f"{path}: missing required schema fields: {', '.join(missing)}")
+    if not isinstance(required, list) or not all(isinstance(field, str) for field in required):
+        raise ValueError(f"{manifest_path}: required at {schema_path} must be a string array")
+
+    properties = schema.get("properties", {})
+    if not isinstance(properties, dict):
+        raise ValueError(f"{manifest_path}: properties at {schema_path} must be an object")
+    for name, child_schema in properties.items():
+        validate_schema_shape(
+            child_schema,
+            manifest_path=manifest_path,
+            schema_path=f"{schema_path}.{name}",
+        )
+
+    if "items" in schema:
+        validate_schema_shape(
+            schema["items"],
+            manifest_path=manifest_path,
+            schema_path=f"{schema_path}[]",
+        )
+
+    additional = schema.get("additionalProperties", True)
+    if isinstance(additional, dict):
+        validate_schema_shape(
+            additional,
+            manifest_path=manifest_path,
+            schema_path=f"{schema_path}.*",
+        )
+    elif not isinstance(additional, bool):
+        raise ValueError(
+            f"{manifest_path}: additionalProperties at {schema_path} must be a boolean or schema"
+        )
+
+
+def _validate_value_against_schema(
+    value: object, schema: dict[str, object], *, manifest_path: Path, value_path: str
+) -> None:
+    expected_type = schema.get("type")
+    if isinstance(expected_type, str):
+        if not matches_json_type(value, expected_type):
+            raise ValueError(f"{manifest_path}: {value_path} must have type {expected_type}")
+
+    if "const" in schema and not json_values_equal(value, schema["const"]):
+        raise ValueError(f"{manifest_path}: {value_path} must equal {schema['const']!r}")
+
+    pattern = schema.get("pattern")
+    if pattern is not None and isinstance(value, str):
+        assert isinstance(pattern, str)
+        if re.search(pattern, value) is None:
+            raise ValueError(f"{manifest_path}: {value_path} does not match {pattern!r}")
+
+    if isinstance(value, dict):
+        required = schema.get("required", [])
+        assert isinstance(required, list)
+        missing = [field for field in required if field not in value]
+        if missing:
+            raise ValueError(
+                f"{manifest_path}: {value_path} is missing required fields: {', '.join(missing)}"
+            )
+
+        properties = schema.get("properties", {})
+        assert isinstance(properties, dict)
+        for name, child_schema in properties.items():
+            if name in value:
+                assert isinstance(child_schema, dict)
+                _validate_value_against_schema(
+                    value[name],
+                    child_schema,
+                    manifest_path=manifest_path,
+                    value_path=f"{value_path}.{name}",
+                )
+
+        additional = schema.get("additionalProperties", True)
+        extras = set(value) - set(properties)
+        if additional is False and extras:
+            names = ", ".join(sorted(extras))
+            raise ValueError(f"{manifest_path}: {value_path} has additional properties: {names}")
+        if isinstance(additional, dict):
+            for name in extras:
+                _validate_value_against_schema(
+                    value[name],
+                    additional,
+                    manifest_path=manifest_path,
+                    value_path=f"{value_path}.{name}",
+                )
+
+    if isinstance(value, list) and "items" in schema:
+        item_schema = schema["items"]
+        assert isinstance(item_schema, dict)
+        for index, item in enumerate(value):
+            _validate_value_against_schema(
+                item,
+                item_schema,
+                manifest_path=manifest_path,
+                value_path=f"{value_path}[{index}]",
+            )
+
+
+def validate_against_schema(
+    value: object, schema: object, *, manifest_path: Path, value_path: str = "$"
+) -> None:
+    """Validate every assertion keyword used by the vendored manifest schemas.
+
+    This is deliberately a small stdlib validator rather than a partial draft
+    implementation. Failing on unknown keywords prevents a future schema edit
+    from silently declaring a constraint that CI does not enforce.
+    """
+    validate_schema_shape(schema, manifest_path=manifest_path, schema_path=value_path)
+    assert isinstance(schema, dict)
+    _validate_value_against_schema(
+        value,
+        schema,
+        manifest_path=manifest_path,
+        value_path=value_path,
+    )
+
+
+def validate_manifest_schema(manifest: object, schema_file: str, path: Path) -> None:
+    validate_against_schema(
+        manifest,
+        read_json(ROOT / "schemas" / schema_file),
+        manifest_path=path,
+    )
 
 
 def validate_skill(path: Path) -> None:
@@ -78,8 +281,8 @@ def main() -> None:
             raise ValueError(f"{root}: {'; '.join(details)}")
         antigravity = read_json(root / "plugin.json")
         claude = read_json(root / ".claude-plugin" / "plugin.json")
-        require_schema_fields(antigravity, "antigravity-plugin.schema.json", root / "plugin.json")
-        require_schema_fields(
+        validate_manifest_schema(antigravity, "antigravity-plugin.schema.json", root / "plugin.json")
+        validate_manifest_schema(
             claude, "claude-plugin.schema.json", root / ".claude-plugin" / "plugin.json"
         )
         expected_antigravity = {

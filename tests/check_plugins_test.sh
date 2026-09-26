@@ -45,6 +45,20 @@ for plugin in compose-catalogs compose-preview; do
   fi
 done
 
+hook="$fixture/plugins/compose-preview/hooks/hooks.json"
+test -f "$hook"
+grep -q '"SessionStart"' "$hook"
+grep -q 'session-start-summary.sh' "$hook"
+
+stale_hook="$fixture/plugins/compose-preview/scripts/obsolete-hook.sh"
+printf '%s\n' '#!/bin/sh' 'exit 0' >"$stale_hook"
+if "$fixture/scripts/check-plugins.sh" >"$fixture/stale-hook.out" 2>"$fixture/stale-hook.err"; then
+  printf '%s\n' 'expected stale generated hook check to fail' >&2
+  exit 1
+fi
+grep -q 'compose-preview has stale generated hooks: obsolete-hook.sh' "$fixture/stale-hook.err"
+rm "$stale_hook"
+
 handwritten_agent="$fixture/plugins/compose-preview/agents/handwritten-reviewer.md"
 printf '%s\n' 'handwritten' >"$handwritten_agent"
 python3 -c '

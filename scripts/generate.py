@@ -13,6 +13,7 @@ SOURCE = ROOT / "src" / "plugins.json"
 SKILL_SOURCE_ROOT = ROOT / "src" / "skills"
 AGENT_SOURCE_ROOT = ROOT / "src" / "agents"
 AGENT_LEDGER_NAME = ".generated-agents.json"
+HOOK_SOURCE_ROOT = ROOT / "src" / "hooks"
 ANTIGRAVITY_SCHEMA = "https://antigravity.google/schemas/v1/plugin.json"
 SKILL_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
@@ -48,6 +49,56 @@ def write_agent(plugin_root: Path, agent: str) -> None:
     target = plugin_root / "agents" / f"{agent}.md"
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+
+
+def write_hook(plugin_root: Path, command: str) -> None:
+    command_path = Path(command)
+    if (
+        command_path.is_absolute()
+        or ".." in command_path.parts
+        or command_path.parts[:1] != ("scripts",)
+        or len(command_path.parts) != 2
+    ):
+        raise ValueError(f"hook command must be a plugin-local script: {command}")
+    source = HOOK_SOURCE_ROOT / command_path.name
+    if not source.is_file():
+        raise ValueError(f"missing shared hook source: {source.relative_to(ROOT)}")
+    target = plugin_root / command_path
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+    target.chmod(source.stat().st_mode)
+
+
+def render_hooks(plugin_name: str, entries: object) -> dict[str, object]:
+    if not isinstance(entries, list):
+        raise ValueError(f"{plugin_name}.hooks must be a list")
+
+    hooks: dict[str, list[dict[str, object]]] = {}
+    for entry in entries:
+        if not isinstance(entry, dict):
+            raise ValueError(f"{plugin_name}.hooks entries must be objects")
+        event = require_string(entry.get("event"), f"{plugin_name}.hooks.event")
+        command = require_string(entry.get("command"), f"{plugin_name}.hooks.command")
+        if event != "SessionStart":
+            raise ValueError(f"{plugin_name}.hooks.event must be SessionStart")
+        if event in hooks:
+            raise ValueError(f"{plugin_name}.hooks contains duplicate event {event}")
+        command_path = Path(command)
+        if (
+            command_path.is_absolute()
+            or ".." in command_path.parts
+            or command_path.parts[:1] != ("scripts",)
+            or len(command_path.parts) != 2
+        ):
+            raise ValueError(f"{plugin_name}.hooks.command must be a plugin-local script")
+        if not (HOOK_SOURCE_ROOT / command_path.name).is_file():
+            raise ValueError(
+                f"missing shared hook source: {(HOOK_SOURCE_ROOT / command_path.name).relative_to(ROOT)}"
+            )
+        hooks[event] = [
+            {"hooks": [{"command": f"${{CLAUDE_PLUGIN_ROOT}}/{command}", "type": "command"}]}
+        ]
+    return {"hooks": hooks}
 
 
 def synchronize_generated_agents(plugin_root: Path, agents: list[str]) -> None:
@@ -138,6 +189,7 @@ def main() -> None:
         keywords = plugin.get("keywords", [])
         skills = plugin.get("skills", [])
         agents = plugin.get("agents", [])
+        hooks = plugin.get("hooks", [])
         mcp = plugin.get("mcp", [])
         if name in names:
             raise ValueError(f"duplicate plugin name: {name}")
@@ -147,6 +199,8 @@ def main() -> None:
             raise ValueError(f"{name}.skills must be a list of strings")
         if not isinstance(agents, list) or not all(isinstance(agent, str) for agent in agents):
             raise ValueError(f"{name}.agents must be a list of strings")
+        if not isinstance(hooks, list):
+            raise ValueError(f"{name}.hooks must be a list")
         names.add(name)
 
         root = ROOT / "plugins" / name
@@ -155,6 +209,12 @@ def main() -> None:
         synchronize_generated_agents(root, agents)
         for agent in agents:
             write_agent(root, agent)
+        if hooks:
+            for hook in hooks:
+                write_hook(root, hook["command"])
+            write_json(root / "hooks" / "hooks.json", render_hooks(name, hooks))
+        else:
+            (root / "hooks" / "hooks.json").unlink(missing_ok=True)
         write_json(
             root / "plugin.json",
             {"$schema": ANTIGRAVITY_SCHEMA, "description": description, "name": name},

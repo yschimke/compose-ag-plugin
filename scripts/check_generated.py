@@ -41,6 +41,16 @@ def generated_paths(source: object) -> tuple[list[Path], set[str]]:
         paths.extend(plugin_root / "agents" / f"{agent}.md" for agent in agents)
         if agents:
             paths.append(plugin_root / "agents" / AGENT_LEDGER_NAME)
+        hooks = plugin.get("hooks", [])
+        if not isinstance(hooks, list) or not all(isinstance(hook, dict) for hook in hooks):
+            raise ValueError(f"{name}.hooks must be a list of objects")
+        if hooks:
+            paths.append(plugin_root / "hooks" / "hooks.json")
+        for hook in hooks:
+            command = hook.get("command")
+            if not isinstance(command, str):
+                raise ValueError(f"{name}.hooks commands must be strings")
+            paths.append(plugin_root / command)
     return paths, plugin_names
 
 
@@ -64,6 +74,23 @@ def main() -> None:
     stale_dirs = actual_dirs - plugin_names
     if stale_dirs:
         errors.append(f"stale plugin directories: {', '.join(sorted(stale_dirs))}")
+
+    for plugin in source["plugins"]:
+        name = plugin["name"]
+        expected_hooks = {
+            Path(hook["command"]).name for hook in plugin.get("hooks", []) if "command" in hook
+        }
+        scripts_root = plugins_root / name / "scripts"
+        actual_hooks = (
+            {path.name for path in scripts_root.iterdir() if path.is_file()}
+            if scripts_root.is_dir()
+            else set()
+        )
+        stale_hooks = actual_hooks - expected_hooks
+        if stale_hooks:
+            errors.append(
+                f"{name} has stale generated hooks: {', '.join(sorted(stale_hooks))}"
+            )
 
     pathspecs = [str(path.relative_to(ROOT)) for path in paths]
     diff = git("diff", "--exit-code", "--", *pathspecs)

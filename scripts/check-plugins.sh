@@ -14,5 +14,6 @@ done < <(find . -name '*.json' -not -path './.git/*' -print0)
 python3 scripts/validate_manifests.py
 python3 tests/validate_manifests_test.py
 tests/harness_test.sh
+tests/session_start_summary_test.sh
 python3 tests/echo_mcp_test.py
 python3 tests/spike_fixture_test.py

@@ -39,9 +39,9 @@ def write_json(path: Path, value: object) -> None:
 
 
 def require_string(value: object, field: str) -> str:
-    if not isinstance(value, str) or not value:
+    if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field} must be a non-empty string")
-    return value
+    return value.strip()
 
 
 def render_codex_manifest(
@@ -64,21 +64,27 @@ def render_codex_manifest(
         for field in CODEX_INTERFACE_STRINGS
     }
     capabilities = interface.get("capabilities")
-    if not isinstance(capabilities, list) or not capabilities or not all(
-        isinstance(capability, str) and capability for capability in capabilities
-    ):
+    if not isinstance(capabilities, list) or not capabilities:
         raise ValueError(f"{name}.interface.capabilities must be a non-empty list of strings")
+    rendered_capabilities = [
+        require_string(capability, f"{name}.interface.capabilities[{index}]")
+        for index, capability in enumerate(capabilities)
+    ]
     default_prompt = interface.get("defaultPrompt")
-    if (
-        not isinstance(default_prompt, list)
-        or not 1 <= len(default_prompt) <= 3
-        or not all(isinstance(prompt, str) and prompt and len(prompt) <= 128 for prompt in default_prompt)
-    ):
+    if not isinstance(default_prompt, list) or not 1 <= len(default_prompt) <= 3:
         raise ValueError(
             f"{name}.interface.defaultPrompt must contain 1 to 3 non-empty strings of at most 128 characters"
         )
-    rendered_interface["capabilities"] = capabilities
-    rendered_interface["defaultPrompt"] = default_prompt
+    rendered_default_prompt = [
+        require_string(prompt, f"{name}.interface.defaultPrompt[{index}]")
+        for index, prompt in enumerate(default_prompt)
+    ]
+    if any(len(prompt) > 128 for prompt in rendered_default_prompt):
+        raise ValueError(
+            f"{name}.interface.defaultPrompt must contain 1 to 3 non-empty strings of at most 128 characters"
+        )
+    rendered_interface["capabilities"] = rendered_capabilities
+    rendered_interface["defaultPrompt"] = rendered_default_prompt
 
     manifest: dict[str, object] = {
         "author": {"name": owner},

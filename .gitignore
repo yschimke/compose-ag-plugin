@@ -1,0 +1,4 @@
+__pycache__/
+*.py[cod]
+spike/p*/hooks.json
+spike/p*/mcp_config.json

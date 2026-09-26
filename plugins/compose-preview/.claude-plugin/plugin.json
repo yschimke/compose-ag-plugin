@@ -1,0 +1,16 @@
+{
+  "author": {
+    "name": "Yuri Schimke"
+  },
+  "description": "Iterate on local Compose previews with live rendering and accessibility checks.",
+  "keywords": [
+    "compose",
+    "preview",
+    "accessibility",
+    "android"
+  ],
+  "license": "Apache-2.0",
+  "name": "compose-preview",
+  "repository": "https://github.com/yschimke/compose-ag-plugin",
+  "version": "0.1.0"
+}

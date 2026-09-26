@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "compose-preview-mcp": {
+      "args": [
+        "mcp",
+        "serve"
+      ],
+      "command": "compose-preview"
+    }
+  }
+}

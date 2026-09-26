@@ -1,0 +1,42 @@
+name: Plugin validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate manifests and check for drift
+        run: python3 scripts/generate.py && git diff --exit-code
+      - name: Validate JSON and plugin contracts
+        run: scripts/check-plugins.sh
+      - name: Lint Markdown
+        uses: DavidAnson/markdownlint-cli2-action@v20
+        with:
+          globs: "**/*.md"
+      - name: Validate with Claude Code when available
+        continue-on-error: true
+        run: |
+          npm install --global @anthropic-ai/claude-code
+          for plugin in plugins/*; do claude plugin validate "$plugin"; done
+      - name: Validate with Codex when available
+        continue-on-error: true
+        run: |
+          npm install --global @openai/codex
+          plugin_home="$(mktemp -d)"
+          CODEX_HOME="$plugin_home" codex plugin marketplace add ./
+          CODEX_HOME="$plugin_home" codex plugin add compose-catalogs@compose-ag-plugin
+          CODEX_HOME="$plugin_home" codex plugin add compose-preview@compose-ag-plugin
+          CODEX_HOME="$plugin_home" codex plugin list
+      - name: Validate with Antigravity when available
+        run: |
+          if command -v agy >/dev/null 2>&1; then
+            for plugin in plugins/*; do agy plugin validate "$plugin"; done
+          else
+            echo "::notice::agy is unavailable; static Antigravity validation ran above"
+          fi

@@ -1,0 +1,8 @@
+{
+  "name": "compose-ag-plugin-spike",
+  "owner": {"name": "Compose AG Plugin spike"},
+  "plugins": [
+    {"name": "p1", "source": "./p1", "description": "Harness fixture alpha"},
+    {"name": "p2", "source": "./p2", "description": "Harness fixture beta"}
+  ]
+}

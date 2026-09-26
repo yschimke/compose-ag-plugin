@@ -1,0 +1,5 @@
+{
+  "$schema": "https://antigravity.google/schemas/v1/plugin.json",
+  "description": "Discover Compose components, inspect properties, and render catalog variants.",
+  "name": "compose-catalogs"
+}

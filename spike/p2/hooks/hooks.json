@@ -1,0 +1,19 @@
+{
+  "description": "Harness fixture p2 lifecycle probes",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {"command": "${CLAUDE_PLUGIN_ROOT}/../echo-mcp/hook-log.sh post-tool-use", "type": "command"}
+        ],
+        "matcher": "Edit|Write|MultiEdit|apply_patch"
+      }
+    ],
+    "SessionStart": [
+      {"hooks": [{"command": "${CLAUDE_PLUGIN_ROOT}/../echo-mcp/hook-log.sh session-start", "type": "command"}]}
+    ],
+    "Stop": [
+      {"hooks": [{"command": "${CLAUDE_PLUGIN_ROOT}/../echo-mcp/hook-log.sh stop", "type": "command"}]}
+    ]
+  }
+}

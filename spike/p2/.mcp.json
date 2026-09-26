@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "beta": {
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/../echo-mcp/server.py",
+        "beta"
+      ],
+      "command": "python3"
+    }
+  }
+}

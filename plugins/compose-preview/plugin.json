@@ -1,0 +1,5 @@
+{
+  "$schema": "https://antigravity.google/schemas/v1/plugin.json",
+  "description": "Iterate on local Compose previews with live rendering and accessibility checks.",
+  "name": "compose-preview"
+}

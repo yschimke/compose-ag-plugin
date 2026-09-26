@@ -1,0 +1,16 @@
+{
+  "author": {
+    "name": "Yuri Schimke"
+  },
+  "description": "Discover Compose components, inspect properties, and render catalog variants.",
+  "keywords": [
+    "compose",
+    "catalog",
+    "material3",
+    "wear"
+  ],
+  "license": "Apache-2.0",
+  "name": "compose-catalogs",
+  "repository": "https://github.com/yschimke/compose-ag-plugin",
+  "version": "0.1.0"
+}

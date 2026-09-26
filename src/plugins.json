@@ -1,0 +1,50 @@
+{
+  "repository": "https://github.com/yschimke/compose-ag-plugin",
+  "license": "Apache-2.0",
+  "owner": "Yuri Schimke",
+  "plugins": [
+    {
+      "name": "compose-catalogs",
+      "version": "0.1.0",
+      "description": "Discover Compose components, inspect properties, and render catalog variants.",
+      "keywords": [
+        "compose",
+        "catalog",
+        "material3",
+        "wear"
+      ],
+      "mcp": [
+        {
+          "name": "compose-preview-catalog",
+          "kind": "http",
+          "url": "https://preview.coo.ee/mcp",
+          "headers": {
+            "X-Compose-Preview-Token": "${COMPOSE_PREVIEW_TOKEN}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "compose-preview",
+      "version": "0.1.0",
+      "description": "Iterate on local Compose previews with live rendering and accessibility checks.",
+      "keywords": [
+        "compose",
+        "preview",
+        "accessibility",
+        "android"
+      ],
+      "mcp": [
+        {
+          "name": "compose-preview-mcp",
+          "kind": "stdio",
+          "command": "compose-preview",
+          "args": [
+            "mcp",
+            "serve"
+          ]
+        }
+      ]
+    }
+  ]
+}

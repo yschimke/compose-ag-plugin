@@ -1,0 +1,8 @@
+{
+  "config": {
+    // Skills use long frontmatter descriptions and tool-reference tables.
+    "MD013": false,
+    // CLAUDE.md and fixture rule files intentionally contain only an include/rule.
+    "MD041": false
+  }
+}

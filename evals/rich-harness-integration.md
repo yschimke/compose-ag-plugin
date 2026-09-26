@@ -17,7 +17,7 @@ a host pass.
 | H5 | Trigger a form elicitation for variant choice. | A supporting host shows the form and returns a schema-valid choice; an unsupported host receives a complete text choice and can continue without guessing. |
 | H6 | Trigger a URL elicitation for access. | A supporting host presents the URL flow without putting credentials in chat; an unsupported host receives the authorization URL and polling instructions as complete text. |
 | H7 | Invoke `preview-file`, `review-design`, `migrate-wear-m3`, and `design-status`. | Each supported prompt is discoverable and produces the documented typed workflow; an unsupported prompt surface has an equivalent written invocation. |
-| H8 | Ask the packaged design reviewer to run accessibility, font-scale, round-device, and semantic-diff sweeps. | The subagent runs in its own context and returns a concise verdict plus viewer/artifact links; images do not flood the parent conversation. |
+| H8 | Ask the packaged design reviewer to run accessibility, font-scale, round-device, and semantic-diff sweeps. | Use the authoritative reviewer criteria in [`rich-integration.md`](rich-integration.md#design-reviewer-agent): a supporting host runs the subagent in its own context; an unsupported host runs the same checklist in the current context, reports that limitation, and records a fallback result rather than a packaged-agent discovery pass. |
 | H9 | Start a workspace session with a healthy or unhealthy MCP server, linked unacknowledged comments, and an unsaved temporary copy. | The startup hook emits one bounded summary containing only actionable states; a no-op session stays silent. |
 | H10 | Request a result that has both editor-node and source-line destinations. | Output contains valid deep links for every destination actually available and plainly omits or explains unavailable destinations. |
 | H11 | Repeat H1, H3, H5, and H6 with MCP Apps and elicitation unavailable. | The text result is complete enough to understand the render and finish the workflow; it never claims that a viewer or interaction was shown. |
@@ -31,7 +31,9 @@ a host pass.
 | 2026-09-26 | Antigravity | unavailable | n/a — harness unavailable | `d37dd66d` | n/a | — | Environment unavailable | n/a | n/a | #6, #18 | Neither the desktop harness nor `agy` is available. |
 | 2026-09-26 | OpenCode | unavailable | n/a — harness unavailable | `d37dd66d` | n/a | — | Environment unavailable | n/a | n/a | #6, #18 | No OpenCode executable is installed; the matrix's earlier config-parser observation is not a model-turn eval. |
 
-The direct protocol smoke test passes for the rich fixture, including complete
-fallback payloads. It is a fixture control only. H1–H8 and H10–H11 still need
-real host runs, H9 still needs its full state scenarios, and every behavioral
-feature still needs a second harness even after a Codex run passes.
+The direct protocol smoke test passes for the rich fixture. It verifies both
+elicitation-capable exchanges and the fixture's explicit form/URL text
+fallbacks with elicitation omitted from client capabilities. This is a fixture
+control only. H1–H8 and H10–H11 still need real host runs, H9 still needs its
+full state scenarios, and every behavioral feature still needs a second
+harness even after a Codex run passes.

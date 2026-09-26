@@ -109,6 +109,47 @@ def run(plugin: str, server_name: str) -> None:
         process.wait(timeout=5)
 
 
+def run_fallback(plugin: str, server_name: str) -> None:
+    server = ROOT / plugin / "echo-mcp" / "server.py"
+    process = subprocess.Popen(
+        [sys.executable, str(server), server_name],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        request(
+            process,
+            1,
+            "initialize",
+            {
+                "protocolVersion": "2025-11-25",
+                "capabilities": {},
+                "clientInfo": {"name": "spike-fallback-smoke", "version": "0"},
+            },
+        )
+        form = request(
+            process,
+            2,
+            "tools/call",
+            {"name": "ask", "arguments": {"mode": "form"}},
+        )["content"][0]["text"]
+        assert "compact or expanded" in form
+        url = request(
+            process,
+            3,
+            "tools/call",
+            {"name": "ask", "arguments": {"mode": "url"}},
+        )["content"][0]["text"]
+        assert "https://example.invalid/spike-elicitation" in url
+        assert "verification code SPIKE-CODE" in url
+        assert "poll access status with the status tool" in url
+    finally:
+        process.terminate()
+        process.wait(timeout=5)
+
+
 for plugin, name in (("p1", "alpha"), ("p2", "beta")):
     run(plugin, name)
+    run_fallback(plugin, name)
 print("spike MCP protocol smoke test passed for alpha and beta")

@@ -47,7 +47,20 @@ unsupported = call(
         "params": {"name": "ask", "arguments": {"mode": "form"}},
     }
 )["result"]
-assert unsupported["content"][0]["text"] == "form elicitation unavailable; use the text fallback: choose compact."
+assert unsupported["content"][0]["text"] == echo_mcp.FORM_FALLBACK
+
+unsupported_url = call(
+    {
+        "jsonrpc": "2.0",
+        "id": "unsupported-url",
+        "method": "tools/call",
+        "params": {"name": "ask", "arguments": {"mode": "url"}},
+    }
+)["result"]
+assert unsupported_url["content"][0]["text"] == echo_mcp.URL_FALLBACK
+assert "https://example.invalid/spike-elicitation" in echo_mcp.URL_FALLBACK
+assert "verification code SPIKE-CODE" in echo_mcp.URL_FALLBACK
+assert "poll access status with the status tool" in echo_mcp.URL_FALLBACK
 
 invalid_arguments = call(
     {
@@ -132,7 +145,7 @@ with contextlib.redirect_stdout(stdout):
     )
 declined_responses = [json.loads(line) for line in stdout.getvalue().splitlines()]
 assert declined_responses[1]["id"] == "declined-tool"
-assert "text fallback: choose compact" in declined_responses[1]["result"]["content"][0]["text"]
+assert declined_responses[1]["result"]["content"][0]["text"] == echo_mcp.FORM_FALLBACK
 
 stdout = io.StringIO()
 with contextlib.redirect_stdout(stdout):
@@ -154,10 +167,7 @@ with contextlib.redirect_stdout(stdout):
     )
 malformed_accept_responses = [json.loads(line) for line in stdout.getvalue().splitlines()]
 assert malformed_accept_responses[1]["id"] == "malformed-accept-tool"
-assert (
-    "text fallback: choose compact"
-    in malformed_accept_responses[1]["result"]["content"][0]["text"]
-)
+assert malformed_accept_responses[1]["result"]["content"][0]["text"] == echo_mcp.FORM_FALLBACK
 
 
 def start_elicitation(tool_request_id: str) -> dict:

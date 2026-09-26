@@ -1,8 +1,8 @@
 {
   "repository": "https://github.com/yschimke/compose-preview-server",
   "pullRequest": "https://github.com/yschimke/compose-preview-server/pull/1135",
-  "commit": "6b0211209aec1fa621956f187e071bf5b418453e",
+  "commit": "16e70717b439076fa3f106282dd153ee59b6b7b2",
   "path": "mcp-app/compose-preview-viewer.html",
   "mcpAppsProtocolVersion": "2026-01-26",
-  "sha256": "51c731c59793c573cdf14c2d9a9d6227ff15fcde28d6b8466d681a639a2b1c72"
+  "sha256": "629bbb5979ec853d4b269feef88ff9085dee28235ad51b10889e3f37ca3c89b1"
 }

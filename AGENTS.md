@@ -9,5 +9,5 @@ This repository owns the Antigravity, Claude Code, and Codex plugin packaging fo
 - Commit subjects and PR titles use Conventional Commits. A `!` in one does **not** bump the major: every release here is a minor.
 - Immediately before every push, fetch `origin main` and confirm the branch or PR has not merged.
 - Open or update a PR automatically after a completed coding change. Never auto-merge.
-- After opening or updating a PR, subscribe to its GitHub notification thread and verify that the subscription is active. Check every open PR for unresolved Codex review comments before pushing and before finishing.
+- After opening or updating a PR, subscribe to its GitHub notification thread and verify that the subscription is active where the harness supports it; otherwise say so in the PR. Before pushing and before finishing, check every PR this agent opened or actively drives for unresolved human and Codex review comments.
 - Never hand-edit generated manifests. Edit `src/plugins.json`, run `python3 scripts/generate.py`, and commit the resulting manifest files together.

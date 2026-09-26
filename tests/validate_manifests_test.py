@@ -71,6 +71,26 @@ class ManifestSchemaValidationTest(unittest.TestCase):
 
         self.validate(1.0, {"const": 1})
 
+    def test_integer_accepts_integral_json_numbers_but_not_boolean_or_fractional_values(self) -> None:
+        self.validate(1, {"type": "integer"})
+        self.validate(1.0, {"type": "integer"})
+
+        with self.assertRaisesRegex(ValueError, "must have type integer"):
+            self.validate(True, {"type": "integer"})
+        with self.assertRaisesRegex(ValueError, "must have type integer"):
+            self.validate(1.5, {"type": "integer"})
+        with self.assertRaisesRegex(ValueError, "must have type integer"):
+            self.validate(float("inf"), {"type": "integer"})
+
+    def test_pattern_only_applies_to_string_instances(self) -> None:
+        self.validate(3, {"pattern": "x"})
+        self.validate({"x": 1}, {"pattern": "x"})
+
+        with self.assertRaisesRegex(ValueError, "does not match"):
+            self.validate("other", {"pattern": "^x$"})
+        with self.assertRaisesRegex(ValueError, "must have type string"):
+            self.validate(3, {"type": "string", "pattern": "x"})
+
     def test_rejects_unsupported_keywords_in_unvisited_child_schemas(self) -> None:
         schemas_and_values = [
             (

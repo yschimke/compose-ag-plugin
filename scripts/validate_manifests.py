@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 import sys
 from pathlib import Path
@@ -43,7 +44,13 @@ def matches_json_type(value: object, expected: str) -> bool:
         case "number":
             return isinstance(value, (int, float)) and not isinstance(value, bool)
         case "integer":
-            return isinstance(value, int) and not isinstance(value, bool)
+            return (
+                isinstance(value, int)
+                and not isinstance(value, bool)
+                or isinstance(value, float)
+                and math.isfinite(value)
+                and value.is_integer()
+            )
         case "boolean":
             return isinstance(value, bool)
         case "null":
@@ -147,9 +154,7 @@ def _validate_value_against_schema(
         raise ValueError(f"{manifest_path}: {value_path} must equal {schema['const']!r}")
 
     pattern = schema.get("pattern")
-    if pattern is not None:
-        if not isinstance(value, str):
-            raise ValueError(f"{manifest_path}: pattern at {value_path} requires strings")
+    if pattern is not None and isinstance(value, str):
         assert isinstance(pattern, str)
         if re.search(pattern, value) is None:
             raise ValueError(f"{manifest_path}: {value_path} does not match {pattern!r}")

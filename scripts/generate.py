@@ -99,7 +99,7 @@ def render_codex_manifest(
     if skills:
         manifest["skills"] = "./skills/"
     if mcp:
-        manifest["mcpServers"] = "./.mcp.json"
+        manifest["mcpServers"] = render_mcp_servers(name, mcp, "codex")
     return manifest
 
 
@@ -276,6 +276,23 @@ def render_mcp_servers(plugin_name: str, entries: object, harness: str) -> dict[
                 raise ValueError(f"{plugin_name}.mcp.{name}.headers must map strings to strings")
             if harness == "antigravity":
                 server = {"headers": headers, "serverUrl": url}
+            elif harness == "codex":
+                env_headers = entry.get("codexEnvHeaders", {})
+                if not isinstance(env_headers, dict) or not all(
+                    isinstance(key, str)
+                    and key
+                    and isinstance(value, str)
+                    and value
+                    for key, value in env_headers.items()
+                ):
+                    raise ValueError(
+                        f"{plugin_name}.mcp.{name}.codexEnvHeaders must map header names to environment variable names"
+                    )
+                if set(env_headers) != set(headers):
+                    raise ValueError(
+                        f"{plugin_name}.mcp.{name}.codexEnvHeaders must cover the same headers as headers"
+                    )
+                server = {"env_http_headers": env_headers, "type": "http", "url": url}
             else:
                 server = {"headers": headers, "type": "http", "url": url}
         else:

@@ -23,7 +23,15 @@
     "wear"
   ],
   "license": "Apache-2.0",
-  "mcpServers": "./.mcp.json",
+  "mcpServers": {
+    "compose-preview-catalog": {
+      "env_http_headers": {
+        "X-Compose-Preview-Token": "COMPOSE_PREVIEW_TOKEN"
+      },
+      "type": "http",
+      "url": "https://preview.coo.ee/mcp"
+    }
+  },
   "name": "compose-catalogs",
   "repository": "https://github.com/yschimke/compose-ag-plugin",
   "skills": "./skills/",

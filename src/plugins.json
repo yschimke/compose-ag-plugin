@@ -33,6 +33,9 @@
           "url": "https://preview.coo.ee/mcp",
           "headers": {
             "X-Compose-Preview-Token": "${COMPOSE_PREVIEW_TOKEN:-}"
+          },
+          "codexEnvHeaders": {
+            "X-Compose-Preview-Token": "COMPOSE_PREVIEW_TOKEN"
           }
         }
       ],

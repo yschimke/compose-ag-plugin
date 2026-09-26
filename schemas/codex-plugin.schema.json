@@ -92,7 +92,10 @@
       "const": "./skills/"
     },
     "mcpServers": {
-      "const": "./.mcp.json"
+      "type": "object",
+      "additionalProperties": {
+        "type": "object"
+      }
     }
   },
   "additionalProperties": false

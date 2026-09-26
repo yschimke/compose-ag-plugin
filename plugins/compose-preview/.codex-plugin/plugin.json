@@ -23,7 +23,15 @@
     "android"
   ],
   "license": "Apache-2.0",
-  "mcpServers": "./.mcp.json",
+  "mcpServers": {
+    "compose-preview-mcp": {
+      "args": [
+        "mcp",
+        "serve"
+      ],
+      "command": "compose-preview"
+    }
+  },
   "name": "compose-preview",
   "repository": "https://github.com/yschimke/compose-ag-plugin",
   "skills": "./skills/",

@@ -8,11 +8,11 @@ viewer, elicitation, prompt, or packaged-agent behavior to a pass.
 
 - Date: 2026-09-26
 - Codex CLI: 0.151.0
-- Plugin commit: `56a1d595fc1bfc9518054d614dadbaba965a2ace`
+- Plugin commit: `dec6a634ab7279f3f22e6d472a48605efadeaaae`
 - Mode: ephemeral `codex exec` with an isolated temporary `CODEX_HOME`
 - Marketplace: local `spike/` marketplace; cached `p1` and `p2` version 0.0.1
 - Canonical-skills commit: n/a; fixture skills only
-- Server commit: fixture echo server at plugin commit `56a1d59`
+- Server commit: fixture echo server at plugin commit `dec6a63`
 - Image count: 1 returned by `beta/render_preview`
 - Follow-up: issues #6 and #18
 

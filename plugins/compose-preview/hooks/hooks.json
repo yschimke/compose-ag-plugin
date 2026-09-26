@@ -5,9 +5,11 @@
         "hooks": [
           {
             "command": "${CLAUDE_PLUGIN_ROOT}/scripts/session-start-summary.sh",
+            "timeout": 10,
             "type": "command"
           }
-        ]
+        ],
+        "matcher": "startup"
       }
     ]
   }

@@ -61,13 +61,13 @@ Pass when supported harnesses expose one concise summary naming all three
 conditions without leaking credentials or dumping full diagnostics. In an
 unsupported harness, `design-status` must return the same complete summary.
 
-Until the CLI/MCP exposes workspace-linked comment acknowledgements and
-temporary-copy inventory to a session hook, the summary must label those two
-dimensions `unavailable`; it must not infer them from local files. The doctor
-dimension may report only `ok`, `failed`, or `unavailable`; it invokes
-`compose-preview mcp doctor --json` only when `compose-preview mcp --help`
-advertises `doctor`, and must not include either command's output. Current CLI
-releases do not advertise it, so they report `unavailable` rather than `failed`.
+This PR delivers only the bounded doctor-readiness slice; issue #18 remains
+open for workspace-linked comment acknowledgements and temporary-copy
+inventory. Until those contracts exist, the hook must not infer either fact or
+inject a constant placeholder line. A healthy CLI, or a current CLI that does
+not advertise `mcp doctor`, is a silent no-op. A missing CLI, timed-out probe,
+or failed doctor emits one concise actionable line without including either
+command's output.
 
 ## Deep links
 

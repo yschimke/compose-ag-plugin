@@ -79,10 +79,14 @@ def render_hooks(plugin_name: str, entries: object) -> dict[str, object]:
             raise ValueError(f"{plugin_name}.hooks entries must be objects")
         event = require_string(entry.get("event"), f"{plugin_name}.hooks.event")
         command = require_string(entry.get("command"), f"{plugin_name}.hooks.command")
-        if event != "SessionStart":
-            raise ValueError(f"{plugin_name}.hooks.event must be SessionStart")
-        if event in hooks:
-            raise ValueError(f"{plugin_name}.hooks contains duplicate event {event}")
+        matcher = entry.get("matcher")
+        timeout = entry.get("timeout")
+        if matcher is not None and (not isinstance(matcher, str) or not matcher):
+            raise ValueError(f"{plugin_name}.hooks.{event}.matcher must be a non-empty string")
+        if timeout is not None and (
+            not isinstance(timeout, int) or isinstance(timeout, bool) or timeout <= 0
+        ):
+            raise ValueError(f"{plugin_name}.hooks.{event}.timeout must be a positive integer")
         command_path = Path(command)
         if (
             command_path.is_absolute()
@@ -95,9 +99,16 @@ def render_hooks(plugin_name: str, entries: object) -> dict[str, object]:
             raise ValueError(
                 f"missing shared hook source: {(HOOK_SOURCE_ROOT / command_path.name).relative_to(ROOT)}"
             )
-        hooks[event] = [
-            {"hooks": [{"command": f"${{CLAUDE_PLUGIN_ROOT}}/{command}", "type": "command"}]}
-        ]
+        command_hook: dict[str, object] = {
+            "command": f"${{CLAUDE_PLUGIN_ROOT}}/{command}",
+            "type": "command",
+        }
+        if timeout is not None:
+            command_hook["timeout"] = timeout
+        event_hook: dict[str, object] = {"hooks": [command_hook]}
+        if matcher is not None:
+            event_hook["matcher"] = matcher
+        hooks.setdefault(event, []).append(event_hook)
     return {"hooks": hooks}
 
 

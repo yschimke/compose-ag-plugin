@@ -16,16 +16,13 @@ assert_equal() {
   fi
 }
 
-expected_prefix='Compose design status: unacknowledged comments unavailable; MCP doctor '
-expected_suffix='; unsaved temporary copies unavailable.'
-
 expected_output() {
-  local status=$1
-  printf '%s' "{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"${expected_prefix}${status}${expected_suffix}\"}}"
+  local message=$1
+  printf '%s' "{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"${message}\"}}"
 }
 
-missing_output="$(PATH="$temporary_root/missing" "$script")"
-assert_equal "$(expected_output unavailable)" "$missing_output" 'missing CLI status'
+missing_output="$(PATH="$temporary_root/missing:/usr/bin:/bin" "$script")"
+assert_equal "$(expected_output 'Compose Preview needs setup: compose-preview is not available on PATH.')" "$missing_output" 'missing CLI guidance'
 
 fake_bin="$temporary_root/bin"
 mkdir "$fake_bin"
@@ -34,18 +31,73 @@ fake_cli="$fake_bin/compose-preview"
 printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then exit 0; fi' 'exit 1' >"$fake_cli"
 chmod +x "$fake_cli"
 unsupported_output="$(PATH="$fake_bin:$PATH" "$script")"
-assert_equal "$(expected_output unavailable)" "$unsupported_output" 'unsupported doctor status'
+assert_equal '' "$unsupported_output" 'unsupported doctor is a silent no-op'
 
 printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then echo doctor; exit 0; fi' 'exit 0' >"$fake_cli"
 chmod +x "$fake_cli"
 ok_output="$(PATH="$fake_bin:$PATH" "$script")"
-assert_equal "$(expected_output ok)" "$ok_output" 'healthy doctor status'
+assert_equal '' "$ok_output" 'healthy doctor is a silent no-op'
 
 printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then echo doctor; exit 0; fi' 'printf "%s\\n" "COMPOSE_PREVIEW_TOKEN=must-not-leak" >&2' 'exit 1' >"$fake_cli"
 failed_output="$(PATH="$fake_bin:$PATH" "$script")"
-assert_equal "$(expected_output failed)" "$failed_output" 'failed doctor status'
+assert_equal "$(expected_output 'Compose Preview needs attention: MCP doctor failed.')" "$failed_output" 'failed doctor guidance'
 if [[ "$failed_output" == *must-not-leak* ]]; then
   printf '%s\n' 'FAIL: doctor diagnostics must not leak into the SessionStart summary' >&2
+  exit 1
+fi
+
+# Both probes must see EOF even if the hook itself inherits a held-open stdin.
+printf '%s\n' \
+  '#!/bin/sh' \
+  'if read -r unexpected; then exit 97; fi' \
+  'if [ "$1 $2" = "mcp --help" ]; then echo doctor; fi' \
+  'exit 0' >"$fake_cli"
+chmod +x "$fake_cli"
+held_stdin="$temporary_root/held-stdin"
+mkfifo "$held_stdin"
+(
+  exec 3>"$held_stdin"
+  sleep 10
+) &
+writer_pid=$!
+started_at=$(date +%s)
+stdin_output="$(PATH="$fake_bin:$PATH" "$script" <"$held_stdin")"
+elapsed=$(($(date +%s) - started_at))
+kill "$writer_pid" 2>/dev/null || true
+wait "$writer_pid" 2>/dev/null || true
+assert_equal '' "$stdin_output" 'closed stdin is a silent healthy result'
+if ((elapsed >= 3)); then
+  printf 'FAIL: closed-stdin probe took %s seconds\n' "$elapsed" >&2
+  exit 1
+fi
+
+# A capability probe that never exits must still return before the hook timeout.
+printf '%s\n' \
+  '#!/bin/sh' \
+  'if [ "$1 $2" = "mcp --help" ]; then while :; do :; done; fi' \
+  'exit 0' >"$fake_cli"
+chmod +x "$fake_cli"
+started_at=$(date +%s)
+hung_help_output="$(PATH="$fake_bin:$PATH" "$script")"
+elapsed=$(($(date +%s) - started_at))
+assert_equal "$(expected_output 'Compose Preview needs attention: the MCP capability probe timed out.')" "$hung_help_output" 'hung help guidance'
+if ((elapsed < 2 || elapsed >= 8)); then
+  printf 'FAIL: help timeout took %s seconds\n' "$elapsed" >&2
+  exit 1
+fi
+
+# Doctor has its own bound rather than relying only on the outer hook timeout.
+printf '%s\n' \
+  '#!/bin/sh' \
+  'if [ "$1 $2" = "mcp --help" ]; then echo doctor; exit 0; fi' \
+  'while :; do :; done' >"$fake_cli"
+chmod +x "$fake_cli"
+started_at=$(date +%s)
+hung_doctor_output="$(PATH="$fake_bin:$PATH" "$script")"
+elapsed=$(($(date +%s) - started_at))
+assert_equal "$(expected_output 'Compose Preview needs attention: MCP doctor timed out.')" "$hung_doctor_output" 'hung doctor guidance'
+if ((elapsed < 2 || elapsed >= 8)); then
+  printf 'FAIL: doctor timeout took %s seconds\n' "$elapsed" >&2
   exit 1
 fi
 

@@ -127,6 +127,36 @@ def synchronize_generated_agents(plugin_root: Path, agents: list[str]) -> None:
         ledger.unlink(missing_ok=True)
 
 
+def remove_obsolete_generated_hooks(plugin_root: Path, hooks: list[object]) -> None:
+    """Remove only scripts proven to belong to the previously generated hook manifest."""
+    manifest = plugin_root / "hooks" / "hooks.json"
+    if not manifest.is_file():
+        return
+    previous = json.loads(manifest.read_text(encoding="utf-8"))
+    expected = {
+        Path(hook["command"]).name
+        for hook in hooks
+        if isinstance(hook, dict) and isinstance(hook.get("command"), str)
+    }
+    prefix = "${CLAUDE_PLUGIN_ROOT}/scripts/"
+    for event_entries in previous.get("hooks", {}).values():
+        if not isinstance(event_entries, list):
+            continue
+        for event_entry in event_entries:
+            if not isinstance(event_entry, dict):
+                continue
+            for hook in event_entry.get("hooks", []):
+                if not isinstance(hook, dict):
+                    continue
+                command = hook.get("command")
+                if not isinstance(command, str) or not command.startswith(prefix):
+                    continue
+                relative = command.removeprefix(prefix)
+                if not relative or "/" in relative or relative in expected:
+                    continue
+                (plugin_root / "scripts" / relative).unlink(missing_ok=True)
+
+
 def render_mcp_servers(plugin_name: str, entries: object, harness: str) -> dict[str, object]:
     if not isinstance(entries, list):
         raise ValueError(f"{plugin_name}.mcp must be a list")
@@ -209,6 +239,7 @@ def main() -> None:
         synchronize_generated_agents(root, agents)
         for agent in agents:
             write_agent(root, agent)
+        remove_obsolete_generated_hooks(root, hooks)
         if hooks:
             for hook in hooks:
                 write_hook(root, hook["command"])

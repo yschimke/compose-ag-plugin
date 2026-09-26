@@ -59,6 +59,26 @@ fi
 grep -q 'compose-preview has stale generated hooks: obsolete-hook.sh' "$fixture/stale-hook.err"
 rm "$stale_hook"
 
+cp "$fixture/src/plugins.json" "$fixture/src/plugins.json.saved"
+python3 -c '
+import json
+import sys
+from pathlib import Path
+
+source = Path(sys.argv[1])
+data = json.loads(source.read_text(encoding="utf-8"))
+next(plugin for plugin in data["plugins"] if plugin["name"] == "compose-preview")["hooks"] = []
+source.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+' "$fixture/src/plugins.json"
+python3 "$fixture/scripts/generate.py"
+if test -e "$fixture/plugins/compose-preview/scripts/session-start-summary.sh"; then
+  printf '%s\n' 'FAIL: generator must remove scripts from its previous hook manifest' >&2
+  exit 1
+fi
+test ! -e "$fixture/plugins/compose-preview/hooks/hooks.json"
+mv "$fixture/src/plugins.json.saved" "$fixture/src/plugins.json"
+python3 "$fixture/scripts/generate.py"
+
 handwritten_agent="$fixture/plugins/compose-preview/agents/handwritten-reviewer.md"
 printf '%s\n' 'handwritten' >"$handwritten_agent"
 python3 -c '

@@ -35,6 +35,14 @@ for plugin in compose-catalogs compose-preview; do
   reviewer="$fixture/plugins/$plugin/agents/design-reviewer.md"
   test -f "$reviewer"
   grep -q '^name: design-reviewer$' "$reviewer"
+  grep -Fq '"Bash(gh pr view:*)"' "$reviewer"
+  grep -Fq '"Bash(gh pr comment:*)"' "$reviewer"
+  grep -Fq '"Bash(gh issue view:*)"' "$reviewer"
+  grep -Fq '"Bash(gh issue comment:*)"' "$reviewer"
+  if grep -Eq '"(Bash|Edit|Write)"' "$reviewer"; then
+    printf '%s\n' 'FAIL: reviewer must not receive unrestricted mutation tools' >&2
+    exit 1
+  fi
 done
 
 handwritten_agent="$fixture/plugins/compose-preview/agents/handwritten-reviewer.md"

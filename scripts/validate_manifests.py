@@ -13,6 +13,16 @@ from generate import ANTIGRAVITY_SCHEMA, SKILL_SOURCE_ROOT, render_mcp_servers
 
 ROOT = Path(__file__).resolve().parents[1]
 NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+SCHEMA_ANNOTATIONS = {"$schema", "title"}
+SCHEMA_ASSERTIONS = {
+    "additionalProperties",
+    "const",
+    "items",
+    "pattern",
+    "properties",
+    "required",
+    "type",
+}
 
 
 def read_json(path: Path) -> object:
@@ -20,14 +30,117 @@ def read_json(path: Path) -> object:
         return json.load(file)
 
 
-def require_schema_fields(manifest: object, schema_file: str, path: Path) -> None:
-    schema = read_json(ROOT / "schemas" / schema_file)
-    if not isinstance(manifest, dict) or not isinstance(schema, dict):
-        raise ValueError(f"{path}: manifest and schema must be objects")
-    required = schema.get("required", [])
-    missing = [field for field in required if field not in manifest]
-    if missing:
-        raise ValueError(f"{path}: missing required schema fields: {', '.join(missing)}")
+def matches_json_type(value: object, expected: str) -> bool:
+    """Return whether a Python JSON value has the requested JSON Schema type."""
+    match expected:
+        case "object":
+            return isinstance(value, dict)
+        case "array":
+            return isinstance(value, list)
+        case "string":
+            return isinstance(value, str)
+        case "number":
+            return isinstance(value, (int, float)) and not isinstance(value, bool)
+        case "integer":
+            return isinstance(value, int) and not isinstance(value, bool)
+        case "boolean":
+            return isinstance(value, bool)
+        case "null":
+            return value is None
+        case _:
+            raise ValueError(f"unsupported JSON Schema type: {expected}")
+
+
+def validate_against_schema(
+    value: object, schema: object, *, manifest_path: Path, value_path: str = "$"
+) -> None:
+    """Validate every assertion keyword used by the vendored manifest schemas.
+
+    This is deliberately a small stdlib validator rather than a partial draft
+    implementation. Failing on unknown keywords prevents a future schema edit
+    from silently declaring a constraint that CI does not enforce.
+    """
+    if not isinstance(schema, dict):
+        raise ValueError(f"{manifest_path}: schema at {value_path} must be an object")
+    unsupported = set(schema) - SCHEMA_ANNOTATIONS - SCHEMA_ASSERTIONS
+    if unsupported:
+        names = ", ".join(sorted(unsupported))
+        raise ValueError(f"{manifest_path}: unsupported schema keywords at {value_path}: {names}")
+
+    expected_type = schema.get("type")
+    if expected_type is not None:
+        if not isinstance(expected_type, str):
+            raise ValueError(f"{manifest_path}: schema type at {value_path} must be a string")
+        if not matches_json_type(value, expected_type):
+            raise ValueError(f"{manifest_path}: {value_path} must have type {expected_type}")
+
+    if "const" in schema and value != schema["const"]:
+        raise ValueError(f"{manifest_path}: {value_path} must equal {schema['const']!r}")
+
+    pattern = schema.get("pattern")
+    if pattern is not None:
+        if not isinstance(value, str) or not isinstance(pattern, str):
+            raise ValueError(f"{manifest_path}: pattern at {value_path} requires strings")
+        if re.search(pattern, value) is None:
+            raise ValueError(f"{manifest_path}: {value_path} does not match {pattern!r}")
+
+    if isinstance(value, dict):
+        required = schema.get("required", [])
+        if not isinstance(required, list) or not all(isinstance(field, str) for field in required):
+            raise ValueError(f"{manifest_path}: required at {value_path} must be a string array")
+        missing = [field for field in required if field not in value]
+        if missing:
+            raise ValueError(
+                f"{manifest_path}: {value_path} is missing required fields: {', '.join(missing)}"
+            )
+
+        properties = schema.get("properties", {})
+        if not isinstance(properties, dict):
+            raise ValueError(f"{manifest_path}: properties at {value_path} must be an object")
+        for name, child_schema in properties.items():
+            if name in value:
+                validate_against_schema(
+                    value[name],
+                    child_schema,
+                    manifest_path=manifest_path,
+                    value_path=f"{value_path}.{name}",
+                )
+
+        additional = schema.get("additionalProperties", True)
+        extras = set(value) - set(properties)
+        if additional is False and extras:
+            names = ", ".join(sorted(extras))
+            raise ValueError(f"{manifest_path}: {value_path} has additional properties: {names}")
+        if isinstance(additional, dict):
+            for name in extras:
+                validate_against_schema(
+                    value[name],
+                    additional,
+                    manifest_path=manifest_path,
+                    value_path=f"{value_path}.{name}",
+                )
+        elif not isinstance(additional, bool):
+            raise ValueError(
+                f"{manifest_path}: additionalProperties at {value_path} must be a boolean or schema"
+            )
+
+    if isinstance(value, list) and "items" in schema:
+        item_schema = schema["items"]
+        for index, item in enumerate(value):
+            validate_against_schema(
+                item,
+                item_schema,
+                manifest_path=manifest_path,
+                value_path=f"{value_path}[{index}]",
+            )
+
+
+def validate_manifest_schema(manifest: object, schema_file: str, path: Path) -> None:
+    validate_against_schema(
+        manifest,
+        read_json(ROOT / "schemas" / schema_file),
+        manifest_path=path,
+    )
 
 
 def validate_skill(path: Path) -> None:
@@ -78,8 +191,8 @@ def main() -> None:
             raise ValueError(f"{root}: {'; '.join(details)}")
         antigravity = read_json(root / "plugin.json")
         claude = read_json(root / ".claude-plugin" / "plugin.json")
-        require_schema_fields(antigravity, "antigravity-plugin.schema.json", root / "plugin.json")
-        require_schema_fields(
+        validate_manifest_schema(antigravity, "antigravity-plugin.schema.json", root / "plugin.json")
+        validate_manifest_schema(
             claude, "claude-plugin.schema.json", root / ".claude-plugin" / "plugin.json"
         )
         expected_antigravity = {

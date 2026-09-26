@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+"""Regression tests for the stdlib manifest schema validator."""
+
+from __future__ import annotations
+
+import sys
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from validate_manifests import validate_against_schema  # noqa: E402
+
+
+class ManifestSchemaValidationTest(unittest.TestCase):
+    path = Path("fixture.json")
+    schema = {
+        "type": "object",
+        "required": ["name", "schema", "keywords", "author"],
+        "properties": {
+            "name": {"type": "string", "pattern": "^[a-z-]+$"},
+            "schema": {"const": "v1"},
+            "keywords": {"type": "array", "items": {"type": "string"}},
+            "author": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {"name": {"type": "string"}},
+                "additionalProperties": False,
+            },
+        },
+        "additionalProperties": False,
+    }
+    valid = {
+        "name": "compose-preview",
+        "schema": "v1",
+        "keywords": ["compose", "preview"],
+        "author": {"name": "Yuri Schimke"},
+    }
+
+    def validate(self, value: object, schema: object | None = None) -> None:
+        validate_against_schema(value, schema or self.schema, manifest_path=self.path)
+
+    def assert_invalid(self, value: object, message: str) -> None:
+        with self.assertRaisesRegex(ValueError, message):
+            self.validate(value)
+
+    def test_accepts_manifest_matching_all_declared_constraints(self) -> None:
+        self.validate(self.valid)
+
+    def test_enforces_required_const_pattern_and_additional_properties(self) -> None:
+        self.assert_invalid({**self.valid, "author": {}}, "missing required fields: name")
+        self.assert_invalid({**self.valid, "schema": "v2"}, "must equal 'v1'")
+        self.assert_invalid({**self.valid, "name": "Compose Preview"}, "does not match")
+        self.assert_invalid({**self.valid, "unexpected": True}, "additional properties")
+
+    def test_enforces_array_item_and_nested_object_types(self) -> None:
+        self.assert_invalid({**self.valid, "keywords": ["compose", 3]}, r"keywords\[1\].*string")
+        self.assert_invalid({**self.valid, "author": {"name": 3}}, r"author.name.*string")
+
+    def test_rejects_schema_keywords_the_validator_would_ignore(self) -> None:
+        with self.assertRaisesRegex(ValueError, "unsupported schema keywords.*minLength"):
+            self.validate("x", {"type": "string", "minLength": 2})
+
+
+if __name__ == "__main__":
+    unittest.main()

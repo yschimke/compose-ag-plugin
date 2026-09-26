@@ -120,6 +120,11 @@ if test -e "$fixture/plugins/compose-preview/scripts/session-start-summary.sh"; 
   exit 1
 fi
 test ! -e "$fixture/plugins/compose-preview/hooks/hooks.json"
+if python3 "$fixture/scripts/check_generated.py" >"$fixture/deleted-hook.out" 2>"$fixture/deleted-hook.err"; then
+  printf '%s\n' 'FAIL: deleted generated hooks must fail the drift check' >&2
+  exit 1
+fi
+grep -q 'generated files differ from their checked-out versions' "$fixture/deleted-hook.err"
 mv "$fixture/src/plugins.json.saved" "$fixture/src/plugins.json"
 python3 "$fixture/scripts/generate.py"
 

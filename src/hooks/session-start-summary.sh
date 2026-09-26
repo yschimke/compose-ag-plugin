@@ -20,6 +20,7 @@ cleanup() {
     cleanup_probe_pid=$probe_pid
     probe_pid=
     kill "$cleanup_probe_pid" 2>/dev/null || true
+    kill -KILL "$cleanup_probe_pid" 2>/dev/null || true
   fi
   rm -rf "$temporary_root"
 }
@@ -47,6 +48,14 @@ run_probe() {
   if kill -0 "$probe_pid" 2>/dev/null; then
     : >"$probe_marker"
     kill "$probe_pid" 2>/dev/null || true
+    probe_grace_ticks=0
+    while kill -0 "$probe_pid" 2>/dev/null && [ "$probe_grace_ticks" -lt 5 ]; do
+      sleep 0.1
+      probe_grace_ticks=$((probe_grace_ticks + 1))
+    done
+    if kill -0 "$probe_pid" 2>/dev/null; then
+      kill -KILL "$probe_pid" 2>/dev/null || true
+    fi
   fi
   wait "$probe_pid" 2>/dev/null
   probe_status=$?
@@ -77,8 +86,11 @@ if [ "$help_status" -eq 124 ]; then
   emit_context "Compose Preview needs attention: the MCP capability probe timed out."
   exit 0
 fi
-if [ "$help_status" -ne 0 ] ||
-  ! grep -Eq '(^|[[:space:]])doctor([[:space:]]|$)' "$help_output"; then
+if [ "$help_status" -ne 0 ]; then
+  emit_context "Compose Preview needs attention: the MCP capability probe failed."
+  exit 0
+fi
+if ! grep -Eq '(^|[[:space:]])doctor([[:space:]]|$)' "$help_output"; then
   exit 0
 fi
 

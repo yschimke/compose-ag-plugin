@@ -33,6 +33,11 @@ chmod +x "$fake_cli"
 unsupported_output="$(PATH="$fake_bin:$PATH" "$script")"
 assert_equal '' "$unsupported_output" 'unsupported doctor is a silent no-op'
 
+printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then exit 23; fi' 'exit 0' >"$fake_cli"
+chmod +x "$fake_cli"
+failed_help_output="$(PATH="$fake_bin:$PATH" "$script")"
+assert_equal "$(expected_output 'Compose Preview needs attention: the MCP capability probe failed.')" "$failed_help_output" 'failed help guidance'
+
 printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then echo doctor; exit 0; fi' 'exit 0' >"$fake_cli"
 chmod +x "$fake_cli"
 ok_output="$(PATH="$fake_bin:$PATH" "$script")"
@@ -83,6 +88,22 @@ elapsed=$(($(date +%s) - started_at))
 assert_equal "$(expected_output 'Compose Preview needs attention: the MCP capability probe timed out.')" "$hung_help_output" 'hung help guidance'
 if ((elapsed < 2 || elapsed >= 8)); then
   printf 'FAIL: help timeout took %s seconds\n' "$elapsed" >&2
+  exit 1
+fi
+
+# A capability probe that ignores SIGTERM must be escalated to SIGKILL.
+printf '%s\n' \
+  '#!/bin/sh' \
+  'trap "" TERM' \
+  'if [ "$1 $2" = "mcp --help" ]; then while :; do :; done; fi' \
+  'exit 0' >"$fake_cli"
+chmod +x "$fake_cli"
+started_at=$(date +%s)
+stubborn_help_output="$(PATH="$fake_bin:$PATH" "$script")"
+elapsed=$(($(date +%s) - started_at))
+assert_equal "$(expected_output 'Compose Preview needs attention: the MCP capability probe timed out.')" "$stubborn_help_output" 'SIGTERM-ignoring help guidance'
+if ((elapsed < 2 || elapsed >= 8)); then
+  printf 'FAIL: SIGTERM-ignoring help timeout took %s seconds\n' "$elapsed" >&2
   exit 1
 fi
 

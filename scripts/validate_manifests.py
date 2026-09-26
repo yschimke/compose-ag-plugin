@@ -8,7 +8,7 @@ import re
 import sys
 from pathlib import Path
 
-from generate import ANTIGRAVITY_SCHEMA, render_mcp_servers
+from generate import ANTIGRAVITY_SCHEMA, SKILL_SOURCE_ROOT, render_mcp_servers
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -100,6 +100,13 @@ def main() -> None:
             raise ValueError(f"{root}/.claude-plugin/plugin.json has invalid keywords")
         for skill_path in expected_skills:
             validate_skill(skill_path)
+            shared_source = SKILL_SOURCE_ROOT / skill_path.parent.name / "SKILL.md"
+            if not shared_source.is_file():
+                raise ValueError(
+                    f"{skill_path}: missing shared source {shared_source.relative_to(ROOT)}"
+                )
+            if skill_path.read_bytes() != shared_source.read_bytes():
+                raise ValueError(f"{skill_path}: generated copy differs from shared source")
         mcp = plugin.get("mcp", [])
         if mcp:
             antigravity_mcp = read_json(root / "mcp_config.json")

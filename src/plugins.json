@@ -5,7 +5,7 @@
   "plugins": [
     {
       "name": "compose-catalogs",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "description": "Discover Compose components, inspect properties, and render catalog variants.",
       "keywords": [
         "compose",
@@ -22,11 +22,14 @@
             "X-Compose-Preview-Token": "${COMPOSE_PREVIEW_TOKEN}"
           }
         }
+      ],
+      "skills": [
+        "harness-notes"
       ]
     },
     {
       "name": "compose-preview",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "description": "Iterate on local Compose previews with live rendering and accessibility checks.",
       "keywords": [
         "compose",
@@ -44,6 +47,9 @@
             "serve"
           ]
         }
+      ],
+      "skills": [
+        "harness-notes"
       ]
     }
   ]

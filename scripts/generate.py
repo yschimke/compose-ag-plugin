@@ -4,12 +4,15 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "src" / "plugins.json"
+SKILL_SOURCE_ROOT = ROOT / "src" / "skills"
 ANTIGRAVITY_SCHEMA = "https://antigravity.google/schemas/v1/plugin.json"
+SKILL_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
 def write_json(path: Path, value: object) -> None:
@@ -21,6 +24,17 @@ def require_string(value: object, field: str) -> str:
     if not isinstance(value, str) or not value:
         raise ValueError(f"{field} must be a non-empty string")
     return value
+
+
+def write_skill(plugin_root: Path, skill: str) -> None:
+    if not SKILL_NAME.fullmatch(skill):
+        raise ValueError(f"invalid skill name: {skill}")
+    source = SKILL_SOURCE_ROOT / skill / "SKILL.md"
+    if not source.is_file():
+        raise ValueError(f"missing shared skill source: {source.relative_to(ROOT)}")
+    target = plugin_root / "skills" / skill / "SKILL.md"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
 
 
 def render_mcp_servers(plugin_name: str, entries: object, harness: str) -> dict[str, object]:
@@ -94,6 +108,8 @@ def main() -> None:
         names.add(name)
 
         root = ROOT / "plugins" / name
+        for skill in skills:
+            write_skill(root, skill)
         write_json(
             root / "plugin.json",
             {"$schema": ANTIGRAVITY_SCHEMA, "description": description, "name": name},

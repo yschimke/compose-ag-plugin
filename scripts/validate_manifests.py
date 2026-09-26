@@ -138,6 +138,8 @@ def compile_json_schema_pattern(pattern: str) -> re.Pattern[str]:
             character_class_has_member = False
             character_class_at_start = True
             translated.append(character)
+        elif character == "]":
+            raise ValueError("unmatched closing character-class bracket")
         elif character == "$":
             translated.append(r"\Z")
         elif character == ".":

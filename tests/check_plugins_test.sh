@@ -32,21 +32,24 @@ for relative in ("plugins/compose-catalogs/.mcp.json", "plugins/compose-catalogs
 ' "$fixture"
 
 cp "$fixture/src/plugins.json" "$fixture/src/plugins.json.valid-version"
-python3 -c '
+for invalid_version in next '1.2.3٣'; do
+  cp "$fixture/src/plugins.json.valid-version" "$fixture/src/plugins.json"
+  python3 -c '
 import json
 import sys
 from pathlib import Path
 
 source = Path(sys.argv[1])
 data = json.loads(source.read_text(encoding="utf-8"))
-data["plugins"][0]["version"] = "next"
+data["plugins"][0]["version"] = sys.argv[2]
 source.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
-' "$fixture/src/plugins.json"
-if python3 "$fixture/scripts/generate.py" >"$fixture/invalid-version.out" 2>"$fixture/invalid-version.err"; then
-  printf '%s\n' 'FAIL: non-semver Codex plugin versions must fail generation' >&2
-  exit 1
-fi
-grep -q 'version must use strict semver' "$fixture/invalid-version.err"
+' "$fixture/src/plugins.json" "$invalid_version"
+  if python3 "$fixture/scripts/generate.py" >"$fixture/invalid-version.out" 2>"$fixture/invalid-version.err"; then
+    printf '%s\n' "FAIL: non-semver Codex plugin version $invalid_version must fail generation" >&2
+    exit 1
+  fi
+  grep -q 'version must use strict semver' "$fixture/invalid-version.err"
+done
 mv "$fixture/src/plugins.json.valid-version" "$fixture/src/plugins.json"
 
 for plugin in compose-catalogs compose-preview; do

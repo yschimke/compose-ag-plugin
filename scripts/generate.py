@@ -17,11 +17,11 @@ HOOK_SOURCE_ROOT = ROOT / "src" / "hooks"
 ANTIGRAVITY_SCHEMA = "https://antigravity.google/schemas/v1/plugin.json"
 SKILL_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 SEMVER = re.compile(
-    r"^(0|[1-9]\d*)\."
-    r"(0|[1-9]\d*)\."
-    r"(0|[1-9]\d*)"
-    r"(?:-(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\."
-    r"(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*)?"
+    r"^(0|[1-9][0-9]*)\."
+    r"(0|[1-9][0-9]*)\."
+    r"(0|[1-9][0-9]*)"
+    r"(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\."
+    r"(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?"
     r"(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$"
 )
 CODEX_INTERFACE_STRINGS = (

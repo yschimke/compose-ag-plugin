@@ -52,14 +52,16 @@
         }
       ],
       "skills": [
-        "harness-notes"
+        "harness-notes",
+        "antigravity-viewer-card"
       ],
       "agents": [
         "design-reviewer"
       ],
       "assets": [
         "compose-preview-viewer.html",
-        "compose-preview-viewer-fallback.md"
+        "compose-preview-viewer-fallback.md",
+        "compose-preview-viewer.provenance.json"
       ],
       "hooks": [
         {

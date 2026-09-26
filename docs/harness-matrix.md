@@ -36,6 +36,9 @@ The fixture’s Antigravity `plugin.json` uses the current official v1 schema UR
 
 ## Additional observations
 
+- A local Claude Code 2.1.205 print-mode probe was killed with exit 137 and
+  produced no output even with escalated execution. Claude cells remain unrun;
+  this is an environment limitation, not a product result.
 - OpenCode 2.0.10 accepted two separately named local MCP server definitions in
   a temporary project config. No server startup, tool call, or model turn ran,
   so Q2 remains untested.

@@ -92,6 +92,8 @@ def compile_json_schema_pattern(pattern: str) -> re.Pattern[str]:
     """
     translated: list[str] = []
     in_character_class = False
+    character_class_has_member = False
+    character_class_at_start = False
     previous_was_quantifier = False
     index = 0
     while index < len(pattern):
@@ -102,23 +104,39 @@ def compile_json_schema_pattern(pattern: str) -> re.Pattern[str]:
             escaped = pattern[index + 1]
             if escaped in "sS":
                 raise ValueError(f"unsupported ECMAScript shorthand: \\{escaped}")
+            if escaped == "-" and not in_character_class:
+                raise ValueError(
+                    "escaped hyphen is only valid inside an ECMAScript character class"
+                )
             if escaped not in ECMASCRIPT_PORTABLE_ESCAPES:
                 raise ValueError(f"unsupported ECMAScript escape: \\{escaped}")
             translated.extend((character, escaped))
+            if in_character_class:
+                character_class_has_member = True
+                character_class_at_start = False
             previous_was_quantifier = False
             index += 2
             continue
         if in_character_class:
             if character == "[":
                 raise ValueError("nested character classes are unsupported")
-            translated.append(character)
             if character == "]":
+                if not character_class_has_member:
+                    raise ValueError("empty character classes are unsupported")
                 in_character_class = False
                 previous_was_quantifier = False
+            elif character == "^" and character_class_at_start:
+                character_class_at_start = False
+            else:
+                character_class_has_member = True
+                character_class_at_start = False
+            translated.append(character)
             index += 1
             continue
         if character == "[":
             in_character_class = True
+            character_class_has_member = False
+            character_class_at_start = True
             translated.append(character)
         elif character == "$":
             translated.append(r"\Z")

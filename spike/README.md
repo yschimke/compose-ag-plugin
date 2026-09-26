@@ -48,7 +48,13 @@ Install or enable both `p1` and `p2` using the harness-specific procedure under 
   and Codex, confirm the SessionStart hook both logs and prints
   `SPIKE-SESSION-START` so the model can be asked to repeat it (Q21).
 
-The static marketplace fixture is at `.claude-plugin/marketplace.json`; the same entries are also available as `.agents/plugins/marketplace.json` for Codex marketplace resolution tests. The fixture uses `CLAUDE_PLUGIN_ROOT` only for paths inside each plugin in the Claude/Codex MCP and hook configurations. Its Antigravity config is generated because variable expansion for command paths is itself unverified.
+The static marketplace fixture is at `.claude-plugin/marketplace.json`; the
+same entries are also available as `.agents/plugins/marketplace.json` for
+Codex marketplace resolution tests. Its shared `.mcp.json` starts the bundled
+server from package-relative `cwd: "."`; hook commands use
+`CLAUDE_PLUGIN_ROOT`, which Codex also supplies for compatibility. The
+Antigravity config is generated because variable expansion for command paths
+is itself unverified.
 
 ## Hook decisions
 

@@ -54,9 +54,9 @@ def assert_cached_plugin(plugin_name: str, server_name: str, cache_root: Path) -
     assert codex["mcpServers"] == "./.mcp.json"
 
     mcp = json.loads((cached_plugin / ".mcp.json").read_text(encoding="utf-8"))
-    configured_server = Path(
-        mcp["mcpServers"][server_name]["args"][0].replace("${CLAUDE_PLUGIN_ROOT}", str(cached_plugin))
-    )
+    configured = mcp["mcpServers"][server_name]
+    assert configured["cwd"] == "."
+    configured_server = cached_plugin / configured["args"][0]
     assert configured_server == server
     assert configured_server.is_file(), configured_server
 

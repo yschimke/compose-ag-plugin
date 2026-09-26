@@ -28,26 +28,75 @@ fake_bin="$temporary_root/bin"
 mkdir "$fake_bin"
 fake_cli="$fake_bin/compose-preview"
 
-printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then exit 0; fi' 'exit 1' >"$fake_cli"
+printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ] || [ "$1 $2" = "design --help" ]; then exit 0; fi' 'exit 1' >"$fake_cli"
 chmod +x "$fake_cli"
 unsupported_output="$(PATH="$fake_bin:$PATH" "$script")"
 assert_equal '' "$unsupported_output" 'unsupported doctor is a silent no-op'
 
-printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then exit 23; fi' 'exit 0' >"$fake_cli"
+printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then exit 23; fi' 'if [ "$1 $2" = "design --help" ]; then exit 0; fi' 'exit 0' >"$fake_cli"
 chmod +x "$fake_cli"
 failed_help_output="$(PATH="$fake_bin:$PATH" "$script")"
-assert_equal "$(expected_output 'Compose Preview needs attention: the MCP capability probe failed.')" "$failed_help_output" 'failed help guidance'
+assert_equal "$(expected_output 'Compose Preview needs attention: The MCP capability probe failed.')" "$failed_help_output" 'failed help guidance'
 
-printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then echo doctor; exit 0; fi' 'exit 0' >"$fake_cli"
+printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then echo doctor; exit 0; fi' 'if [ "$1 $2" = "design --help" ]; then exit 0; fi' 'exit 0' >"$fake_cli"
 chmod +x "$fake_cli"
 ok_output="$(PATH="$fake_bin:$PATH" "$script")"
 assert_equal '' "$ok_output" 'healthy doctor is a silent no-op'
 
-printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then echo doctor; exit 0; fi' 'printf "%s\\n" "COMPOSE_PREVIEW_TOKEN=must-not-leak" >&2' 'exit 1' >"$fake_cli"
+printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then exit 0; fi' 'if [ "$1 $2" = "design --help" ]; then exit 23; fi' 'exit 0' >"$fake_cli"
+chmod +x "$fake_cli"
+failed_design_help_output="$(PATH="$fake_bin:$PATH" "$script")"
+assert_equal "$(expected_output 'Compose Preview needs attention: The design-status capability probe failed.')" "$failed_design_help_output" 'failed design help guidance'
+
+printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then echo doctor; exit 0; fi' 'if [ "$1 $2" = "design --help" ]; then exit 0; fi' 'printf "%s\\n" "COMPOSE_PREVIEW_TOKEN=must-not-leak" >&2' 'exit 1' >"$fake_cli"
 failed_output="$(PATH="$fake_bin:$PATH" "$script")"
 assert_equal "$(expected_output 'Compose Preview needs attention: MCP doctor failed.')" "$failed_output" 'failed doctor guidance'
 if [[ "$failed_output" == *must-not-leak* ]]; then
   printf '%s\n' 'FAIL: doctor diagnostics must not leak into the SessionStart summary' >&2
+  exit 1
+fi
+
+# The released status command contributes only its fixed, redacted summary grammar.
+status_args="$temporary_root/status-args"
+printf '%s\n' \
+  '#!/bin/sh' \
+  'if [ "$1 $2" = "mcp --help" ]; then echo doctor; exit 0; fi' \
+  'if [ "$1 $2" = "mcp doctor" ]; then exit 0; fi' \
+  'if [ "$1 $2" = "design --help" ]; then echo status; exit 0; fi' \
+  'if [ "$1 $2" = "design status" ]; then printf "%s\n" "$*" >"$STATUS_ARGS"; echo "2 unacknowledged design comments; 1 unsaved temporary copy; design inventory unavailable for 1 workspace-linked design."; exit 0; fi' \
+  'exit 1' >"$fake_cli"
+chmod +x "$fake_cli"
+status_output="$(STATUS_ARGS="$status_args" CLAUDE_PROJECT_DIR="$temporary_root/project with spaces" PATH="$fake_bin:$PATH" "$script")"
+assert_equal "$(expected_output 'Compose Preview needs attention: 2 unacknowledged design comments; 1 unsaved temporary copy; design inventory unavailable for 1 workspace-linked design.')" "$status_output" 'actionable workspace design status'
+assert_equal "design status --workspace $temporary_root/project with spaces --summary --timeout 2" "$(cat "$status_args")" 'status workspace and bound'
+
+# Even stdout is treated as untrusted until it matches the complete summary grammar.
+printf '%s\n' \
+  '#!/bin/sh' \
+  'if [ "$1 $2" = "mcp --help" ]; then exit 0; fi' \
+  'if [ "$1 $2" = "design --help" ]; then echo status; exit 0; fi' \
+  'if [ "$1 $2" = "design status" ]; then echo "COMPOSE_PREVIEW_TOKEN=must-not-leak"; exit 0; fi' \
+  'exit 0' >"$fake_cli"
+chmod +x "$fake_cli"
+unsafe_status_output="$(PATH="$fake_bin:$PATH" "$script")"
+assert_equal "$(expected_output 'Compose Preview needs attention: Workspace design status returned an unreadable summary.')" "$unsafe_status_output" 'unsafe status summary is replaced'
+if [[ "$unsafe_status_output" == *must-not-leak* ]]; then
+  printf '%s\n' 'FAIL: status stdout must not leak into the SessionStart summary' >&2
+  exit 1
+fi
+
+# Status failures and diagnostics collapse to one fixed sentence.
+printf '%s\n' \
+  '#!/bin/sh' \
+  'if [ "$1 $2" = "mcp --help" ]; then exit 0; fi' \
+  'if [ "$1 $2" = "design --help" ]; then echo status; exit 0; fi' \
+  'if [ "$1 $2" = "design status" ]; then echo "credential=must-not-leak" >&2; exit 19; fi' \
+  'exit 0' >"$fake_cli"
+chmod +x "$fake_cli"
+failed_status_output="$(PATH="$fake_bin:$PATH" "$script")"
+assert_equal "$(expected_output 'Compose Preview needs attention: Workspace design status failed.')" "$failed_status_output" 'failed status guidance'
+if [[ "$failed_status_output" == *must-not-leak* ]]; then
+  printf '%s\n' 'FAIL: status diagnostics must not leak into the SessionStart summary' >&2
   exit 1
 fi
 
@@ -56,6 +105,7 @@ printf '%s\n' \
   '#!/bin/sh' \
   'if read -r unexpected; then exit 97; fi' \
   'if [ "$1 $2" = "mcp --help" ]; then echo doctor; fi' \
+  'if [ "$1 $2" = "design --help" ]; then exit 0; fi' \
   'exit 0' >"$fake_cli"
 chmod +x "$fake_cli"
 held_stdin="$temporary_root/held-stdin"
@@ -85,9 +135,26 @@ chmod +x "$fake_cli"
 started_at=$(date +%s)
 hung_help_output="$(PATH="$fake_bin:$PATH" "$script")"
 elapsed=$(($(date +%s) - started_at))
-assert_equal "$(expected_output 'Compose Preview needs attention: the MCP capability probe timed out.')" "$hung_help_output" 'hung help guidance'
+assert_equal "$(expected_output 'Compose Preview needs attention: The MCP capability probe timed out.')" "$hung_help_output" 'hung help guidance'
 if ((elapsed < 2 || elapsed >= 8)); then
   printf 'FAIL: help timeout took %s seconds\n' "$elapsed" >&2
+  exit 1
+fi
+
+# The workspace status call has the same hard process bound as the existing doctor call.
+printf '%s\n' \
+  '#!/bin/sh' \
+  'if [ "$1 $2" = "mcp --help" ]; then exit 0; fi' \
+  'if [ "$1 $2" = "design --help" ]; then echo status; exit 0; fi' \
+  'if [ "$1 $2" = "design status" ]; then while :; do :; done; fi' \
+  'exit 0' >"$fake_cli"
+chmod +x "$fake_cli"
+started_at=$(date +%s)
+hung_status_output="$(PATH="$fake_bin:$PATH" "$script")"
+elapsed=$(($(date +%s) - started_at))
+assert_equal "$(expected_output 'Compose Preview needs attention: Workspace design status timed out.')" "$hung_status_output" 'hung status guidance'
+if ((elapsed < 2 || elapsed >= 8)); then
+  printf 'FAIL: status timeout took %s seconds\n' "$elapsed" >&2
   exit 1
 fi
 
@@ -101,7 +168,7 @@ chmod +x "$fake_cli"
 started_at=$(date +%s)
 stubborn_help_output="$(PATH="$fake_bin:$PATH" "$script")"
 elapsed=$(($(date +%s) - started_at))
-assert_equal "$(expected_output 'Compose Preview needs attention: the MCP capability probe timed out.')" "$stubborn_help_output" 'SIGTERM-ignoring help guidance'
+assert_equal "$(expected_output 'Compose Preview needs attention: The MCP capability probe timed out.')" "$stubborn_help_output" 'SIGTERM-ignoring help guidance'
 if ((elapsed < 2 || elapsed >= 8)); then
   printf 'FAIL: SIGTERM-ignoring help timeout took %s seconds\n' "$elapsed" >&2
   exit 1
@@ -111,6 +178,7 @@ fi
 printf '%s\n' \
   '#!/bin/sh' \
   'if [ "$1 $2" = "mcp --help" ]; then echo doctor; exit 0; fi' \
+  'if [ "$1 $2" = "design --help" ]; then exit 0; fi' \
   'while :; do :; done' >"$fake_cli"
 chmod +x "$fake_cli"
 started_at=$(date +%s)

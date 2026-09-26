@@ -134,6 +134,31 @@ declined_responses = [json.loads(line) for line in stdout.getvalue().splitlines(
 assert declined_responses[1]["id"] == "declined-tool"
 assert "text fallback: choose compact" in declined_responses[1]["result"]["content"][0]["text"]
 
+stdout = io.StringIO()
+with contextlib.redirect_stdout(stdout):
+    echo_mcp.handle(
+        {
+            "jsonrpc": "2.0",
+            "id": "malformed-accept-tool",
+            "method": "tools/call",
+            "params": {"name": "ask", "arguments": {"mode": "form"}},
+        }
+    )
+    elicitation = json.loads(stdout.getvalue())
+    echo_mcp.handle(
+        {
+            "jsonrpc": "2.0",
+            "id": elicitation["id"],
+            "result": {"action": "accept", "content": {"variant": []}},
+        }
+    )
+malformed_accept_responses = [json.loads(line) for line in stdout.getvalue().splitlines()]
+assert malformed_accept_responses[1]["id"] == "malformed-accept-tool"
+assert (
+    "text fallback: choose compact"
+    in malformed_accept_responses[1]["result"]["content"][0]["text"]
+)
+
 
 def start_elicitation(tool_request_id: str) -> dict:
     stdout = io.StringIO()

@@ -31,6 +31,20 @@ for relative in ("plugins/compose-catalogs/.mcp.json", "plugins/compose-catalogs
         raise SystemExit(f"{relative}: expected {expected!r}, got {actual!r}")
 ' "$fixture"
 
+for plugin in compose-catalogs compose-preview; do
+  reviewer="$fixture/plugins/$plugin/agents/design-reviewer.md"
+  test -f "$reviewer"
+  grep -q '^name: design-reviewer$' "$reviewer"
+done
+
+stale_agent="$fixture/plugins/compose-preview/agents/obsolete-reviewer.md"
+printf '%s\n' 'obsolete' >"$stale_agent"
+"$fixture/scripts/check-plugins.sh"
+if test -e "$stale_agent"; then
+  printf '%s\n' 'FAIL: generator must remove agents absent from src/plugins.json' >&2
+  exit 1
+fi
+
 mkdir "$fixture/plugins/stale-plugin"
 if "$fixture/scripts/check-plugins.sh" >/dev/null 2>&1; then
   printf '%s\n' 'FAIL: stale plugin directory must fail generated drift check' >&2

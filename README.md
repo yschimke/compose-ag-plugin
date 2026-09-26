@@ -27,6 +27,11 @@ does not duplicate the canonical Compose workflows. Edit its single source at
 [`src/skills/harness-notes/SKILL.md`](src/skills/harness-notes/SKILL.md), then
 run the generator.
 
+Both plugins also ship the shared `design-reviewer` agent. It performs semantic,
+accessibility, font-scale, and device checks in its own context, then returns a
+short verdict with viewer or artifact links so rendered image payloads do not
+consume the main conversation.
+
 Every plugin follows the [agent rules](docs/agent-rules.md): the agent sees what the user sees, edits through typed tools with schemas, edits a design at its one canonical home, and keeps discussion there.
 
 See the [harness compatibility matrix](docs/harness-matrix.md) for the verified installation and runtime behaviour of each harness.

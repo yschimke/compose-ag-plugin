@@ -25,6 +25,9 @@
       ],
       "skills": [
         "harness-notes"
+      ],
+      "agents": [
+        "design-reviewer"
       ]
     },
     {
@@ -50,6 +53,9 @@
       ],
       "skills": [
         "harness-notes"
+      ],
+      "agents": [
+        "design-reviewer"
       ]
     }
   ]

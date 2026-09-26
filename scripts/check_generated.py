@@ -34,6 +34,10 @@ def generated_paths(source: object) -> tuple[list[Path], set[str]]:
         if not isinstance(skills, list) or not all(isinstance(skill, str) for skill in skills):
             raise ValueError(f"{name}.skills must be a list of strings")
         paths.extend(plugin_root / "skills" / skill / "SKILL.md" for skill in skills)
+        agents = plugin.get("agents", [])
+        if not isinstance(agents, list) or not all(isinstance(agent, str) for agent in agents):
+            raise ValueError(f"{name}.agents must be a list of strings")
+        paths.extend(plugin_root / "agents" / f"{agent}.md" for agent in agents)
     return paths, plugin_names
 
 
@@ -57,6 +61,19 @@ def main() -> None:
     stale_dirs = actual_dirs - plugin_names
     if stale_dirs:
         errors.append(f"stale plugin directories: {', '.join(sorted(stale_dirs))}")
+
+    for plugin in source["plugins"]:
+        name = plugin["name"]
+        expected_agents = {f"{agent}.md" for agent in plugin.get("agents", [])}
+        agents_root = plugins_root / name / "agents"
+        actual_agents = (
+            {path.name for path in agents_root.glob("*.md")} if agents_root.is_dir() else set()
+        )
+        stale_agents = actual_agents - expected_agents
+        if stale_agents:
+            errors.append(
+                f"{name} has stale generated agents: {', '.join(sorted(stale_agents))}"
+            )
 
     pathspecs = [str(path.relative_to(ROOT)) for path in paths]
     diff = git("diff", "--exit-code", "--", *pathspecs)

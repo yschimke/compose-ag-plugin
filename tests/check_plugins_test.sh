@@ -63,6 +63,7 @@ assert entry["hooks"][0]["timeout"] == 10, entry
 # the same source-of-truth rather than bypassing generated manifests.
 cp "$fixture/src/plugins.json" "$fixture/src/plugins.json.before-stop"
 printf '%s\n' '#!/bin/sh' 'exit 0' >"$fixture/src/hooks/future-stop.sh"
+chmod +x "$fixture/src/hooks/future-stop.sh"
 python3 -c '
 import json
 import sys

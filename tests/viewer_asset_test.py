@@ -100,5 +100,14 @@ assert "#compose-preview-result=<unpadded-base64url-envelope>" in fallback
 assert "500,000" in fallback
 assert "complete MCP `CallToolResult`" in fallback
 assert "complete text fallback" in fallback
+assert "arguments.token" in fallback
+assert "parse,\n  sanitize, and compactly re-encode" in fallback
+
+skill = (ROOT / "src" / "skills" / "antigravity-viewer-card" / "SKILL.md").read_text(
+    encoding="utf-8"
+)
+assert "never from the original tool-call\narguments" in skill
+assert "request_access` / `poll_access" in skill
+assert "JSON carried inside text content" in skill
 
 print("viewer asset tests passed")

@@ -14,10 +14,18 @@ response. From the typed render tool call, build this compact JSON envelope:
 {"version":1,"arguments":{},"result":{"content":[]}}
 ```
 
-- `arguments` is the render call's credential-free argument object.
-- `result` is its complete MCP `CallToolResult`, including `isError` when set.
+- `arguments` is a sanitized copy of the render call's argument object. A
+  cold-start grant passed as `arguments.token` after `request_access` /
+  `poll_access` is for the live call only: delete it before building this
+  envelope.
+- `result` is its complete MCP `CallToolResult`, including `isError` when set,
+  after the same credential sanitization. If a text content block contains JSON, parse,
+  sanitize, and compactly re-encode that JSON rather than treating it as an
+  opaque safe string.
 - Recursively omit credential-shaped keys such as `token`, `authorization`,
-  `password`, `secret`, `cookie`, and `apiKey`. Never put credentials in a URL.
+  `password`, `secret`, `cookie`, and `apiKey` from both copies. Never put
+  credentials in a URL. If any value cannot be proved credential-free, omit the
+  card and return the complete text fallback alone.
 - Encode the UTF-8 JSON as unpadded base64url. Both the encoded fragment and the
   decoded UTF-8 payload must be at most 500,000 bytes/characters.
 

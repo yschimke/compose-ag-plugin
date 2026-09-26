@@ -198,7 +198,16 @@ def handle_elicitation_response(request_id: object, response: dict[str, object])
     tool_request_id = PENDING_ELICITATIONS.pop(request_id)
     response_result = response.get("result")
     response_action = response_result.get("action") if isinstance(response_result, dict) else None
-    if "error" in response or response_action != "accept":
+    accepted = "error" not in response and response_action == "accept"
+    if accepted and tool_request_id["mode"] == "form":
+        content = response_result.get("content")
+        accepted = (
+            isinstance(content, dict)
+            and set(content) == {"variant"}
+            and isinstance(content.get("variant"), str)
+            and content.get("variant") in {"compact", "expanded"}
+        )
+    if not accepted:
         result(
             tool_request_id["request_id"],
             text_result(f"{tool_request_id['mode']} elicitation unavailable; use the text fallback: choose compact."),

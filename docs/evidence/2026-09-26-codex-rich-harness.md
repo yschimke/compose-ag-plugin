@@ -30,9 +30,10 @@ reviewed locally before the run. The command remained in a read-only sandbox.
 ## Observations
 
 - Both SessionStart hooks ran with their own `CLAUDE_PLUGIN_ROOT`. Each hook
-  saw `CODEX_THREAD_ID`, logged the startup event, and emitted
-  `SPIKE-SESSION-START`. The model reported that exact marker in its startup
-  context.
+  saw `CODEX_THREAD_ID`, logged the startup event, and emitted the same
+  `SPIKE-SESSION-START` marker. The model reported that marker in its startup
+  context, proving delivery from at least one hook; identical markers do not
+  distinguish which hook output was delivered.
 - Both `spike-p1` and `spike-p2` were discovered by name. The model read both
   skill files and returned `SPIKE-P1-LOADED` and `SPIKE-P2-LOADED`.
 - Neither `alpha` nor `beta` exposed an MCP tool to the model, and no
@@ -43,9 +44,10 @@ reviewed locally before the run. The command remained in a read-only sandbox.
 - `spike-prompt` was not exposed to the noninteractive model. Because
   `codex exec` has no slash-command picker, this does not settle prompt
   discovery in an interactive Codex UI.
-- The model attempted to invoke `spike-reviewer`; the host returned
-  `collab spawn failed: no thread with id`. No agent verdict was returned, so
-  Q20 fails for this tested mode.
+- The prompt supplied the `spike-reviewer` name and the model attempted to use
+  it, but the host returned `collab spawn failed: no thread with id`. No agent
+  verdict was returned, and the attempt does not independently prove that the
+  packaged definition was discovered. Q20 remains blocked for this mode.
 - Both Stop hooks ran once after the final response and received the actual
   session and turn envelope. No blocking decision was configured for this run.
 

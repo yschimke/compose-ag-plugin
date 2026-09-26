@@ -16,6 +16,14 @@ AGENT_LEDGER_NAME = ".generated-agents.json"
 HOOK_SOURCE_ROOT = ROOT / "src" / "hooks"
 ANTIGRAVITY_SCHEMA = "https://antigravity.google/schemas/v1/plugin.json"
 SKILL_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+SEMVER = re.compile(
+    r"^(0|[1-9]\d*)\."
+    r"(0|[1-9]\d*)\."
+    r"(0|[1-9]\d*)"
+    r"(?:-(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\."
+    r"(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*)?"
+    r"(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$"
+)
 CODEX_INTERFACE_STRINGS = (
     "displayName",
     "shortDescription",
@@ -286,6 +294,8 @@ def main() -> None:
             raise ValueError("each plugin must be an object")
         name = require_string(plugin.get("name"), "plugin.name")
         version = require_string(plugin.get("version"), f"{name}.version")
+        if SEMVER.fullmatch(version) is None:
+            raise ValueError(f"{name}.version must use strict semver")
         description = require_string(plugin.get("description"), f"{name}.description")
         keywords = plugin.get("keywords", [])
         skills = plugin.get("skills", [])

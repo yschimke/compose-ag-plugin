@@ -37,11 +37,25 @@ for plugin in compose-catalogs compose-preview; do
   grep -q '^name: design-reviewer$' "$reviewer"
 done
 
-stale_agent="$fixture/plugins/compose-preview/agents/obsolete-reviewer.md"
-printf '%s\n' 'obsolete' >"$stale_agent"
-"$fixture/scripts/check-plugins.sh"
-if test -e "$stale_agent"; then
-  printf '%s\n' 'FAIL: generator must remove agents absent from src/plugins.json' >&2
+handwritten_agent="$fixture/plugins/compose-preview/agents/handwritten-reviewer.md"
+printf '%s\n' 'handwritten' >"$handwritten_agent"
+python3 -c '
+import json
+import sys
+from pathlib import Path
+
+source = Path(sys.argv[1])
+data = json.loads(source.read_text(encoding="utf-8"))
+next(plugin for plugin in data["plugins"] if plugin["name"] == "compose-preview")["agents"] = []
+source.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+' "$fixture/src/plugins.json"
+python3 "$fixture/scripts/generate.py"
+if test -e "$fixture/plugins/compose-preview/agents/design-reviewer.md"; then
+  printf '%s\n' 'FAIL: generator must remove agents recorded in its ledger' >&2
+  exit 1
+fi
+if ! test -e "$handwritten_agent"; then
+  printf '%s\n' 'FAIL: generator must preserve hand-written agents absent from its ledger' >&2
   exit 1
 fi
 

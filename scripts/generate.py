@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "src" / "plugins.json"
 SKILL_SOURCE_ROOT = ROOT / "src" / "skills"
 AGENT_SOURCE_ROOT = ROOT / "src" / "agents"
+AGENT_LEDGER_NAME = ".generated-agents.json"
 ANTIGRAVITY_SCHEMA = "https://antigravity.google/schemas/v1/plugin.json"
 SKILL_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
@@ -49,14 +50,30 @@ def write_agent(plugin_root: Path, agent: str) -> None:
     target.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
 
 
-def remove_stale_agents(plugin_root: Path, agents: list[str]) -> None:
+def synchronize_generated_agents(plugin_root: Path, agents: list[str]) -> None:
     agents_root = plugin_root / "agents"
-    if not agents_root.is_dir():
-        return
+    ledger = agents_root / AGENT_LEDGER_NAME
+    previous: list[str] = []
+    if ledger.is_file():
+        value = json.loads(ledger.read_text(encoding="utf-8"))
+        if (
+            not isinstance(value, dict)
+            or not isinstance(value.get("agents"), list)
+            or not all(isinstance(agent, str) for agent in value["agents"])
+        ):
+            raise ValueError(f"invalid generated agent ledger: {ledger.relative_to(ROOT)}")
+        previous = value["agents"]
     expected = {f"{agent}.md" for agent in agents}
-    for candidate in agents_root.glob("*.md"):
-        if candidate.name not in expected:
-            candidate.unlink()
+    for agent in previous:
+        agent_path = Path(agent)
+        if agent_path.is_absolute() or ".." in agent_path.parts or len(agent_path.parts) != 1:
+            raise ValueError(f"invalid generated agent ledger entry: {agent!r}")
+        if agent not in expected:
+            (agents_root / agent_path).unlink(missing_ok=True)
+    if agents:
+        write_json(ledger, {"agents": sorted(expected)})
+    else:
+        ledger.unlink(missing_ok=True)
 
 
 def render_mcp_servers(plugin_name: str, entries: object, harness: str) -> dict[str, object]:
@@ -135,7 +152,7 @@ def main() -> None:
         root = ROOT / "plugins" / name
         for skill in skills:
             write_skill(root, skill)
-        remove_stale_agents(root, agents)
+        synchronize_generated_agents(root, agents)
         for agent in agents:
             write_agent(root, agent)
         write_json(

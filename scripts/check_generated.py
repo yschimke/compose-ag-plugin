@@ -11,6 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "src" / "plugins.json"
+AGENT_LEDGER_NAME = ".generated-agents.json"
 
 
 def generated_paths(source: object) -> tuple[list[Path], set[str]]:
@@ -38,6 +39,8 @@ def generated_paths(source: object) -> tuple[list[Path], set[str]]:
         if not isinstance(agents, list) or not all(isinstance(agent, str) for agent in agents):
             raise ValueError(f"{name}.agents must be a list of strings")
         paths.extend(plugin_root / "agents" / f"{agent}.md" for agent in agents)
+        if agents:
+            paths.append(plugin_root / "agents" / AGENT_LEDGER_NAME)
     return paths, plugin_names
 
 
@@ -61,19 +64,6 @@ def main() -> None:
     stale_dirs = actual_dirs - plugin_names
     if stale_dirs:
         errors.append(f"stale plugin directories: {', '.join(sorted(stale_dirs))}")
-
-    for plugin in source["plugins"]:
-        name = plugin["name"]
-        expected_agents = {f"{agent}.md" for agent in plugin.get("agents", [])}
-        agents_root = plugins_root / name / "agents"
-        actual_agents = (
-            {path.name for path in agents_root.glob("*.md")} if agents_root.is_dir() else set()
-        )
-        stale_agents = actual_agents - expected_agents
-        if stale_agents:
-            errors.append(
-                f"{name} has stale generated agents: {', '.join(sorted(stale_agents))}"
-            )
 
     pathspecs = [str(path.relative_to(ROOT)) for path in paths]
     diff = git("diff", "--exit-code", "--", *pathspecs)

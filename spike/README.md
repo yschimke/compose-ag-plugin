@@ -38,7 +38,8 @@ Install or enable both `p1` and `p2` using the harness-specific procedure under 
 - Call `ask` with both `mode: form` and `mode: url`; if no interaction appears,
   verify that form mode offers the `compact` and `expanded` choices in text,
   while URL mode supplies the authorization URL, verification code, and status
-  polling instruction (Q18). List and get `spike-prompt` to probe prompts (Q19).
+  polling instruction; call `access_status` to complete that fallback (Q18).
+  List and get `spike-prompt` to probe prompts (Q19).
 - Ask for the `spike-reviewer` fixture from plugin `p1` (Q20). In Claude Code
   and Codex, confirm the SessionStart hook both logs and prints
   `SPIKE-SESSION-START` so the model can be asked to repeat it (Q21).

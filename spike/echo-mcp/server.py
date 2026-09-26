@@ -36,7 +36,7 @@ FORM_FALLBACK = (
 )
 URL_FALLBACK = (
     "url elicitation unavailable; open https://example.invalid/spike-elicitation, "
-    "enter verification code SPIKE-CODE, then poll access status with the status tool."
+    "enter verification code SPIKE-CODE, then call access_status until it reports authorized."
 )
 
 VIEWER_HTML = """<!doctype html>
@@ -123,6 +123,11 @@ TOOLS = [
     {
         "name": "status",
         "description": "Return the echo MCP server name.",
+        "inputSchema": {"type": "object", "additionalProperties": False},
+    },
+    {
+        "name": "access_status",
+        "description": "Poll the fixture authorization flow until it is authorized.",
         "inputSchema": {"type": "object", "additionalProperties": False},
     },
     {
@@ -303,6 +308,8 @@ def handle(request: object) -> None:
         arguments = params.get("arguments", {}) if isinstance(params, dict) else {}
         if tool_name == "status":
             result(request_id, text_result(f"status from {SERVER_NAME}"))
+        elif tool_name == "access_status":
+            result(request_id, text_result("access status: authorized"))
         elif tool_name == "render_preview":
             result(
                 request_id,

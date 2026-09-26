@@ -60,7 +60,16 @@ unsupported_url = call(
 assert unsupported_url["content"][0]["text"] == echo_mcp.URL_FALLBACK
 assert "https://example.invalid/spike-elicitation" in echo_mcp.URL_FALLBACK
 assert "verification code SPIKE-CODE" in echo_mcp.URL_FALLBACK
-assert "poll access status with the status tool" in echo_mcp.URL_FALLBACK
+assert "call access_status until it reports authorized" in echo_mcp.URL_FALLBACK
+access_status = call(
+    {
+        "jsonrpc": "2.0",
+        "id": "access-status",
+        "method": "tools/call",
+        "params": {"name": "access_status", "arguments": {}},
+    }
+)["result"]
+assert access_status["content"][0]["text"] == "access status: authorized"
 
 invalid_arguments = call(
     {
@@ -86,7 +95,12 @@ call(
 )
 
 tools = call({"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}})["result"]["tools"]
-assert {tool["name"] for tool in tools} == {"render_preview", "status", "ask"}
+assert {tool["name"] for tool in tools} == {
+    "render_preview",
+    "status",
+    "access_status",
+    "ask",
+}
 assert next(tool for tool in tools if tool["name"] == "render_preview")["_meta"]["ui"]["resourceUri"] == "ui://spike/app"
 
 viewer = call({"jsonrpc": "2.0", "id": 2, "method": "resources/read", "params": {"uri": echo_mcp.VIEWER_URI}})["result"]["contents"][0]
@@ -205,6 +219,7 @@ overlapping_request = call(
 assert {tool["name"] for tool in overlapping_request["result"]["tools"]} == {
     "render_preview",
     "status",
+    "access_status",
     "ask",
 }
 assert overlap["id"] in echo_mcp.PENDING_ELICITATIONS

@@ -47,7 +47,7 @@ def run(plugin: str, server_name: str) -> None:
         assert {"tools", "resources", "prompts"} <= set(initialize["capabilities"])
         tools = request(process, 2, "tools/list", {})["tools"]
         tools_by_name = {tool["name"]: tool for tool in tools}
-        assert set(tools_by_name) == {"render_preview", "status", "ask"}
+        assert set(tools_by_name) == {"render_preview", "status", "access_status", "ask"}
         assert tools_by_name["render_preview"]["_meta"]["ui"]["resourceUri"] == "ui://spike/app"
         status = request(process, 3, "tools/call", {"name": "status", "arguments": {}})
         assert status["content"][0]["text"] == f"status from {server_name}"
@@ -143,7 +143,14 @@ def run_fallback(plugin: str, server_name: str) -> None:
         )["content"][0]["text"]
         assert "https://example.invalid/spike-elicitation" in url
         assert "verification code SPIKE-CODE" in url
-        assert "poll access status with the status tool" in url
+        assert "call access_status until it reports authorized" in url
+        access_status = request(
+            process,
+            4,
+            "tools/call",
+            {"name": "access_status", "arguments": {}},
+        )["content"][0]["text"]
+        assert access_status == "access status: authorized"
     finally:
         process.terminate()
         process.wait(timeout=5)

@@ -6,7 +6,14 @@ This matrix records only observed results for the compatibility investigation in
 
 On 2026-09-26, `python3 spike/prepare.py && python3 spike/run-protocol-smoke.py` passed locally. The direct JSON-RPC client verified that both `alpha` and `beta` expose `render_preview` and `status`; `render_preview` returns a text item and a 1×1 PNG image. This establishes the fixture only, not host behaviour.
 
-The fixture’s Antigravity `plugin.json` uses the current official v1 schema URL and no `version` field. That differs from the older issue text, which used `version`; the product scaffold follows the same current shape.
+The fixture’s Antigravity `plugin.json` follows Google's
+[official plugin manifest documentation](https://antigravity.google/docs/plugins#manifest-file-plugin-json):
+the v1 schema URL, a required `name`, an optional `description`, and no `version` field. That differs
+from the older issue text, which used `version`; the product scaffold follows the documented shape.
+The documentation both recommends the `$schema` property and shows it in the canonical example,
+although the full schema printed on that page omits `$schema` from `properties`. The vendored schema
+keeps `$schema` as a constant so the documented example validates while a different schema URL does
+not.
 
 ## Harness results
 

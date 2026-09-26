@@ -31,9 +31,9 @@ a host pass.
 | 2026-09-26 | Antigravity | unavailable | n/a — harness unavailable | `d37dd66d` | n/a | — | Environment unavailable | n/a | n/a | #6, #18 | Neither the desktop harness nor `agy` is available. |
 | 2026-09-26 | OpenCode | unavailable | n/a — harness unavailable | `d37dd66d` | n/a | — | Environment unavailable | n/a | n/a | #6, #18 | No OpenCode executable is installed; the matrix's earlier config-parser observation is not a model-turn eval. |
 
-The direct protocol smoke test passes for the rich fixture. It verifies both
-elicitation-capable exchanges and the fixture's explicit form/URL text
-fallbacks with elicitation omitted from client capabilities. This is a fixture
-control only. H1–H8 and H10–H11 still need real host runs, H9 still needs its
-full state scenarios, and every behavioral feature still needs a second
-harness even after a Codex run passes.
+The direct protocol smoke test passed at the recorded `d37dd66d` revision for
+both elicitation-capable exchanges. A separate fixture-only rerun at `c0f4f04`
+verified the explicit form/URL text fallbacks with elicitation omitted from
+client capabilities. Neither control is a host pass. H1–H8 and H10–H11 still
+need real host runs, H9 still needs its full state scenarios, and every
+behavioral feature still needs a second harness even after a Codex run passes.

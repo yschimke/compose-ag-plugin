@@ -65,10 +65,13 @@ reviewed locally before the run. The command remained in a read-only sandbox.
 ## Fixture-only control
 
 `python3 spike/prepare.py && python3 spike/run-protocol-smoke.py` passed on the
-same commit. The direct client verified both servers, their colliding tool
-names, the image plus text/resource-link result, the MCP App resource, both
-elicitation fallbacks, and the prompt protocol. That proves the fixture is
-internally coherent; it does not upgrade any blocked host result to a pass.
+same `d37dd66d` commit. The direct client verified both servers, their colliding
+tool names, the image plus text/resource-link result, the MCP App resource,
+both elicitation-capable exchanges, and the prompt protocol. It did not test an
+unsupported client at that revision. A fixture-only rerun at `c0f4f04` added a
+second client with no elicitation capability and verified the explicit form and
+URL text fallbacks. These controls prove the fixture paths they exercised; they
+do not upgrade any blocked host result to a pass.
 
 ## Unavailable harnesses
 

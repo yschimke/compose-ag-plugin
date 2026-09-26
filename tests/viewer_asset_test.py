@@ -29,12 +29,12 @@ assert GENERATED_PROVENANCE.read_bytes() == provenance_bytes
 assert provenance == {
     "repository": "https://github.com/yschimke/compose-preview-server",
     "pullRequest": "https://github.com/yschimke/compose-preview-server/pull/1135",
-    "commit": "93952d3b8ac89f81f462c1d2f8b5f4d894bb9e23",
+    "commit": "6b0211209aec1fa621956f187e071bf5b418453e",
     "path": "mcp-app/compose-preview-viewer.html",
     # Stable MCP Apps UI protocol revision:
     # https://github.com/modelcontextprotocol/ext-apps/tree/main/specification/2026-01-26
     "mcpAppsProtocolVersion": "2026-01-26",
-    "sha256": "7d3802af7a051dcae025ae38bc7e631066bff96eeec03d97fdf571ec5785664a",
+    "sha256": "51c731c59793c573cdf14c2d9a9d6227ff15fcde28d6b8466d681a639a2b1c72",
 }
 assert hashlib.sha256(source_bytes).hexdigest() == provenance["sha256"]
 assert f"protocolVersion: '{provenance['mcpAppsProtocolVersion']}'," in source
@@ -57,6 +57,7 @@ required = (
     "function credentialKeyInUri(key, value)",
     "if (url.username || url.password)",
     "for (const [parameter] of url.searchParams)",
+    "new URLSearchParams(url.hash.slice(1))",
     "|cookie|session)/i",
     "const bridgeReady = staticMode ? Promise.resolve() : initializeBridge();",
     "protocolVersion: '2026-01-26',",

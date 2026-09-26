@@ -12,6 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "src" / "plugins.json"
 AGENT_LEDGER_NAME = ".generated-agents.json"
+ASSET_LEDGER_NAME = ".generated-assets.json"
 
 
 def generated_paths(source: object) -> tuple[list[Path], set[str]]:
@@ -51,6 +52,12 @@ def generated_paths(source: object) -> tuple[list[Path], set[str]]:
             if not isinstance(command, str):
                 raise ValueError(f"{name}.hooks commands must be strings")
             paths.append(plugin_root / command)
+        assets = plugin.get("assets", [])
+        if not isinstance(assets, list) or not all(isinstance(asset, str) for asset in assets):
+            raise ValueError(f"{name}.assets must be a list of strings")
+        paths.extend(plugin_root / "assets" / asset for asset in assets)
+        if assets:
+            paths.append(plugin_root / "assets" / ASSET_LEDGER_NAME)
     return paths, plugin_names
 
 
@@ -118,6 +125,22 @@ def main() -> None:
         if stale_hooks:
             errors.append(
                 f"{name} has stale generated hooks: {', '.join(sorted(stale_hooks))}"
+            )
+        expected_assets = set(plugin.get("assets", []))
+        assets_root = plugins_root / name / "assets"
+        actual_assets = (
+            {
+                path.name
+                for path in assets_root.iterdir()
+                if path.is_file() and path.name != ASSET_LEDGER_NAME
+            }
+            if assets_root.is_dir()
+            else set()
+        )
+        stale_assets = actual_assets - expected_assets
+        if stale_assets:
+            errors.append(
+                f"{name} has stale generated assets: {', '.join(sorted(stale_assets))}"
             )
 
     pathspecs = [str(path.relative_to(ROOT)) for path in paths]

@@ -14,5 +14,16 @@ rules that must remain consistent across Antigravity, Claude Code, and Codex.
 - **R3 — Keep one canonical home:** read and preserve the design's recorded home, edit there in small batches, announce and reconcile temporary copies, and get approval before moving the home.
 - **R4 — Keep discussion at the home:** use server comments for server-homed designs and the linked PR or issue for repo-homed designs, then report unacknowledged comments before finishing.
 
+## Antigravity viewer card
+
+When the compose-preview plugin is active in Antigravity and its
+../../assets/compose-preview-viewer.html asset is available, use that exact
+portable bundle for render cards; do not author a second card. Follow
+../../assets/compose-preview-viewer-fallback.md: copy the HTML unchanged into
+the current response artifact folder, embed that artifact with agent-embed, and
+include the complete text fallback in the same response. If the asset, artifact
+copy, or bridge is unavailable, return the text fallback alone and state that
+the visual surface was not inspected.
+
 The full, authoritative contract and current tooling gaps are in
 [`docs/agent-rules.md`](https://github.com/yschimke/compose-ag-plugin/blob/main/docs/agent-rules.md).

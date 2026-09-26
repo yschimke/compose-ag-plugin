@@ -16,6 +16,13 @@ AGENT_LEDGER_NAME = ".generated-agents.json"
 HOOK_SOURCE_ROOT = ROOT / "src" / "hooks"
 ANTIGRAVITY_SCHEMA = "https://antigravity.google/schemas/v1/plugin.json"
 SKILL_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+CODEX_INTERFACE_STRINGS = (
+    "displayName",
+    "shortDescription",
+    "longDescription",
+    "developerName",
+    "category",
+)
 
 
 def write_json(path: Path, value: object) -> None:
@@ -27,6 +34,59 @@ def require_string(value: object, field: str) -> str:
     if not isinstance(value, str) or not value:
         raise ValueError(f"{field} must be a non-empty string")
     return value
+
+
+def render_codex_manifest(
+    *,
+    name: str,
+    version: str,
+    description: str,
+    keywords: list[str],
+    skills: list[str],
+    mcp: list[object],
+    interface: object,
+    owner: str,
+    repository: str,
+    license_name: str,
+) -> dict[str, object]:
+    if not isinstance(interface, dict):
+        raise ValueError(f"{name}.interface must be an object")
+    rendered_interface: dict[str, object] = {
+        field: require_string(interface.get(field), f"{name}.interface.{field}")
+        for field in CODEX_INTERFACE_STRINGS
+    }
+    capabilities = interface.get("capabilities")
+    if not isinstance(capabilities, list) or not capabilities or not all(
+        isinstance(capability, str) and capability for capability in capabilities
+    ):
+        raise ValueError(f"{name}.interface.capabilities must be a non-empty list of strings")
+    default_prompt = interface.get("defaultPrompt")
+    if (
+        not isinstance(default_prompt, list)
+        or not 1 <= len(default_prompt) <= 3
+        or not all(isinstance(prompt, str) and prompt and len(prompt) <= 128 for prompt in default_prompt)
+    ):
+        raise ValueError(
+            f"{name}.interface.defaultPrompt must contain 1 to 3 non-empty strings of at most 128 characters"
+        )
+    rendered_interface["capabilities"] = capabilities
+    rendered_interface["defaultPrompt"] = default_prompt
+
+    manifest: dict[str, object] = {
+        "author": {"name": owner},
+        "description": description,
+        "interface": rendered_interface,
+        "keywords": keywords,
+        "license": license_name,
+        "name": name,
+        "repository": repository,
+        "version": version,
+    }
+    if skills:
+        manifest["skills"] = "./skills/"
+    if mcp:
+        manifest["mcpServers"] = "./.mcp.json"
+    return manifest
 
 
 def write_skill(plugin_root: Path, skill: str) -> None:
@@ -232,6 +292,7 @@ def main() -> None:
         agents = plugin.get("agents", [])
         hooks = plugin.get("hooks", [])
         mcp = plugin.get("mcp", [])
+        interface = plugin.get("interface")
         if name in names:
             raise ValueError(f"duplicate plugin name: {name}")
         if not isinstance(keywords, list) or not all(isinstance(word, str) for word in keywords):
@@ -272,6 +333,21 @@ def main() -> None:
                 "repository": repository,
                 "version": version,
             },
+        )
+        write_json(
+            root / ".codex-plugin" / "plugin.json",
+            render_codex_manifest(
+                name=name,
+                version=version,
+                description=description,
+                keywords=keywords,
+                skills=skills,
+                mcp=mcp,
+                interface=interface,
+                owner=owner,
+                repository=repository,
+                license_name=license_name,
+            ),
         )
         marketplace_plugins.append(
             {"description": description, "name": name, "source": f"./plugins/{name}"}

@@ -1,0 +1,31 @@
+{
+  "author": {
+    "name": "Yuri Schimke"
+  },
+  "description": "Iterate on local Compose previews with live rendering and accessibility checks.",
+  "interface": {
+    "capabilities": [
+      "Interactive"
+    ],
+    "category": "Developer Tools",
+    "defaultPrompt": [
+      "Render and review the Compose previews in this project."
+    ],
+    "developerName": "Yuri Schimke",
+    "displayName": "Compose Preview",
+    "longDescription": "Iterate on local Compose previews with live rendering, accessibility checks, and shared review evidence.",
+    "shortDescription": "Render and review Compose previews."
+  },
+  "keywords": [
+    "compose",
+    "preview",
+    "accessibility",
+    "android"
+  ],
+  "license": "Apache-2.0",
+  "mcpServers": "./.mcp.json",
+  "name": "compose-preview",
+  "repository": "https://github.com/yschimke/compose-ag-plugin",
+  "skills": "./skills/",
+  "version": "0.2.0"
+}

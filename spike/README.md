@@ -2,7 +2,11 @@
 
 This fixture supports issue [#6](https://github.com/yschimke/compose-ag-plugin/issues/6). It is deliberately separate from shipping plugins and makes no claim about a harness until that harness has run it.
 
-The Antigravity root manifests follow the current official schema URL and omit the older `version` field. The adjacent Claude/Codex manifests retain `name` and `version` because they exercise a separate manifest format.
+The Antigravity root manifests follow the current official schema URL and omit
+the older `version` field. Claude Code uses the adjacent `.claude-plugin`
+manifest. Codex uses the `.codex-plugin` compatibility manifest, which points
+at the fixture's `skills/` and `.mcp.json` paths without competing with the
+Antigravity root `plugin.json`.
 
 ## Prepare and verify the fixture
 

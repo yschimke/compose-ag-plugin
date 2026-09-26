@@ -46,6 +46,13 @@ def assert_cached_plugin(plugin_name: str, server_name: str, cache_root: Path) -
         assert reviewer.is_file(), reviewer
         assert "SPIKE-REVIEWER-LOADED" in reviewer.read_text(encoding="utf-8")
 
+    codex = json.loads(
+        (cached_plugin / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8")
+    )
+    assert codex["name"] == plugin_name
+    assert codex["skills"] == "./skills/"
+    assert codex["mcpServers"] == "./.mcp.json"
+
     mcp = json.loads((cached_plugin / ".mcp.json").read_text(encoding="utf-8"))
     configured_server = Path(
         mcp["mcpServers"][server_name]["args"][0].replace("${CLAUDE_PLUGIN_ROOT}", str(cached_plugin))

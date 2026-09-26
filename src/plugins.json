@@ -13,6 +13,19 @@
         "material3",
         "wear"
       ],
+      "interface": {
+        "displayName": "Compose Catalogs",
+        "shortDescription": "Discover and render Compose component catalogs.",
+        "longDescription": "Discover Compose components, inspect their properties, and render catalog variants through Compose Preview.",
+        "developerName": "Yuri Schimke",
+        "category": "Developer Tools",
+        "capabilities": [
+          "Interactive"
+        ],
+        "defaultPrompt": [
+          "Show the available Compose component catalogs."
+        ]
+      },
       "mcp": [
         {
           "name": "compose-preview-catalog",
@@ -40,6 +53,19 @@
         "accessibility",
         "android"
       ],
+      "interface": {
+        "displayName": "Compose Preview",
+        "shortDescription": "Render and review Compose previews.",
+        "longDescription": "Iterate on local Compose previews with live rendering, accessibility checks, and shared review evidence.",
+        "developerName": "Yuri Schimke",
+        "category": "Developer Tools",
+        "capabilities": [
+          "Interactive"
+        ],
+        "defaultPrompt": [
+          "Render and review the Compose previews in this project."
+        ]
+      },
       "mcp": [
         {
           "name": "compose-preview-mcp",

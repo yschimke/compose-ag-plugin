@@ -306,6 +306,11 @@ def handle(request: object) -> None:
     elif method == "tools/call":
         tool_name = params.get("name") if isinstance(params, dict) else None
         arguments = params.get("arguments", {}) if isinstance(params, dict) else {}
+        if tool_name in {"status", "access_status", "render_preview"} and (
+            not isinstance(arguments, dict) or arguments
+        ):
+            error(request_id, -32602, f"{tool_name} does not accept arguments")
+            return
         if tool_name == "status":
             result(request_id, text_result(f"status from {SERVER_NAME}"))
         elif tool_name == "access_status":

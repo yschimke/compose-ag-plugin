@@ -71,6 +71,17 @@ access_status = call(
 )["result"]
 assert access_status["content"][0]["text"] == "access status: authorized"
 
+for zero_argument_tool in ("status", "access_status", "render_preview"):
+    rejected_arguments = call(
+        {
+            "jsonrpc": "2.0",
+            "id": f"invalid-{zero_argument_tool}-arguments",
+            "method": "tools/call",
+            "params": {"name": zero_argument_tool, "arguments": {"unexpected": True}},
+        }
+    )
+    assert rejected_arguments["error"]["code"] == -32602
+
 invalid_arguments = call(
     {
         "jsonrpc": "2.0",

@@ -3,14 +3,14 @@
 set -euo pipefail
 
 event_name="${1:?hook event name is required}"
-payload="$(cat)"
-python3 - "$event_name" "$payload" <<'PY'
+python3 -c '
 import json
 import os
 import sys
 from pathlib import Path
 
-event, stdin = sys.argv[1:]
+event = sys.argv[1]
+stdin = sys.stdin.read()
 detection_keys = (
     "ANTIGRAVITY_CLI_ALIAS",
     "CLAUDECODE",
@@ -26,9 +26,10 @@ record = {
     "detectionEnvironment": {key: os.environ[key] for key in detection_keys if key in os.environ},
     "stdin": stdin,
 }
-with Path("/tmp/spike-hooks.log").open("a", encoding="utf-8") as log:
+log_path = Path(os.environ.get("SPIKE_HOOK_LOG_PATH", "/tmp/spike-hooks.log"))
+with log_path.open("a", encoding="utf-8") as log:
     log.write(json.dumps(record, sort_keys=True) + "\n")
-PY
+' "$event_name"
 
 # The hosts' decision contracts differ. Keep the default non-blocking so this fixture only observes.
 if [[ "${SPIKE_HOOK_DECISION:-}" == "continue" ]]; then

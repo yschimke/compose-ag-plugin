@@ -2,7 +2,7 @@
   "mcpServers": {
     "alpha": {
       "args": [
-        "${CLAUDE_PLUGIN_ROOT}/../echo-mcp/server.py",
+        "${CLAUDE_PLUGIN_ROOT}/echo-mcp/server.py",
         "alpha"
       ],
       "command": "python3"

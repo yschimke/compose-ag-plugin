@@ -13,9 +13,11 @@ python3 spike/prepare.py
 python3 spike/run-protocol-smoke.py
 ```
 
-`prepare.py` writes ignored Antigravity `mcp_config.json` and `hooks.json` files
-for both plugins, with absolute paths to this checkout. It is safe to run after
-moving the checkout; do not install the Antigravity fixtures before preparation.
+`prepare.py` copies the echo MCP server and hook logger into each ignored
+`spike/p*/echo-mcp/` directory, then writes ignored Antigravity `mcp_config.json`
+and `hooks.json` files that point to that plugin-local copy. It is safe to run
+after moving the checkout; do not install the Antigravity fixtures before
+preparation.
 The smoke test speaks JSON-RPC directly, confirms both servers expose the
 deliberately colliding `render_preview` and `status` tools, and confirms that
 `render_preview` supplies a 1×1 PNG image. It is not evidence of any harness
@@ -30,7 +32,7 @@ Install or enable both `p1` and `p2` using the harness-specific procedure under 
 - Ask the harness to call `render_preview` on `beta` after both plugins are active (Q2 and Q10).
 - Ask `spike check` and `rules check` to test discovery (Q6–Q7).
 
-The static marketplace fixture is at `.claude-plugin/marketplace.json`; the same entries are also available as `.agents/plugins/marketplace.json` for Codex marketplace resolution tests. The fixture uses `CLAUDE_PLUGIN_ROOT` only in the Claude/Codex MCP and hook configurations. Its Antigravity config is generated because variable expansion for command paths is itself unverified.
+The static marketplace fixture is at `.claude-plugin/marketplace.json`; the same entries are also available as `.agents/plugins/marketplace.json` for Codex marketplace resolution tests. The fixture uses `CLAUDE_PLUGIN_ROOT` only for paths inside each plugin in the Claude/Codex MCP and hook configurations. Its Antigravity config is generated because variable expansion for command paths is itself unverified.
 
 ## Hook decisions
 

@@ -31,6 +31,42 @@ for relative in ("plugins/compose-catalogs/.mcp.json", "plugins/compose-catalogs
         raise SystemExit(f"{relative}: expected {expected!r}, got {actual!r}")
 ' "$fixture"
 
+for plugin in compose-catalogs compose-preview; do
+  reviewer="$fixture/plugins/$plugin/agents/design-reviewer.md"
+  test -f "$reviewer"
+  grep -q '^name: design-reviewer$' "$reviewer"
+  grep -Fq '"Bash(gh pr view:*)"' "$reviewer"
+  grep -Fq '"Bash(gh pr comment:*)"' "$reviewer"
+  grep -Fq '"Bash(gh issue view:*)"' "$reviewer"
+  grep -Fq '"Bash(gh issue comment:*)"' "$reviewer"
+  if grep -Eq '"(Bash|Edit|Write)"' "$reviewer"; then
+    printf '%s\n' 'FAIL: reviewer must not receive unrestricted mutation tools' >&2
+    exit 1
+  fi
+done
+
+handwritten_agent="$fixture/plugins/compose-preview/agents/handwritten-reviewer.md"
+printf '%s\n' 'handwritten' >"$handwritten_agent"
+python3 -c '
+import json
+import sys
+from pathlib import Path
+
+source = Path(sys.argv[1])
+data = json.loads(source.read_text(encoding="utf-8"))
+next(plugin for plugin in data["plugins"] if plugin["name"] == "compose-preview")["agents"] = []
+source.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+' "$fixture/src/plugins.json"
+python3 "$fixture/scripts/generate.py"
+if test -e "$fixture/plugins/compose-preview/agents/design-reviewer.md"; then
+  printf '%s\n' 'FAIL: generator must remove agents recorded in its ledger' >&2
+  exit 1
+fi
+if ! test -e "$handwritten_agent"; then
+  printf '%s\n' 'FAIL: generator must preserve hand-written agents absent from its ledger' >&2
+  exit 1
+fi
+
 mkdir "$fixture/plugins/stale-plugin"
 if "$fixture/scripts/check-plugins.sh" >/dev/null 2>&1; then
   printf '%s\n' 'FAIL: stale plugin directory must fail generated drift check' >&2

@@ -11,6 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "src" / "plugins.json"
+AGENT_LEDGER_NAME = ".generated-agents.json"
 
 
 def generated_paths(source: object) -> tuple[list[Path], set[str]]:
@@ -34,6 +35,12 @@ def generated_paths(source: object) -> tuple[list[Path], set[str]]:
         if not isinstance(skills, list) or not all(isinstance(skill, str) for skill in skills):
             raise ValueError(f"{name}.skills must be a list of strings")
         paths.extend(plugin_root / "skills" / skill / "SKILL.md" for skill in skills)
+        agents = plugin.get("agents", [])
+        if not isinstance(agents, list) or not all(isinstance(agent, str) for agent in agents):
+            raise ValueError(f"{name}.agents must be a list of strings")
+        paths.extend(plugin_root / "agents" / f"{agent}.md" for agent in agents)
+        if agents:
+            paths.append(plugin_root / "agents" / AGENT_LEDGER_NAME)
     return paths, plugin_names
 
 

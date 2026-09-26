@@ -11,6 +11,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "src" / "plugins.json"
 SKILL_SOURCE_ROOT = ROOT / "src" / "skills"
+AGENT_SOURCE_ROOT = ROOT / "src" / "agents"
+AGENT_LEDGER_NAME = ".generated-agents.json"
 ANTIGRAVITY_SCHEMA = "https://antigravity.google/schemas/v1/plugin.json"
 SKILL_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
@@ -35,6 +37,43 @@ def write_skill(plugin_root: Path, skill: str) -> None:
     target = plugin_root / "skills" / skill / "SKILL.md"
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+
+
+def write_agent(plugin_root: Path, agent: str) -> None:
+    if not SKILL_NAME.fullmatch(agent):
+        raise ValueError(f"invalid agent name: {agent}")
+    source = AGENT_SOURCE_ROOT / f"{agent}.md"
+    if not source.is_file():
+        raise ValueError(f"missing shared agent source: {source.relative_to(ROOT)}")
+    target = plugin_root / "agents" / f"{agent}.md"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+
+
+def synchronize_generated_agents(plugin_root: Path, agents: list[str]) -> None:
+    agents_root = plugin_root / "agents"
+    ledger = agents_root / AGENT_LEDGER_NAME
+    previous: list[str] = []
+    if ledger.is_file():
+        value = json.loads(ledger.read_text(encoding="utf-8"))
+        if (
+            not isinstance(value, dict)
+            or not isinstance(value.get("agents"), list)
+            or not all(isinstance(agent, str) for agent in value["agents"])
+        ):
+            raise ValueError(f"invalid generated agent ledger: {ledger.relative_to(ROOT)}")
+        previous = value["agents"]
+    expected = {f"{agent}.md" for agent in agents}
+    for agent in previous:
+        agent_path = Path(agent)
+        if agent_path.is_absolute() or ".." in agent_path.parts or len(agent_path.parts) != 1:
+            raise ValueError(f"invalid generated agent ledger entry: {agent!r}")
+        if agent not in expected:
+            (agents_root / agent_path).unlink(missing_ok=True)
+    if agents:
+        write_json(ledger, {"agents": sorted(expected)})
+    else:
+        ledger.unlink(missing_ok=True)
 
 
 def render_mcp_servers(plugin_name: str, entries: object, harness: str) -> dict[str, object]:
@@ -98,6 +137,7 @@ def main() -> None:
         description = require_string(plugin.get("description"), f"{name}.description")
         keywords = plugin.get("keywords", [])
         skills = plugin.get("skills", [])
+        agents = plugin.get("agents", [])
         mcp = plugin.get("mcp", [])
         if name in names:
             raise ValueError(f"duplicate plugin name: {name}")
@@ -105,11 +145,16 @@ def main() -> None:
             raise ValueError(f"{name}.keywords must be a list of strings")
         if not isinstance(skills, list) or not all(isinstance(skill, str) for skill in skills):
             raise ValueError(f"{name}.skills must be a list of strings")
+        if not isinstance(agents, list) or not all(isinstance(agent, str) for agent in agents):
+            raise ValueError(f"{name}.agents must be a list of strings")
         names.add(name)
 
         root = ROOT / "plugins" / name
         for skill in skills:
             write_skill(root, skill)
+        synchronize_generated_agents(root, agents)
+        for agent in agents:
+            write_agent(root, agent)
         write_json(
             root / "plugin.json",
             {"$schema": ANTIGRAVITY_SCHEMA, "description": description, "name": name},

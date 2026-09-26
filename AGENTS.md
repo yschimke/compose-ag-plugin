@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This repository owns the Antigravity, Claude Code, and Codex plugin packaging for Compose tooling. Read `README.md` first.
+This repository owns the Antigravity, Claude Code, and Codex plugin packaging for Compose tooling. Read `README.md` first. The product rules every plugin, skill and tool must follow are in [`docs/agent-rules.md`](docs/agent-rules.md); a change that breaks one is a bug.
 
 ## Enforced rules
 

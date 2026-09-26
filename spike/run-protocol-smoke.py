@@ -21,8 +21,8 @@ def request(process: subprocess.Popen[str], request_id: int, method: str, params
     return response["result"]
 
 
-def run(server_name: str) -> None:
-    server = ROOT / "echo-mcp" / "server.py"
+def run(plugin: str, server_name: str) -> None:
+    server = ROOT / plugin / "echo-mcp" / "server.py"
     process = subprocess.Popen(
         [sys.executable, str(server), server_name],
         stdin=subprocess.PIPE,
@@ -43,6 +43,6 @@ def run(server_name: str) -> None:
         process.wait(timeout=5)
 
 
-for name in ("alpha", "beta"):
-    run(name)
+for plugin, name in (("p1", "alpha"), ("p2", "beta")):
+    run(plugin, name)
 print("spike MCP protocol smoke test passed for alpha and beta")

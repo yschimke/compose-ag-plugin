@@ -1,22 +1,29 @@
 #!/usr/bin/env python3
-"""Write the Antigravity fixture MCP configs with this checkout's absolute server path."""
+"""Prepare self-contained fixture plugins for local harness installation."""
 
 from __future__ import annotations
 
 import json
+import shutil
 import shlex
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent
-SERVER = ROOT / "echo-mcp" / "server.py"
-HOOK_LOGGER = ROOT / "echo-mcp" / "hook-log.sh"
+ECHO_MCP = ROOT / "echo-mcp"
 
 for plugin, server_name in (("p1", "alpha"), ("p2", "beta")):
-    path = ROOT / plugin / "mcp_config.json"
+    plugin_root = ROOT / plugin
+    plugin_echo_mcp = plugin_root / "echo-mcp"
+    shutil.rmtree(plugin_echo_mcp, ignore_errors=True)
+    shutil.copytree(ECHO_MCP, plugin_echo_mcp)
+
+    server = plugin_echo_mcp / "server.py"
+    hook_logger = plugin_echo_mcp / "hook-log.sh"
+    path = plugin_root / "mcp_config.json"
     path.write_text(
         json.dumps(
-            {"mcpServers": {server_name: {"command": "python3", "args": [str(SERVER), server_name]}}},
+            {"mcpServers": {server_name: {"command": "python3", "args": [str(server), server_name]}}},
             indent=2,
             sort_keys=True,
         )
@@ -32,13 +39,13 @@ for plugin, server_name in (("p1", "alpha"), ("p2", "beta")):
                     "hooks": [
                         {
                             "type": "command",
-                            "command": f"{shlex.quote(str(HOOK_LOGGER))} post-tool-use",
+                            "command": f"{shlex.quote(str(hook_logger))} post-tool-use",
                         }
                     ],
                 }
             ],
             "Stop": [
-                {"type": "command", "command": f"{shlex.quote(str(HOOK_LOGGER))} stop"}
+                {"type": "command", "command": f"{shlex.quote(str(hook_logger))} stop"}
             ],
         }
     }

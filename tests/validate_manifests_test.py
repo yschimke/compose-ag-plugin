@@ -63,6 +63,14 @@ class ManifestSchemaValidationTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unsupported schema keywords.*minLength"):
             self.validate("x", {"type": "string", "minLength": 2})
 
+    def test_const_comparison_preserves_json_types_recursively(self) -> None:
+        with self.assertRaisesRegex(ValueError, "must equal 1"):
+            self.validate(True, {"const": 1})
+        with self.assertRaisesRegex(ValueError, "must equal"):
+            self.validate({"x": True}, {"const": {"x": 1}})
+
+        self.validate(1.0, {"const": 1})
+
     def test_rejects_unsupported_keywords_in_unvisited_child_schemas(self) -> None:
         schemas_and_values = [
             (

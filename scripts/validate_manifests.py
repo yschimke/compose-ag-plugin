@@ -52,6 +52,28 @@ def matches_json_type(value: object, expected: str) -> bool:
             raise ValueError(f"unsupported JSON Schema type: {expected}")
 
 
+def json_values_equal(left: object, right: object) -> bool:
+    """Compare JSON values without conflating booleans and numbers as Python does."""
+    left_number = isinstance(left, (int, float)) and not isinstance(left, bool)
+    right_number = isinstance(right, (int, float)) and not isinstance(right, bool)
+    if left_number or right_number:
+        return left_number and right_number and left == right
+    if type(left) is not type(right):
+        return False
+    if isinstance(left, dict):
+        assert isinstance(right, dict)
+        return left.keys() == right.keys() and all(
+            json_values_equal(left[key], right[key]) for key in left
+        )
+    if isinstance(left, list):
+        assert isinstance(right, list)
+        return len(left) == len(right) and all(
+            json_values_equal(left_item, right_item)
+            for left_item, right_item in zip(left, right, strict=True)
+        )
+    return left == right
+
+
 def validate_schema_shape(schema: object, *, manifest_path: Path, schema_path: str = "$") -> None:
     """Verify that every node in a vendored schema uses the supported subset."""
     if not isinstance(schema, dict):
@@ -121,7 +143,7 @@ def _validate_value_against_schema(
         if not matches_json_type(value, expected_type):
             raise ValueError(f"{manifest_path}: {value_path} must have type {expected_type}")
 
-    if "const" in schema and value != schema["const"]:
+    if "const" in schema and not json_values_equal(value, schema["const"]):
         raise ValueError(f"{manifest_path}: {value_path} must equal {schema['const']!r}")
 
     pattern = schema.get("pattern")

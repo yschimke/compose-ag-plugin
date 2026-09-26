@@ -27,12 +27,12 @@ The fixture’s Antigravity `plugin.json` uses the current official v1 schema UR
 | Q13: Existing `yschimke-skills` marketplace | n/a | n/a | Install ✅; trigger not run | n/a | Codex 0.151.0 added `yschimke/skills`, installed `yschimke-skills` 0.1.4, and cached all 8 `SKILL.md` files. No model turn tested triggering. |
 | Q14: Canonical skills from `~/.agents/skills` or Skills CLI | Not run | n/a | n/a | n/a | — |
 | Q15: Canonical skills plus wiring plugins coexist | Not run | Not run | Install/list ✅; trigger not run | Not run | Codex 0.151.0 enabled `yschimke-skills`, `compose-catalogs`, and `compose-preview` together. The wiring plugins contain only the shared `harness-notes` skill, so they introduced no duplicate canonical Compose skill IDs. |
-| Q16: MCP App viewer resource rendering | Not run | Not run | Not run | Not run | Fixture ready: `render_preview` `_meta.ui.resourceUri` is `ui://spike/app`, with `text/html;profile=mcp-app` and text/resource-link fallback. |
-| Q17: Viewer postMessage actions | Not run | Not run | Not run | Not run | Fixture ready: portable initialize/initialized bridge calls `status`, sends `ui/message`, checks parent source, and handles errors. |
-| Q18: `elicitation/create` | Not run | Not run | Not run | Not run | Fixture ready: `ask` provides `form` and `url` modes using protocol `2025-11-25`, with fallback text. |
-| Q19: `prompts/list` and `prompts/get` | Not run | Not run | Not run | Not run | Fixture ready: `spike-prompt`. |
-| Q20: Plugin `agents/` reviewer discovery | Not run | Not run | Not run | Not run | Fixture ready: `p1/agents/spike-reviewer.md`; no real review is performed. |
-| Q21: SessionStart hook marker | n/a | Not run | Not run | n/a | Fixture ready for Claude Code and Codex: SessionStart logs and prints `SPIKE-SESSION-START`; host event support is unverified. |
+| Q16: MCP App viewer resource rendering | Not run | Not run | Not exposed (Codex 0.151.0) | Not run | With both cached fixtures enabled in an isolated CLI session, Codex exposed neither echo MCP server nor `render_preview`; no server initialization log was emitted, so viewer rendering could not be tested. The fixture remains ready with `ui://spike/app`, `text/html;profile=mcp-app`, and text/resource-link fallback. |
+| Q17: Viewer postMessage actions | Not run | Not run | Not exposed (Codex 0.151.0) | Not run | The same session did not expose the viewer resource, so its `status` / `ui/message` action could not be tested. The fixture bridge remains source-verified only. |
+| Q18: `elicitation/create` | Not run | Not run | Not exposed (Codex 0.151.0) | Not run | The isolated session exposed no `ask` tool, so neither form nor URL elicitation could be tested. The fixture remains ready with text fallback. |
+| Q19: `prompts/list` and `prompts/get` | Not run | Not run | Not exposed (Codex 0.151.0) | Not run | Codex exposed no echo MCP server or prompts interface, so `spike-prompt` could not be tested. |
+| Q20: Plugin `agents/` reviewer discovery | Not run | Not run | Not exposed (Codex 0.151.0) | Not run | In a separate isolated session, Codex reported: “No invocable agent named `spike-reviewer` is exposed by this Codex session.” |
+| Q21: SessionStart hook marker | n/a | Not run | Partial (Codex 0.151.0) | n/a | Both cached fixtures ran their SessionStart hooks and wrote records with `probe: SPIKE-SESSION-START`. The CLI showed hook lifecycle events but did not surface the marker’s stdout, so model-repeat behaviour remains unverified. |
 
 ## Additional observations
 
@@ -42,6 +42,13 @@ The fixture’s Antigravity `plugin.json` uses the current official v1 schema UR
 - Codex 0.151.0 installed both product plugins from this checkout as a local
   marketplace. A GitHub marketplace URL and git subdirectory source were not
   tested, so Q1 remains untested.
+- An isolated `CODEX_HOME` on 2026-09-26 installed and enabled cached `p1` and
+  `p2` from `spike/.agents/plugins/marketplace.json`. A read-only, ephemeral
+  Codex CLI session ran both SessionStart hooks, but exposed no fixture MCP
+  tools, resources, templates, or prompts; neither echo server wrote its
+  initialization log. A second session did not expose `spike-reviewer` as an
+  invocable agent. These are CLI-session observations only, not a claim about
+  other Codex surfaces.
 
 ## Reproduction
 

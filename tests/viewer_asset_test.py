@@ -29,12 +29,12 @@ assert GENERATED_PROVENANCE.read_bytes() == provenance_bytes
 assert provenance == {
     "repository": "https://github.com/yschimke/compose-preview-server",
     "pullRequest": "https://github.com/yschimke/compose-preview-server/pull/1135",
-    "commit": "67ebf8e9b8796f82bc6a0869727aa7173d4962b4",
+    "commit": "1f3975fccd944bf734542dd7996ec355bc8a2ff5",
     "path": "mcp-app/compose-preview-viewer.html",
     # Stable MCP Apps UI protocol revision:
     # https://github.com/modelcontextprotocol/ext-apps/tree/main/specification/2026-01-26
     "mcpAppsProtocolVersion": "2026-01-26",
-    "sha256": "7a3a0158b5c898afca1bd9c9184bbc6e95fe1d0fc6aab8cb0f2b6e7c0e32141f",
+    "sha256": "5f48cc3cf364d5332528ddb5b0b099fd47f3e3a0c588c96f7c9c7eedaa04051c",
 }
 assert hashlib.sha256(source_bytes).hexdigest() == provenance["sha256"]
 assert f"protocolVersion: '{provenance['mcpAppsProtocolVersion']}'," in source
@@ -55,6 +55,7 @@ required = (
     "envelope.version !== 1",
     "!Array.isArray(envelope.result.content)",
     "envelope.result.content.every(block => block && typeof block === 'object'",
+    "value.cells.every(cell => cell && typeof cell === 'object'",
     "credentialKeyIn(envelope)",
     "function credentialKeyInUri(key, value)",
     "if (url.username || url.password)",

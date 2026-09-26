@@ -27,6 +27,12 @@ The fixture’s Antigravity `plugin.json` uses the current official v1 schema UR
 | Q13: Existing `yschimke-skills` marketplace | n/a | n/a | Install ✅; trigger not run | n/a | Codex 0.151.0 added `yschimke/skills`, installed `yschimke-skills` 0.1.4, and cached all 8 `SKILL.md` files. No model turn tested triggering. |
 | Q14: Canonical skills from `~/.agents/skills` or Skills CLI | Not run | n/a | n/a | n/a | — |
 | Q15: Canonical skills plus wiring plugins coexist | Not run | Not run | Install/list ✅; trigger not run | Not run | Codex 0.151.0 enabled `yschimke-skills`, `compose-catalogs`, and `compose-preview` together. The wiring plugins contain only the shared `harness-notes` skill, so they introduced no duplicate canonical Compose skill IDs. |
+| Q16: MCP App viewer resource rendering | Not run | Not run | Not run | Not run | Fixture ready: `render_preview` `_meta.ui.resourceUri` is `ui://spike/app`, with `text/html;profile=mcp-app` and text/resource-link fallback. |
+| Q17: Viewer postMessage actions | Not run | Not run | Not run | Not run | Fixture ready: portable initialize/initialized bridge calls `status`, sends `ui/message`, checks parent source, and handles errors. |
+| Q18: `elicitation/create` | Not run | Not run | Not run | Not run | Fixture ready: `ask` provides `form` and `url` modes using protocol `2025-11-25`, with fallback text. |
+| Q19: `prompts/list` and `prompts/get` | Not run | Not run | Not run | Not run | Fixture ready: `spike-prompt`. |
+| Q20: Plugin `agents/` reviewer discovery | Not run | Not run | Not run | Not run | Fixture ready: `p1/agents/spike-reviewer.md`; no real review is performed. |
+| Q21: SessionStart hook marker | n/a | Not run | Not run | n/a | Fixture ready for Claude Code and Codex: SessionStart logs and prints `SPIKE-SESSION-START`; host event support is unverified. |
 
 ## Additional observations
 

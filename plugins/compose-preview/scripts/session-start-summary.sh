@@ -1,5 +1,5 @@
 #!/bin/sh
-# Emit a safe, text-only SessionStart summary for Claude Code and Codex.
+# Emit a safe SessionStart context summary for Claude Code and Codex.
 #
 # A future CLI may expose `compose-preview mcp doctor --json`. Probe the MCP
 # help before invoking it: current releases do not have that subcommand, which
@@ -20,4 +20,5 @@ else
   doctor_status=unavailable
 fi
 
-printf '%s\n' "Compose design status: unacknowledged comments unavailable; MCP doctor ${doctor_status}; unsaved temporary copies unavailable."
+summary="Compose design status: unacknowledged comments unavailable; MCP doctor ${doctor_status}; unsaved temporary copies unavailable."
+printf '%s\n' "{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"${summary}\"}}"

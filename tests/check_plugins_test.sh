@@ -180,7 +180,7 @@ from pathlib import Path
 for harness, name in (("claude", "hooks.json"), ("codex", "codex-hooks.json")):
     hooks = json.loads((Path(sys.argv[1]) / name).read_text(encoding="utf-8"))["hooks"]
     assert hooks["Stop"][-1]["hooks"][0] == {
-        "command": f"${{CLAUDE_PLUGIN_ROOT}}/scripts/future-stop.sh --harness={harness}",
+        "command": f"\"${{CLAUDE_PLUGIN_ROOT}}/scripts/future-stop.sh\" --harness={harness}",
         "timeout": 15,
         "type": "command",
     }, hooks

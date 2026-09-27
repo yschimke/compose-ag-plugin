@@ -29,7 +29,7 @@ def assert_session_start_hook(hooks: dict) -> None:
     session_start = hooks["hooks"]["SessionStart"]
     assert len(session_start) == 1
     command = session_start[0]["hooks"][0]["command"]
-    assert command == "${CLAUDE_PLUGIN_ROOT}/echo-mcp/hook-log.sh session-start"
+    assert command == '"${CLAUDE_PLUGIN_ROOT}/echo-mcp/hook-log.sh" session-start'
 
 
 def assert_cached_plugin(plugin_name: str, server_name: str, cache_root: Path) -> None:
@@ -51,19 +51,29 @@ def assert_cached_plugin(plugin_name: str, server_name: str, cache_root: Path) -
     )
     assert codex["name"] == plugin_name
     assert codex["skills"] == "./skills/"
-    assert codex["mcpServers"] == "./.mcp.json"
+    assert codex["mcpServers"] == "./.codex-mcp.json"
 
+    # Codex resolves package-relative args through cwd; its expansion of
+    # ${CLAUDE_PLUGIN_ROOT} in args is unconfirmed, so it keeps its own file.
+    codex_mcp = json.loads((cached_plugin / ".codex-mcp.json").read_text(encoding="utf-8"))
+    codex_configured = codex_mcp["mcpServers"][server_name]
+    assert codex_configured["cwd"] == "."
+    assert cached_plugin / codex_configured["args"][0] == server
+
+    # Claude Code resolves relative args against the session directory and ignores cwd.
     mcp = json.loads((cached_plugin / ".mcp.json").read_text(encoding="utf-8"))
     configured = mcp["mcpServers"][server_name]
-    assert configured["cwd"] == "."
-    configured_server = cached_plugin / configured["args"][0]
+    assert "cwd" not in configured
+    assert configured["args"][0] == "${CLAUDE_PLUGIN_ROOT}/echo-mcp/server.py"
+    configured_server = Path(configured["args"][0].replace("${CLAUDE_PLUGIN_ROOT}", str(cached_plugin)))
     assert configured_server == server
     assert configured_server.is_file(), configured_server
 
     hooks = json.loads((cached_plugin / "hooks" / "hooks.json").read_text(encoding="utf-8"))
     assert_session_start_hook(hooks)
     for command in hook_commands(hooks):
-        executable = Path(command.split(" ", 1)[0].replace("${CLAUDE_PLUGIN_ROOT}", str(cached_plugin)))
+        assert command.startswith('"${CLAUDE_PLUGIN_ROOT}/'), command
+        executable = Path(command[1 : command.index('"', 1)].replace("${CLAUDE_PLUGIN_ROOT}", str(cached_plugin)))
         assert executable == logger
         assert executable.is_file(), executable
         assert "/../" not in command

@@ -1,0 +1,9 @@
+{
+  "repository": "https://github.com/yschimke/compose-preview-server",
+  "release": "v3.75.0",
+  "releaseAsset": "https://github.com/yschimke/compose-preview-server/releases/download/v3.75.0/compose-preview-viewer.html",
+  "commit": "4c54483502348c3ef1f1773d441227f61ac72f0a",
+  "path": "mcp-app/compose-preview-viewer.html",
+  "mcpAppsProtocolVersion": "2026-01-26",
+  "sha256": "a621c5fe82d506cb8fd13af49ccb3f92b392321e7800160fe65f470a7d59ea99"
+}

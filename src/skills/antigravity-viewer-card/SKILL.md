@@ -5,6 +5,9 @@ description: Show a render of the person's own Compose previews in Antigravity â
 
 # Rendering previews in Antigravity
 
+**Render first, explore later.** Your first tool call is `render_preview`.
+Only if it fails do you look anything up.
+
 1. Call `render_preview` on the **local** `compose-preview-mcp` server with
    `preview` set to the function name the person used, for example
    `preview: "ListScreenPreview"`. Nothing else is needed first: the server

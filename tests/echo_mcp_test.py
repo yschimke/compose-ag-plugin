@@ -47,7 +47,40 @@ unsupported = call(
         "params": {"name": "ask", "arguments": {"mode": "form"}},
     }
 )["result"]
-assert unsupported["content"][0]["text"] == "form elicitation unavailable; use the text fallback: choose compact."
+assert unsupported["content"][0]["text"] == echo_mcp.FORM_FALLBACK
+
+unsupported_url = call(
+    {
+        "jsonrpc": "2.0",
+        "id": "unsupported-url",
+        "method": "tools/call",
+        "params": {"name": "ask", "arguments": {"mode": "url"}},
+    }
+)["result"]
+assert unsupported_url["content"][0]["text"] == echo_mcp.URL_FALLBACK
+assert "https://example.invalid/spike-elicitation" in echo_mcp.URL_FALLBACK
+assert "verification code SPIKE-CODE" in echo_mcp.URL_FALLBACK
+assert "call access_status until it reports authorized" in echo_mcp.URL_FALLBACK
+access_status = call(
+    {
+        "jsonrpc": "2.0",
+        "id": "access-status",
+        "method": "tools/call",
+        "params": {"name": "access_status", "arguments": {}},
+    }
+)["result"]
+assert access_status["content"][0]["text"] == "access status: authorized"
+
+for zero_argument_tool in ("status", "access_status", "render_preview"):
+    rejected_arguments = call(
+        {
+            "jsonrpc": "2.0",
+            "id": f"invalid-{zero_argument_tool}-arguments",
+            "method": "tools/call",
+            "params": {"name": zero_argument_tool, "arguments": {"unexpected": True}},
+        }
+    )
+    assert rejected_arguments["error"]["code"] == -32602
 
 invalid_arguments = call(
     {
@@ -73,7 +106,12 @@ call(
 )
 
 tools = call({"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}})["result"]["tools"]
-assert {tool["name"] for tool in tools} == {"render_preview", "status", "ask"}
+assert {tool["name"] for tool in tools} == {
+    "render_preview",
+    "status",
+    "access_status",
+    "ask",
+}
 assert next(tool for tool in tools if tool["name"] == "render_preview")["_meta"]["ui"]["resourceUri"] == "ui://spike/app"
 
 viewer = call({"jsonrpc": "2.0", "id": 2, "method": "resources/read", "params": {"uri": echo_mcp.VIEWER_URI}})["result"]["contents"][0]
@@ -132,7 +170,7 @@ with contextlib.redirect_stdout(stdout):
     )
 declined_responses = [json.loads(line) for line in stdout.getvalue().splitlines()]
 assert declined_responses[1]["id"] == "declined-tool"
-assert "text fallback: choose compact" in declined_responses[1]["result"]["content"][0]["text"]
+assert declined_responses[1]["result"]["content"][0]["text"] == echo_mcp.FORM_FALLBACK
 
 stdout = io.StringIO()
 with contextlib.redirect_stdout(stdout):
@@ -154,10 +192,7 @@ with contextlib.redirect_stdout(stdout):
     )
 malformed_accept_responses = [json.loads(line) for line in stdout.getvalue().splitlines()]
 assert malformed_accept_responses[1]["id"] == "malformed-accept-tool"
-assert (
-    "text fallback: choose compact"
-    in malformed_accept_responses[1]["result"]["content"][0]["text"]
-)
+assert malformed_accept_responses[1]["result"]["content"][0]["text"] == echo_mcp.FORM_FALLBACK
 
 
 def start_elicitation(tool_request_id: str) -> dict:
@@ -195,6 +230,7 @@ overlapping_request = call(
 assert {tool["name"] for tool in overlapping_request["result"]["tools"]} == {
     "render_preview",
     "status",
+    "access_status",
     "ask",
 }
 assert overlap["id"] in echo_mcp.PENDING_ELICITATIONS

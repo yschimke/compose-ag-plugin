@@ -1,0 +1,39 @@
+{
+  "author": {
+    "name": "Yuri Schimke"
+  },
+  "description": "Discover Compose components, inspect properties, and render catalog variants.",
+  "interface": {
+    "capabilities": [
+      "Interactive"
+    ],
+    "category": "Developer Tools",
+    "defaultPrompt": [
+      "Show the available Compose component catalogs."
+    ],
+    "developerName": "Yuri Schimke",
+    "displayName": "Compose Catalogs",
+    "longDescription": "Discover Compose components, inspect their properties, and render catalog variants through Compose Preview.",
+    "shortDescription": "Discover and render Compose component catalogs."
+  },
+  "keywords": [
+    "compose",
+    "catalog",
+    "material3",
+    "wear"
+  ],
+  "license": "Apache-2.0",
+  "mcpServers": {
+    "compose-preview-catalog": {
+      "env_http_headers": {
+        "X-Compose-Preview-Token": "COMPOSE_PREVIEW_TOKEN"
+      },
+      "type": "http",
+      "url": "https://preview.coo.ee/mcp"
+    }
+  },
+  "name": "compose-catalogs",
+  "repository": "https://github.com/yschimke/compose-ag-plugin",
+  "skills": "./skills/",
+  "version": "0.2.0"
+}

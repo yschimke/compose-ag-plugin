@@ -14,6 +14,7 @@ from generate import (
     ASSET_SOURCE_ROOT,
     HOOK_SOURCE_ROOT,
     SKILL_SOURCE_ROOT,
+    render_codex_manifest,
     render_hooks,
     render_mcp_servers,
 )
@@ -32,6 +33,7 @@ SCHEMA_ASSERTIONS = {
     "type",
 }
 JSON_SCHEMA_TYPES = {"array", "boolean", "integer", "null", "number", "object", "string"}
+ECMASCRIPT_PORTABLE_ESCAPES = frozenset("dDwWbfnrtv\\.^$|?*+()[]{}-/")
 
 
 def read_json(path: Path) -> object:
@@ -88,6 +90,81 @@ def json_values_equal(left: object, right: object) -> bool:
     return left == right
 
 
+def compile_json_schema_pattern(pattern: str) -> re.Pattern[str]:
+    """Compile the ECMAScript-compatible subset this stdlib validator can prove.
+
+    JSON Schema patterns use ECMA-262 semantics, while Python's regular-expression dialect
+    differs in observable ways. Keep the supported subset explicit and fail closed on constructs
+    whose behavior cannot be reproduced faithfully. In particular, Python's ``$`` accepts a final
+    newline and its Unicode shorthand classes differ from JavaScript's.
+    """
+    translated: list[str] = []
+    in_character_class = False
+    character_class_has_member = False
+    character_class_at_start = False
+    previous_was_quantifier = False
+    index = 0
+    while index < len(pattern):
+        character = pattern[index]
+        if character == "\\":
+            if index + 1 == len(pattern):
+                raise ValueError("trailing escape")
+            escaped = pattern[index + 1]
+            if escaped in "sS":
+                raise ValueError(f"unsupported ECMAScript shorthand: \\{escaped}")
+            if escaped == "-" and not in_character_class:
+                raise ValueError(
+                    "escaped hyphen is only valid inside an ECMAScript character class"
+                )
+            if escaped not in ECMASCRIPT_PORTABLE_ESCAPES:
+                raise ValueError(f"unsupported ECMAScript escape: \\{escaped}")
+            translated.extend((character, escaped))
+            if in_character_class:
+                character_class_has_member = True
+                character_class_at_start = False
+            previous_was_quantifier = False
+            index += 2
+            continue
+        if in_character_class:
+            if character == "[":
+                raise ValueError("nested character classes are unsupported")
+            if character == "]":
+                if not character_class_has_member:
+                    raise ValueError("empty character classes are unsupported")
+                in_character_class = False
+                previous_was_quantifier = False
+            elif character == "^" and character_class_at_start:
+                character_class_at_start = False
+            else:
+                character_class_has_member = True
+                character_class_at_start = False
+            translated.append(character)
+            index += 1
+            continue
+        if character == "[":
+            in_character_class = True
+            character_class_has_member = False
+            character_class_at_start = True
+            translated.append(character)
+        elif character == "]":
+            raise ValueError("unmatched closing character-class bracket")
+        elif character == "$":
+            translated.append(r"\Z")
+        elif character == ".":
+            raise ValueError("wildcard '.' has incompatible line-terminator semantics")
+        elif character in "(){}":
+            raise ValueError(f"unsupported ECMAScript construct: {character}")
+        elif character == "+" and previous_was_quantifier:
+            raise ValueError("possessive quantifiers are not valid ECMAScript")
+        else:
+            translated.append(character)
+        previous_was_quantifier = character in "*+?"
+        index += 1
+    if in_character_class:
+        raise ValueError("unterminated character class")
+    return re.compile("".join(translated), flags=re.ASCII)
+
+
 def validate_schema_shape(schema: object, *, manifest_path: Path, schema_path: str = "$") -> None:
     """Verify that every node in a vendored schema uses the supported subset."""
     if not isinstance(schema, dict):
@@ -111,8 +188,8 @@ def validate_schema_shape(schema: object, *, manifest_path: Path, schema_path: s
         if not isinstance(pattern, str):
             raise ValueError(f"{manifest_path}: pattern at {schema_path} must be a string")
         try:
-            re.compile(pattern)
-        except re.error as error:
+            compile_json_schema_pattern(pattern)
+        except (re.error, ValueError) as error:
             raise ValueError(f"{manifest_path}: invalid pattern at {schema_path}: {error}") from error
 
     required = schema.get("required", [])
@@ -163,7 +240,7 @@ def _validate_value_against_schema(
     pattern = schema.get("pattern")
     if pattern is not None and isinstance(value, str):
         assert isinstance(pattern, str)
-        if re.search(pattern, value) is None:
+        if compile_json_schema_pattern(pattern).search(value) is None:
             raise ValueError(f"{manifest_path}: {value_path} does not match {pattern!r}")
 
     if isinstance(value, dict):
@@ -288,9 +365,13 @@ def main() -> None:
             raise ValueError(f"{root}: {'; '.join(details)}")
         antigravity = read_json(root / "plugin.json")
         claude = read_json(root / ".claude-plugin" / "plugin.json")
+        codex = read_json(root / ".codex-plugin" / "plugin.json")
         validate_manifest_schema(antigravity, "antigravity-plugin.schema.json", root / "plugin.json")
         validate_manifest_schema(
             claude, "claude-plugin.schema.json", root / ".claude-plugin" / "plugin.json"
+        )
+        validate_manifest_schema(
+            codex, "codex-plugin.schema.json", root / ".codex-plugin" / "plugin.json"
         )
         expected_antigravity = {
             "$schema": ANTIGRAVITY_SCHEMA,
@@ -308,6 +389,20 @@ def main() -> None:
             raise ValueError(f"{root}/.claude-plugin/plugin.json has invalid package metadata")
         if claude.get("keywords") != plugin.get("keywords", []):
             raise ValueError(f"{root}/.claude-plugin/plugin.json has invalid keywords")
+        expected_codex = render_codex_manifest(
+            name=name,
+            version=plugin["version"],
+            description=plugin["description"],
+            keywords=plugin.get("keywords", []),
+            skills=plugin.get("skills", []),
+            mcp=plugin.get("mcp", []),
+            interface=plugin.get("interface"),
+            owner=source["owner"],
+            repository=source["repository"],
+            license_name=source["license"],
+        )
+        if codex != expected_codex:
+            raise ValueError(f"{root}/.codex-plugin/plugin.json does not match the Codex contract")
         for skill_path in expected_skills:
             validate_skill(skill_path)
             shared_source = SKILL_SOURCE_ROOT / skill_path.parent.name / "SKILL.md"

@@ -31,6 +31,13 @@ PENDING_ELICITATIONS: dict[object, object] = {}
 ELICITATION_IDS = count(1)
 CLIENT_ELICITATION_CAPABILITIES: dict[str, object] = {}
 CLIENT_ELICITATION_DECLARED = False
+FORM_FALLBACK = (
+    "form elicitation unavailable; choose a variant in text: compact or expanded."
+)
+URL_FALLBACK = (
+    "url elicitation unavailable; open https://example.invalid/spike-elicitation, "
+    "enter verification code SPIKE-CODE, then call access_status until it reports authorized."
+)
 
 VIEWER_HTML = """<!doctype html>
 <html lang="en">
@@ -119,6 +126,11 @@ TOOLS = [
         "inputSchema": {"type": "object", "additionalProperties": False},
     },
     {
+        "name": "access_status",
+        "description": "Poll the fixture authorization flow until it is authorized.",
+        "inputSchema": {"type": "object", "additionalProperties": False},
+    },
+    {
         "name": "ask",
         "description": "Probe form or URL elicitation and return text if the client declines or cannot elicit.",
         "inputSchema": {
@@ -192,6 +204,10 @@ def text_result(text: str) -> dict[str, object]:
     return {"content": [{"type": "text", "text": text}]}
 
 
+def elicitation_fallback(mode: str) -> str:
+    return URL_FALLBACK if mode == "url" else FORM_FALLBACK
+
+
 def handle_elicitation_response(request_id: object, response: dict[str, object]) -> bool:
     if request_id not in PENDING_ELICITATIONS:
         return False
@@ -210,7 +226,7 @@ def handle_elicitation_response(request_id: object, response: dict[str, object])
     if not accepted:
         result(
             tool_request_id["request_id"],
-            text_result(f"{tool_request_id['mode']} elicitation unavailable; use the text fallback: choose compact."),
+            text_result(elicitation_fallback(tool_request_id["mode"])),
         )
     else:
         result(
@@ -290,8 +306,15 @@ def handle(request: object) -> None:
     elif method == "tools/call":
         tool_name = params.get("name") if isinstance(params, dict) else None
         arguments = params.get("arguments", {}) if isinstance(params, dict) else {}
+        if tool_name in {"status", "access_status", "render_preview"} and (
+            not isinstance(arguments, dict) or arguments
+        ):
+            error(request_id, -32602, f"{tool_name} does not accept arguments")
+            return
         if tool_name == "status":
             result(request_id, text_result(f"status from {SERVER_NAME}"))
+        elif tool_name == "access_status":
+            result(request_id, text_result("access status: authorized"))
         elif tool_name == "render_preview":
             result(
                 request_id,
@@ -322,7 +345,7 @@ def handle(request: object) -> None:
             if not supports_elicitation(mode):
                 result(
                     request_id,
-                    text_result(f"{mode} elicitation unavailable; use the text fallback: choose compact."),
+                    text_result(elicitation_fallback(mode)),
                 )
                 return
             elicitation_id = f"elicitation-{next(ELICITATION_IDS)}"

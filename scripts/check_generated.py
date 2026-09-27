@@ -29,7 +29,13 @@ def generated_paths(source: object) -> tuple[list[Path], set[str]]:
             raise ValueError(f"duplicate plugin name: {name}")
         plugin_names.add(name)
         plugin_root = ROOT / "plugins" / name
-        paths.extend((plugin_root / "plugin.json", plugin_root / ".claude-plugin" / "plugin.json"))
+        paths.extend(
+            (
+                plugin_root / "plugin.json",
+                plugin_root / ".claude-plugin" / "plugin.json",
+                plugin_root / ".codex-plugin" / "plugin.json",
+            )
+        )
         if plugin.get("mcp"):
             paths.extend((plugin_root / "mcp_config.json", plugin_root / ".mcp.json"))
         skills = plugin.get("skills", [])

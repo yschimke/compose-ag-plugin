@@ -91,6 +91,45 @@ class ManifestSchemaValidationTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "must have type string"):
             self.validate(3, {"type": "string", "pattern": "x"})
 
+    def test_pattern_uses_ecmascript_anchor_and_ascii_shorthand_semantics(self) -> None:
+        self.validate("a", {"pattern": "^a$"})
+        with self.assertRaisesRegex(ValueError, "does not match"):
+            self.validate("a\n", {"pattern": "^a$"})
+
+        self.validate("1", {"pattern": r"^\d$"})
+        with self.assertRaisesRegex(ValueError, "does not match"):
+            self.validate("١", {"pattern": r"^\d$"})
+
+    def test_rejects_pattern_constructs_without_portable_ecmascript_semantics(self) -> None:
+        for pattern in (
+            ".",
+            r"\s",
+            r"\B",
+            r"\-",
+            "]",
+            "[]]",
+            "[^]]",
+            "[a]]",
+            "(group)",
+            "a{1,2}",
+            "a++",
+            "a*+",
+            "a?+",
+        ):
+            with self.subTest(pattern=pattern):
+                with self.assertRaisesRegex(ValueError, "invalid pattern"):
+                    self.validate("anything", {"pattern": pattern})
+
+        for pattern, value in (
+            ("a*?", "a"),
+            ("a+?", "a"),
+            ("a??", "a"),
+            (r"[\-]", "-"),
+            ("[^a]", "b"),
+        ):
+            with self.subTest(pattern=pattern):
+                self.validate(value, {"pattern": pattern})
+
     def test_rejects_unsupported_keywords_in_unvisited_child_schemas(self) -> None:
         schemas_and_values = [
             (

@@ -28,26 +28,103 @@ fake_bin="$temporary_root/bin"
 mkdir "$fake_bin"
 fake_cli="$fake_bin/compose-preview"
 
-printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then exit 0; fi' 'exit 1' >"$fake_cli"
+printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ] || [ "$1 $2" = "design --help" ]; then exit 0; fi' 'exit 1' >"$fake_cli"
 chmod +x "$fake_cli"
 unsupported_output="$(PATH="$fake_bin:$PATH" "$script")"
 assert_equal '' "$unsupported_output" 'unsupported doctor is a silent no-op'
 
-printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then exit 23; fi' 'exit 0' >"$fake_cli"
+printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then exit 23; fi' 'if [ "$1 $2" = "design --help" ]; then exit 0; fi' 'exit 0' >"$fake_cli"
 chmod +x "$fake_cli"
 failed_help_output="$(PATH="$fake_bin:$PATH" "$script")"
-assert_equal "$(expected_output 'Compose Preview needs attention: the MCP capability probe failed.')" "$failed_help_output" 'failed help guidance'
+assert_equal "$(expected_output 'Compose Preview needs attention: The MCP capability probe failed.')" "$failed_help_output" 'failed help guidance'
 
-printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then echo doctor; exit 0; fi' 'exit 0' >"$fake_cli"
+printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then echo doctor; exit 0; fi' 'if [ "$1 $2" = "design --help" ]; then exit 0; fi' 'exit 0' >"$fake_cli"
 chmod +x "$fake_cli"
 ok_output="$(PATH="$fake_bin:$PATH" "$script")"
 assert_equal '' "$ok_output" 'healthy doctor is a silent no-op'
 
-printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then echo doctor; exit 0; fi' 'printf "%s\\n" "COMPOSE_PREVIEW_TOKEN=must-not-leak" >&2' 'exit 1' >"$fake_cli"
+printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then exit 0; fi' 'if [ "$1 $2" = "design --help" ]; then exit 23; fi' 'if [ "$1" = "--help" ]; then echo design; exit 0; fi' 'exit 0' >"$fake_cli"
+chmod +x "$fake_cli"
+failed_design_help_output="$(PATH="$fake_bin:$PATH" "$script")"
+assert_equal "$(expected_output 'Compose Preview needs attention: The design-status capability probe failed.')" "$failed_design_help_output" 'failed design help guidance'
+
+printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then exit 0; fi' 'if [ "$1 $2" = "design --help" ]; then exit 23; fi' 'if [ "$1" = "--help" ]; then echo mcp; exit 0; fi' 'exit 1' >"$fake_cli"
+chmod +x "$fake_cli"
+old_cli_output="$(PATH="$fake_bin:$PATH" "$script")"
+assert_equal '' "$old_cli_output" 'older CLI without design is a silent no-op'
+
+printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then echo doctor; exit 0; fi' 'if [ "$1 $2" = "design --help" ]; then exit 0; fi' 'printf "%s\\n" "COMPOSE_PREVIEW_TOKEN=must-not-leak" >&2' 'exit 1' >"$fake_cli"
 failed_output="$(PATH="$fake_bin:$PATH" "$script")"
 assert_equal "$(expected_output 'Compose Preview needs attention: MCP doctor failed.')" "$failed_output" 'failed doctor guidance'
 if [[ "$failed_output" == *must-not-leak* ]]; then
   printf '%s\n' 'FAIL: doctor diagnostics must not leak into the SessionStart summary' >&2
+  exit 1
+fi
+
+# The released status command contributes only integers read from its versioned JSON envelope.
+status_args="$temporary_root/status-args"
+printf '%s\n' \
+  '#!/bin/sh' \
+  'if [ "$1 $2" = "mcp --help" ]; then echo doctor; exit 0; fi' \
+  'if [ "$1 $2" = "mcp doctor" ]; then exit 0; fi' \
+  'if [ "$1 $2" = "design --help" ]; then echo status; exit 0; fi' \
+  'if [ "$1 $2" = "design status" ]; then printf "%s\n" "$*" >"$STATUS_ARGS"; cat "$STATUS_JSON"; exit 0; fi' \
+  'exit 1' >"$fake_cli"
+chmod +x "$fake_cli"
+status_json="$temporary_root/status.json"
+# Envelope shape as printed by compose-preview-server v3.75.0 `design status --json`.
+printf '%s\n' '{"schema":"compose-preview-design-status/v1","verdict":"unavailable","totals":{"workspaceDesigns":4,"serverLinked":3,"unsavedTemporaryCopies":1,"unacknowledgedComments":2,"unavailable":2},"designs":[{"designId":"a","file":"ui-builder/designs/a.json","state":"unsaved","unacknowledgedComments":2},{"designId":"b","file":"ui-builder/designs/b.json","state":"clean","unacknowledgedComments":0},{"designId":"c","file":"ui-builder/designs/c.json","state":"unavailable","code":"REMOTE_UNAVAILABLE"},{"designId":"d","file":"ui-builder/designs/d.json","state":"unavailable","code":"MISSING_HOME"}]}' >"$status_json"
+status_output="$(STATUS_JSON="$status_json" STATUS_ARGS="$status_args" CLAUDE_PROJECT_DIR="$temporary_root/project with spaces" PATH="$fake_bin:$PATH" "$script")"
+assert_equal "$(expected_output 'Compose Preview needs attention: 2 unacknowledged design comments; 1 unsaved temporary copy; design inventory unavailable for 1 workspace-linked design.')" "$status_output" 'actionable workspace design status'
+assert_equal "design status --workspace $temporary_root/project with spaces --json --timeout 2" "$(cat "$status_args")" 'status workspace and bound'
+
+# Until designs record a home (compose-preview-server#1157) every repo-published design reports
+# MISSING_HOME. That is not an actionable problem and must not produce a warning on every session.
+printf '%s\n' '{"schema":"compose-preview-design-status/v1","verdict":"unavailable","totals":{"workspaceDesigns":2,"serverLinked":0,"unsavedTemporaryCopies":0,"unacknowledgedComments":0,"unavailable":2},"designs":[{"designId":"a","file":"ui-builder/designs/a.json","state":"unavailable","code":"MISSING_HOME"},{"designId":"b","file":"ui-builder/designs/b.json","state":"unavailable","code":"MISSING_HOME"}]}' >"$status_json"
+missing_home_output="$(STATUS_JSON="$status_json" STATUS_ARGS="$status_args" PATH="$fake_bin:$PATH" "$script")"
+assert_equal '' "$missing_home_output" 'designs without a recorded home are silent'
+
+printf '%s\n' '{"schema":"compose-preview-design-status/v1","verdict":"unavailable","totals":{"workspaceDesigns":3,"serverLinked":2,"unsavedTemporaryCopies":0,"unacknowledgedComments":1,"unavailable":2},"designs":[{"designId":"a","file":"ui-builder/designs/a.json","state":"unavailable","code":"MISSING_HOME"},{"designId":"b","file":"ui-builder/designs/b.json","state":"unavailable","code":"AUTHORIZATION_REQUIRED"},{"designId":"c","file":"ui-builder/designs/c.json","state":"clean","unacknowledgedComments":1}]}' >"$status_json"
+mixed_home_output="$(STATUS_JSON="$status_json" STATUS_ARGS="$status_args" PATH="$fake_bin:$PATH" "$script")"
+assert_equal "$(expected_output 'Compose Preview needs attention: 1 unacknowledged design comment; design inventory unavailable for 1 workspace-linked design.')" "$mixed_home_output" 'missing homes are excluded from the unavailable count only'
+
+# A clean workspace is a silent no-op.
+printf '%s\n' '{"schema":"compose-preview-design-status/v1","verdict":"ok","totals":{"workspaceDesigns":0,"serverLinked":0,"unsavedTemporaryCopies":0,"unacknowledgedComments":0,"unavailable":0},"designs":[]}' >"$status_json"
+clean_status_output="$(STATUS_JSON="$status_json" STATUS_ARGS="$status_args" PATH="$fake_bin:$PATH" "$script")"
+assert_equal '' "$clean_status_output" 'clean workspace status is silent'
+
+# An envelope from another schema version is not guessed at.
+printf '%s\n' '{"schema":"compose-preview-design-status/v2","totals":{"unsavedTemporaryCopies":0,"unacknowledgedComments":0,"unavailable":0}}' >"$status_json"
+other_schema_output="$(STATUS_JSON="$status_json" STATUS_ARGS="$status_args" PATH="$fake_bin:$PATH" "$script")"
+assert_equal "$(expected_output 'Compose Preview needs attention: Workspace design status returned an unreadable summary.')" "$other_schema_output" 'unknown status schema is not parsed'
+
+# Even stdout is treated as untrusted: anything but the versioned envelope is replaced.
+printf '%s\n' \
+  '#!/bin/sh' \
+  'if [ "$1 $2" = "mcp --help" ]; then exit 0; fi' \
+  'if [ "$1 $2" = "design --help" ]; then echo status; exit 0; fi' \
+  'if [ "$1 $2" = "design status" ]; then echo "COMPOSE_PREVIEW_TOKEN=must-not-leak"; exit 0; fi' \
+  'exit 0' >"$fake_cli"
+chmod +x "$fake_cli"
+unsafe_status_output="$(PATH="$fake_bin:$PATH" "$script")"
+assert_equal "$(expected_output 'Compose Preview needs attention: Workspace design status returned an unreadable summary.')" "$unsafe_status_output" 'unsafe status summary is replaced'
+if [[ "$unsafe_status_output" == *must-not-leak* ]]; then
+  printf '%s\n' 'FAIL: status stdout must not leak into the SessionStart summary' >&2
+  exit 1
+fi
+
+# Status failures and diagnostics collapse to one fixed sentence.
+printf '%s\n' \
+  '#!/bin/sh' \
+  'if [ "$1 $2" = "mcp --help" ]; then exit 0; fi' \
+  'if [ "$1 $2" = "design --help" ]; then echo status; exit 0; fi' \
+  'if [ "$1 $2" = "design status" ]; then echo "credential=must-not-leak" >&2; exit 19; fi' \
+  'exit 0' >"$fake_cli"
+chmod +x "$fake_cli"
+failed_status_output="$(PATH="$fake_bin:$PATH" "$script")"
+assert_equal "$(expected_output 'Compose Preview needs attention: Workspace design status failed.')" "$failed_status_output" 'failed status guidance'
+if [[ "$failed_status_output" == *must-not-leak* ]]; then
+  printf '%s\n' 'FAIL: status diagnostics must not leak into the SessionStart summary' >&2
   exit 1
 fi
 
@@ -56,6 +133,7 @@ printf '%s\n' \
   '#!/bin/sh' \
   'if read -r unexpected; then exit 97; fi' \
   'if [ "$1 $2" = "mcp --help" ]; then echo doctor; fi' \
+  'if [ "$1 $2" = "design --help" ]; then exit 0; fi' \
   'exit 0' >"$fake_cli"
 chmod +x "$fake_cli"
 held_stdin="$temporary_root/held-stdin"
@@ -85,9 +163,46 @@ chmod +x "$fake_cli"
 started_at=$(date +%s)
 hung_help_output="$(PATH="$fake_bin:$PATH" "$script")"
 elapsed=$(($(date +%s) - started_at))
-assert_equal "$(expected_output 'Compose Preview needs attention: the MCP capability probe timed out.')" "$hung_help_output" 'hung help guidance'
+assert_equal "$(expected_output 'Compose Preview needs attention: The MCP capability probe timed out.')" "$hung_help_output" 'hung help guidance'
 if ((elapsed < 2 || elapsed >= 8)); then
   printf 'FAIL: help timeout took %s seconds\n' "$elapsed" >&2
+  exit 1
+fi
+
+# The workspace status call has the same hard process bound as the existing doctor call.
+printf '%s\n' \
+  '#!/bin/sh' \
+  'if [ "$1 $2" = "mcp --help" ]; then exit 0; fi' \
+  'if [ "$1 $2" = "design --help" ]; then echo status; exit 0; fi' \
+  'if [ "$1 $2" = "design status" ]; then while :; do :; done; fi' \
+  'exit 0' >"$fake_cli"
+chmod +x "$fake_cli"
+started_at=$(date +%s)
+hung_status_output="$(PATH="$fake_bin:$PATH" "$script")"
+elapsed=$(($(date +%s) - started_at))
+assert_equal "$(expected_output 'Compose Preview needs attention: Workspace design status timed out.')" "$hung_status_output" 'hung status guidance'
+if ((elapsed < 2 || elapsed >= 8)); then
+  printf 'FAIL: status timeout took %s seconds\n' "$elapsed" >&2
+  exit 1
+fi
+
+# Several individually bounded slow probes must still leave time for the hook to emit context
+# before the manifest's 10-second deadline.
+printf '%s\n' \
+  '#!/bin/sh' \
+  'sleep 2' \
+  'if [ "$1 $2" = "mcp --help" ]; then echo doctor; exit 0; fi' \
+  'if [ "$1 $2" = "mcp doctor" ]; then exit 0; fi' \
+  'if [ "$1 $2" = "design --help" ]; then echo status; exit 0; fi' \
+  'if [ "$1 $2" = "design status" ]; then echo "{\"schema\":\"compose-preview-design-status/v1\",\"totals\":{\"unsavedTemporaryCopies\":0,\"unacknowledgedComments\":1,\"unavailable\":0}}"; exit 0; fi' \
+  'exit 0' >"$fake_cli"
+chmod +x "$fake_cli"
+started_at=$(date +%s)
+cumulative_output="$(PATH="$fake_bin:$PATH" "$script")"
+elapsed=$(($(date +%s) - started_at))
+assert_equal "$(expected_output 'Compose Preview needs attention: Workspace design status timed out.')" "$cumulative_output" 'cumulative hook deadline guidance'
+if ((elapsed < 6 || elapsed >= 10)); then
+  printf 'FAIL: cumulative hook deadline took %s seconds\n' "$elapsed" >&2
   exit 1
 fi
 
@@ -101,7 +216,7 @@ chmod +x "$fake_cli"
 started_at=$(date +%s)
 stubborn_help_output="$(PATH="$fake_bin:$PATH" "$script")"
 elapsed=$(($(date +%s) - started_at))
-assert_equal "$(expected_output 'Compose Preview needs attention: the MCP capability probe timed out.')" "$stubborn_help_output" 'SIGTERM-ignoring help guidance'
+assert_equal "$(expected_output 'Compose Preview needs attention: The MCP capability probe timed out.')" "$stubborn_help_output" 'SIGTERM-ignoring help guidance'
 if ((elapsed < 2 || elapsed >= 8)); then
   printf 'FAIL: SIGTERM-ignoring help timeout took %s seconds\n' "$elapsed" >&2
   exit 1
@@ -111,6 +226,7 @@ fi
 printf '%s\n' \
   '#!/bin/sh' \
   'if [ "$1 $2" = "mcp --help" ]; then echo doctor; exit 0; fi' \
+  'if [ "$1 $2" = "design --help" ]; then exit 0; fi' \
   'while :; do :; done' >"$fake_cli"
 chmod +x "$fake_cli"
 started_at=$(date +%s)

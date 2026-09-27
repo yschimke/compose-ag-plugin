@@ -27,11 +27,28 @@ does not duplicate the canonical Compose workflows. Edit its single source at
 [`src/skills/harness-notes/SKILL.md`](src/skills/harness-notes/SKILL.md), then
 run the generator.
 
+`compose-preview` additionally carries the Antigravity-only viewer-card
+micro-skill. Keeping that instruction out of `compose-catalogs` avoids
+advertising a local artifact that the remote-catalog plugin does not package.
+
 Both plugins also ship the shared, read-only `design-reviewer` agent for Claude
 Code. It performs semantic, accessibility, font-scale, and device checks in its
 own context, then returns a short verdict with viewer or artifact links so
 rendered image payloads do not consume the main conversation. Codex and
 Antigravity support remains unverified in issue #6 Q20.
+
+`compose-preview` also ships the portable viewer bundle at
+`assets/compose-preview-viewer.html`. In Antigravity, copy that file unchanged
+into the response artifact folder and embed its bounded, credential-free static
+result fragment with `<agent-embed>`; the packaged
+`assets/compose-preview-viewer-fallback.md` requires the same response to carry
+a complete text result when the card or its bridge is unavailable. The bundle
+is the unmodified `compose-preview-viewer.html` asset from the
+compose-preview-server v3.75.0 release; the adjacent provenance file pins that
+release tag, its source commit, the SHA-256, and the stable MCP Apps UI
+protocol revision. Whether Antigravity permits the artifact copy and discovers
+the `<agent-embed>` card is still unverified (issue #6 Q9), so the text result
+is always required.
 
 Every plugin follows the [agent rules](docs/agent-rules.md): the agent sees what the user sees, edits through typed tools with schemas, edits a design at its one canonical home, and keeps discussion there.
 

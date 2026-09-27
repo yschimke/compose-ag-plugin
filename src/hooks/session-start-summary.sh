@@ -1,17 +1,18 @@
 #!/bin/sh
 # Emit a safe SessionStart context summary for Claude Code and Codex.
 #
-# A future CLI may expose `compose-preview mcp doctor --json`. Probe the MCP
-# help before invoking it: current releases do not have that subcommand, which
-# is not actionable and therefore produces no session context. Both subprocesses
-# are bounded independently and receive closed stdin so `mcp --help` cannot
-# accidentally become a long-running stdio server. Diagnostics may include
-# machine-specific paths or configuration details, so only a fixed status is
-# surfaced. The current CLI/MCP contracts expose no session-level inventory of
-# workspace-linked design comments or temporary copies; #18 remains open until
-# those facts can be reported without guessing from local files.
+# Probe capabilities before invoking them so an older installation remains a
+# silent no-op. Every subprocess is bounded independently and receives closed
+# stdin, so neither a help probe nor a status command can accidentally become a
+# long-running stdio server. Diagnostics may include machine-specific paths,
+# configuration details or credentials, so only fixed statuses and integers read
+# from the CLI's versioned status envelope are surfaced.
 
 probe_timeout_seconds=3
+# The manifest gives the whole hook 10 seconds. Reserve time for cleanup and the final JSON write;
+# otherwise several individually valid near-timeout probes can consume the harness deadline before
+# the result is emitted.
+hook_tick_budget=70
 temporary_root=$(mktemp -d "${TMPDIR:-/tmp}/compose-preview-session-start.XXXXXX") || exit 0
 probe_pid=
 
@@ -37,13 +38,22 @@ run_probe() {
   : >"$probe_output"
   rm -f "$probe_marker"
 
+  if [ "$hook_tick_budget" -le 0 ]; then
+    : >"$probe_marker"
+    return 124
+  fi
+
   "$@" </dev/null >"$probe_output" 2>/dev/null &
   probe_pid=$!
   probe_ticks=0
   probe_tick_limit=$((probe_timeout_seconds * 10))
+  if [ "$hook_tick_budget" -lt "$probe_tick_limit" ]; then
+    probe_tick_limit=$hook_tick_budget
+  fi
   while kill -0 "$probe_pid" 2>/dev/null && [ "$probe_ticks" -lt "$probe_tick_limit" ]; do
     sleep 0.1
     probe_ticks=$((probe_ticks + 1))
+    hook_tick_budget=$((hook_tick_budget - 1))
   done
   if kill -0 "$probe_pid" 2>/dev/null; then
     : >"$probe_marker"
@@ -71,6 +81,67 @@ emit_context() {
   printf '%s\n' "{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"$1\"}}"
 }
 
+context_message=
+
+append_context() {
+  if [ -n "$context_message" ]; then
+    context_message="$context_message $1"
+  else
+    context_message=$1
+  fi
+}
+
+plural() {
+  if [ "$1" -eq 1 ]; then
+    printf '%s' "$2"
+  else
+    printf '%s' "$3"
+  fi
+}
+
+# Read the versioned `design status --json` envelope (compose-preview-server v3.75.0+) and print
+# the fixed SessionStart sentence, or nothing when there is nothing to act on. Only integers are
+# taken from the output, so paths, URLs or credentials can never reach the session context.
+#
+# The server counts a design whose document records no `home` as MISSING_HOME inside `unavailable`.
+# Recorded homes are not written yet (compose-preview-server#1157), so today that is every design
+# published in the repository. It is not an unsaved copy or an unreachable server, and reporting it
+# would warn on every session, so those designs are left out of the unavailable count.
+status_summary() {
+  status_file=$1
+  status_lines=$(wc -l <"$status_file" | tr -d '[:space:]')
+  [ "$status_lines" = 1 ] || return 1
+  grep -Eq '^\{"schema":"compose-preview-design-status/v1",' "$status_file" || return 1
+  status_totals=$(grep -Eo '"totals":\{[^{}]*\}' "$status_file" | sed -n '1p')
+  [ -n "$status_totals" ] || return 1
+  status_integer='(0|[1-9][0-9]{0,8})'
+  for status_key in unacknowledgedComments unsavedTemporaryCopies unavailable; do
+    printf '%s\n' "$status_totals" | grep -Eq "[{,]\"$status_key\":$status_integer[,}]" || return 1
+  done
+  status_comments=$(printf '%s\n' "$status_totals" | sed -E 's/.*[{,]"unacknowledgedComments":([0-9]+)[,}].*/\1/')
+  status_copies=$(printf '%s\n' "$status_totals" | sed -E 's/.*[{,]"unsavedTemporaryCopies":([0-9]+)[,}].*/\1/')
+  status_unavailable=$(printf '%s\n' "$status_totals" | sed -E 's/.*[{,]"unavailable":([0-9]+)[,}].*/\1/')
+  # Design ids and file names are restricted to [A-Za-z0-9._-], so this code cannot be forged
+  # from inside another field.
+  status_missing_home=$(grep -Eo '"code":"MISSING_HOME"' "$status_file" | wc -l | tr -d '[:space:]')
+  [ "$status_missing_home" -le "$status_unavailable" ] || return 1
+  status_unavailable=$((status_unavailable - status_missing_home))
+
+  status_sentence=
+  if [ "$status_comments" -gt 0 ]; then
+    status_sentence="$status_comments unacknowledged design $(plural "$status_comments" comment comments)"
+  fi
+  if [ "$status_copies" -gt 0 ]; then
+    status_sentence="${status_sentence:+$status_sentence; }$status_copies unsaved temporary $(plural "$status_copies" copy copies)"
+  fi
+  if [ "$status_unavailable" -gt 0 ]; then
+    status_sentence="${status_sentence:+$status_sentence; }design inventory unavailable for $status_unavailable workspace-linked $(plural "$status_unavailable" design designs)"
+  fi
+  if [ -n "$status_sentence" ]; then
+    printf '%s.\n' "$status_sentence"
+  fi
+}
+
 if ! command -v compose-preview >/dev/null 2>&1; then
   emit_context "Compose Preview needs setup: compose-preview is not available on PATH."
   exit 0
@@ -83,28 +154,69 @@ else
   help_status=$?
 fi
 if [ "$help_status" -eq 124 ]; then
-  emit_context "Compose Preview needs attention: the MCP capability probe timed out."
-  exit 0
-fi
-if [ "$help_status" -ne 0 ]; then
-  emit_context "Compose Preview needs attention: the MCP capability probe failed."
-  exit 0
-fi
-if ! grep -Eq '(^|[[:space:]])doctor([[:space:]]|$)' "$help_output"; then
-  exit 0
+  append_context "The MCP capability probe timed out."
+elif [ "$help_status" -ne 0 ]; then
+  append_context "The MCP capability probe failed."
+elif grep -Eq '(^|[[:space:]])doctor([[:space:]]|$)' "$help_output"; then
+  doctor_output="$temporary_root/doctor.out"
+  if run_probe "$doctor_output" "$temporary_root/doctor.timed-out" compose-preview mcp doctor --json; then
+    doctor_status=0
+  else
+    doctor_status=$?
+  fi
+  if [ "$doctor_status" -eq 124 ]; then
+    append_context "MCP doctor timed out."
+  elif [ "$doctor_status" -ne 0 ]; then
+    append_context "MCP doctor failed."
+  fi
 fi
 
-doctor_output="$temporary_root/doctor.out"
-if run_probe "$doctor_output" "$temporary_root/doctor.timed-out" compose-preview mcp doctor --json; then
-  doctor_status=0
+design_help_output="$temporary_root/design-help.out"
+if run_probe "$design_help_output" "$temporary_root/design-help.timed-out" compose-preview design --help; then
+  design_help_status=0
 else
-  doctor_status=$?
+  design_help_status=$?
 fi
-if [ "$doctor_status" -eq 0 ]; then
-  exit 0
+if [ "$design_help_status" -eq 124 ]; then
+  append_context "The design-status capability probe timed out."
+elif [ "$design_help_status" -ne 0 ]; then
+  # Older launchers predate the top-level `design` command. A successful root help that does not
+  # advertise it is an unsupported capability, not a broken installation and not session context.
+  root_help_output="$temporary_root/root-help.out"
+  if run_probe "$root_help_output" "$temporary_root/root-help.timed-out" compose-preview --help; then
+    root_help_status=0
+  else
+    root_help_status=$?
+  fi
+  if [ "$root_help_status" -eq 124 ]; then
+    append_context "The design-command capability probe timed out."
+  elif [ "$root_help_status" -ne 0 ] || grep -Eq '(^|[[:space:]])design([[:space:]]|$)' "$root_help_output"; then
+    append_context "The design-status capability probe failed."
+  fi
+elif grep -Eq '(^|[[:space:]])status([[:space:]]|$)' "$design_help_output"; then
+  status_output="$temporary_root/status.out"
+  workspace_root=${CLAUDE_PROJECT_DIR:-$PWD}
+  if run_probe "$status_output" "$temporary_root/status.timed-out" \
+    compose-preview design status --workspace "$workspace_root" --json --timeout 2; then
+    status_status=0
+  else
+    status_status=$?
+  fi
+  if [ "$status_status" -eq 124 ]; then
+    append_context "Workspace design status timed out."
+  elif [ "$status_status" -ne 0 ]; then
+    append_context "Workspace design status failed."
+  elif [ -s "$status_output" ]; then
+    if status_summary_text=$(status_summary "$status_output"); then
+      if [ -n "$status_summary_text" ]; then
+        append_context "$status_summary_text"
+      fi
+    else
+      append_context "Workspace design status returned an unreadable summary."
+    fi
+  fi
 fi
-if [ "$doctor_status" -eq 124 ]; then
-  emit_context "Compose Preview needs attention: MCP doctor timed out."
-else
-  emit_context "Compose Preview needs attention: MCP doctor failed."
+
+if [ -n "$context_message" ]; then
+  emit_context "Compose Preview needs attention: $context_message"
 fi

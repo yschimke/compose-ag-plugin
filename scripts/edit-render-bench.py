@@ -82,7 +82,8 @@ def render(mcp, preview):
     start = time.time()
     text, size = mcp.tool("render_preview", {"preview": preview, "inline": False})
     elapsed = time.time() - start
-    data = json.loads(text[text.index("{"):text.rindex("}") + 1])
+    # The first text block is the render's JSON; more blocks (a stale line, a note) can follow it.
+    data, _ = json.JSONDecoder().raw_decode(text[text.index("{"):])
     return data, elapsed, size, text
 
 

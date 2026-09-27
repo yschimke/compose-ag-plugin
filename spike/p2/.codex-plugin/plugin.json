@@ -16,7 +16,7 @@
     "longDescription": "Exercise plugin discovery and rich MCP transport with the beta fixture.",
     "shortDescription": "Exercise the beta harness fixture."
   },
-  "mcpServers": "./.mcp.json",
+  "mcpServers": "./.codex-mcp.json",
   "name": "p2",
   "skills": "./skills/",
   "version": "0.0.1"

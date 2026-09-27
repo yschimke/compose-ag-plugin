@@ -163,9 +163,22 @@ def write_asset(plugin_root: Path, asset: str) -> None:
     target.write_bytes(source.read_bytes())
 
 
-def hook_script(command: str) -> str:
-    """Return the plugin-relative script from a generated command string."""
-    return command.split(" ", 1)[0]
+HOOK_ROOT = "${CLAUDE_PLUGIN_ROOT}/"
+
+
+def hook_command(script: str, harness: str) -> str:
+    """Quote the expanded plugin root so install paths containing spaces still work."""
+    return f'"{HOOK_ROOT}{script}" --harness={harness}'
+
+
+def hook_script(command: str) -> str | None:
+    """Return the plugin-relative script from a generated command, quoted or legacy unquoted."""
+    if command.startswith(f'"{HOOK_ROOT}'):
+        end = command.find('"', 1)
+        return command[len(HOOK_ROOT) + 1 : end] if end > 0 else None
+    if command.startswith(HOOK_ROOT):
+        return command.removeprefix(HOOK_ROOT).split(" ", 1)[0]
+    return None
 
 
 def render_hooks(plugin_name: str, entries: object, harness: str) -> dict[str, object]:
@@ -202,7 +215,7 @@ def render_hooks(plugin_name: str, entries: object, harness: str) -> dict[str, o
                 f"missing shared hook source: {(HOOK_SOURCE_ROOT / command_path.name).relative_to(ROOT)}"
             )
         command_hook: dict[str, object] = {
-            "command": f"${{CLAUDE_PLUGIN_ROOT}}/{command} --harness={harness}",
+            "command": hook_command(command, harness),
             "type": "command",
         }
         if timeout is not None:
@@ -247,7 +260,6 @@ def remove_obsolete_generated_hooks(plugin_root: Path, hooks: list[object]) -> N
         for hook in hooks
         if isinstance(hook, dict) and isinstance(hook.get("command"), str)
     }
-    prefix = "${CLAUDE_PLUGIN_ROOT}/scripts/"
     for manifest_path in HOOK_MANIFESTS.values():
         manifest = plugin_root / manifest_path
         if not manifest.is_file():
@@ -263,9 +275,10 @@ def remove_obsolete_generated_hooks(plugin_root: Path, hooks: list[object]) -> N
                     if not isinstance(hook, dict):
                         continue
                     command = hook.get("command")
-                    if not isinstance(command, str) or not command.startswith(prefix):
+                    script = hook_script(command) if isinstance(command, str) else None
+                    if not script or not script.startswith("scripts/"):
                         continue
-                    relative = hook_script(command.removeprefix(prefix))
+                    relative = script.removeprefix("scripts/")
                     if not relative or "/" in relative or relative in expected:
                         continue
                     (plugin_root / "scripts" / relative).unlink(missing_ok=True)

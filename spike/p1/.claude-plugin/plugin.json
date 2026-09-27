@@ -1,4 +1,8 @@
 {
+  "author": {
+    "name": "Yuri Schimke"
+  },
+  "description": "Harness fixture alpha",
   "name": "p1",
   "version": "0.0.1"
 }

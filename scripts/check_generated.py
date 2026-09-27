@@ -96,9 +96,8 @@ def previous_hook_paths(source: object) -> list[Path]:
                 for entry in entries:
                     for hook in entry.get("hooks", []):
                         command = hook.get("command")
-                        prefix = "${CLAUDE_PLUGIN_ROOT}/"
-                        if isinstance(command, str) and command.startswith(prefix):
-                            script = hook_script(command.removeprefix(prefix))
+                        script = hook_script(command) if isinstance(command, str) else None
+                        if script:
                             paths.append(ROOT / "plugins" / name / script)
     return paths
 

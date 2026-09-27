@@ -4,7 +4,7 @@
       {
         "hooks": [
           {
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/session-start-summary.sh --harness=codex",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/session-start-summary.sh\" --harness=codex",
             "timeout": 10,
             "type": "command"
           }
@@ -16,7 +16,7 @@
       {
         "hooks": [
           {
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/stop-gate.sh --harness=codex",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/stop-gate.sh\" --harness=codex",
             "timeout": 360,
             "type": "command"
           }

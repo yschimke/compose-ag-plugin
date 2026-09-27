@@ -20,5 +20,7 @@ apply to UI Builder designs, not to plain preview renders. Keep a simple render 
 follow `antigravity-viewer-card` (render, card helper, look at the PNG, a few bullets); elsewhere, one
 render call and a short reply.
 
+Claude Code ≥2.1.281 supports URL elicitation only on 2026-07-28-protocol connections; otherwise use the text fallback for the access grant.
+
 The full, authoritative contract and current tooling gaps are in
 [`docs/agent-rules.md`](https://github.com/yschimke/compose-ag-plugin/blob/main/docs/agent-rules.md).

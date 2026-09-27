@@ -14,5 +14,10 @@ rules that must remain consistent across Antigravity, Claude Code, and Codex.
 - **R3 — Keep one canonical home:** read and preserve the design's recorded home, edit there in small batches, announce and reconcile temporary copies, and get approval before moving the home.
 - **R4 — Keep discussion at the home:** use server comments for server-homed designs and the linked PR or issue for repo-homed designs, then report unacknowledged comments before finishing.
 
+Pick the server by what is being rendered: the person's own `@Preview`s come from the local
+`compose-preview-mcp` server; library components come from `compose-preview-catalog`. R3 and R4
+apply to UI Builder designs, not to plain preview renders. Keep a simple render to one tool call and
+a short reply.
+
 The full, authoritative contract and current tooling gaps are in
 [`docs/agent-rules.md`](https://github.com/yschimke/compose-ag-plugin/blob/main/docs/agent-rules.md).

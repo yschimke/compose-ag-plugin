@@ -110,8 +110,9 @@ assert "parse,\n  sanitize, and compactly re-encode" in fallback
 skill = (ROOT / "src" / "skills" / "antigravity-viewer-card" / "SKILL.md").read_text(
     encoding="utf-8"
 )
-assert "Do **not** build an `<agent-embed>` card" in skill
-assert "re-encode or print base64" in skill
+assert "build an `<agent-embed>` card, or print base64" in skill
+assert "Never use the `compose-preview-catalog` server for project previews" in skill
+assert "don't look it up" in skill
 assert "iframe srcdoc" in fallback
 
 print("viewer asset tests passed")

@@ -17,5 +17,6 @@ tests/harness_test.sh
 tests/session_start_summary_test.sh
 tests/stop_gate_test.sh
 python3 tests/viewer_asset_test.py
+python3 tests/card_helper_test.py
 python3 tests/echo_mcp_test.py
 python3 tests/spike_fixture_test.py

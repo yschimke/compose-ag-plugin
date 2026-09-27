@@ -16,8 +16,9 @@ rules that must remain consistent across Antigravity, Claude Code, and Codex.
 
 Pick the server by what is being rendered: the person's own `@Preview`s come from the local
 `compose-preview-mcp` server; library components come from `compose-preview-catalog`. R3 and R4
-apply to UI Builder designs, not to plain preview renders. Keep a simple render to one tool call and
-a short reply.
+apply to UI Builder designs, not to plain preview renders. Keep a simple render short: in Antigravity,
+follow `antigravity-viewer-card` (render, card helper, look at the PNG, a few bullets); elsewhere, one
+render call and a short reply.
 
 The full, authoritative contract and current tooling gaps are in
 [`docs/agent-rules.md`](https://github.com/yschimke/compose-ag-plugin/blob/main/docs/agent-rules.md).

@@ -1,19 +1,31 @@
 # Compose Preview viewer handoff
 
 `compose-preview-viewer.html` is the portable viewer bundle released as the
-`compose-preview-viewer.html` asset of `compose-preview-server` v3.75.0, copied
+`compose-preview-viewer.html` asset of `compose-preview-server` v3.77.0, copied
 byte-for-byte. Its release tag, source commit, and SHA-256 are recorded in
 `compose-preview-viewer.provenance.json`. Do not create, edit, or substitute a
 second Antigravity card.
 
-## Not in Antigravity (yet)
+## In Antigravity: the card helper
 
-Antigravity renders `<agent-embed>` cards as `iframe srcdoc`, and cards showed an
-empty `location.hash` and `location.search` in testing (compose-ag-plugin#6 Q9).
-The agent would also have to type the whole base64 envelope as output, which
-takes minutes for a single render. In Antigravity, rely on the image the render
-tool already returns and send the text fallback below; do not build this card.
-The contract that follows is for hosts that load the file URL with its fragment.
+Antigravity renders `<agent-embed>` cards as `iframe srcdoc`, so the viewer
+never sees a URL fragment (compose-ag-plugin#6 Q9). Since v3.77.0 the viewer also
+reads the same envelope from an inline
+`<script type="application/json" id="compose-preview-result">` block anywhere in
+the document. `compose-preview-card.py`, next to the viewer, writes that file:
+
+1. Call `render_preview` with `inline=false`. The result is JSON text with
+   `uri`, `pngPath`, `widthPx`, `heightPx` and `sha256`; no image bytes.
+2. Run `python3 <assets>/compose-preview-card.py '<that JSON text>'`. It reads
+   the PNG from disk, checks it against `sha256`, builds the envelope below with
+   only `arguments.uri`, escapes every `<` as `\u003c`, appends the block to a
+   copy of the viewer in the conversation's `brain/` folder, and prints the
+   `<agent-embed>` line.
+3. Paste that line. If the helper exits non-zero (no `pngPath`, over 500,000
+   bytes, hash mismatch), call `render_preview` again without `inline=false` so
+   Antigravity shows the image itself.
+
+The agent never types base64: the image goes from disk to the file.
 
 ## Static result contract
 

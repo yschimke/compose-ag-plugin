@@ -40,14 +40,16 @@ Codex support remains unverified.
 
 `compose-preview` also ships the portable viewer bundle at
 `assets/compose-preview-viewer.html`, the unmodified `compose-preview-viewer.html`
-asset from the compose-preview-server v3.75.0 release; the adjacent provenance
+asset from the compose-preview-server v3.77.0 release; the adjacent provenance
 file pins that release tag, its source commit, the SHA-256, and the stable MCP
-Apps UI protocol revision. Antigravity does not use it yet: it renders
-`<agent-embed>` cards as `iframe srcdoc`, which drops the URL fragment the
-viewer reads (issue #6 Q9), and building the card made the agent print the whole
-image as base64. In Antigravity the `antigravity-viewer-card` skill therefore
-relies on the image the render tool already returns, plus the short text summary
-in `assets/compose-preview-viewer-fallback.md`.
+Apps UI protocol revision. Antigravity renders `<agent-embed>` cards as
+`iframe srcdoc`, which drops the URL fragment the viewer reads (issue #6 Q9), so
+`assets/compose-preview-card.py` appends the result to a copy of the viewer as
+an inline `<script type="application/json" id="compose-preview-result">` block
+instead. It reads the PNG from the `pngPath` that `render_preview` returns with
+`inline=false`, so the agent never prints base64. The `antigravity-viewer-card`
+skill runs it; `assets/compose-preview-viewer-fallback.md` has the contract and
+the text fallback.
 
 Every plugin follows the [agent rules](docs/agent-rules.md): the agent sees what the user sees, edits through typed tools with schemas, edits a design at its one canonical home, and keeps discussion there.
 

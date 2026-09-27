@@ -180,6 +180,77 @@ rm "$fixture/src/hooks/future-stop.sh"
 python3 "$fixture/scripts/generate.py"
 test ! -e "$fixture/plugins/compose-preview/scripts/future-stop.sh"
 
+viewer_source="$fixture/src/assets/compose-preview-viewer.html"
+viewer_asset="$fixture/plugins/compose-preview/assets/compose-preview-viewer.html"
+fallback_asset="$fixture/plugins/compose-preview/assets/compose-preview-viewer-fallback.md"
+provenance_source="$fixture/src/assets/compose-preview-viewer.provenance.json"
+provenance_asset="$fixture/plugins/compose-preview/assets/compose-preview-viewer.provenance.json"
+cmp "$viewer_source" "$viewer_asset"
+grep -q "ui/notifications/tool-result" "$viewer_asset"
+grep -q "ui/update-model-context" "$viewer_asset"
+grep -q "protocolVersion: '2026-01-26'" "$viewer_asset"
+grep -q "MAX_STATIC_RESULT_BYTES = 500000" "$viewer_asset"
+test -f "$fallback_asset"
+grep -q '#compose-preview-result=<unpadded-base64url-envelope>' "$fallback_asset"
+grep -q 'Text fallback' "$fallback_asset"
+cmp "$provenance_source" "$provenance_asset"
+grep -q 'a621c5fe82d506cb8fd13af49ccb3f92b392321e7800160fe65f470a7d59ea99' "$provenance_asset"
+test -f "$fixture/plugins/compose-preview/skills/antigravity-viewer-card/SKILL.md"
+test ! -e "$fixture/plugins/compose-catalogs/skills/antigravity-viewer-card/SKILL.md"
+
+stale_asset="$fixture/plugins/compose-preview/assets/obsolete-viewer.html"
+printf '%s\n' '<!doctype html>' >"$stale_asset"
+if python3 "$fixture/scripts/check_generated.py" >"$fixture/stale-asset.out" 2>"$fixture/stale-asset.err"; then
+  printf '%s\n' 'expected stale generated asset check to fail' >&2
+  exit 1
+fi
+grep -q 'compose-preview has stale generated assets: obsolete-viewer.html' "$fixture/stale-asset.err"
+rm "$stale_asset"
+
+cp "$fixture/src/plugins.json" "$fixture/src/plugins.json.assets-saved"
+python3 -c '
+import json
+import sys
+from pathlib import Path
+
+source = Path(sys.argv[1])
+data = json.loads(source.read_text(encoding="utf-8"))
+plugin = next(plugin for plugin in data["plugins"] if plugin["name"] == "compose-preview")
+plugin["assets"].remove("compose-preview-viewer.html")
+source.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+' "$fixture/src/plugins.json"
+python3 "$fixture/scripts/generate.py"
+if test -e "$viewer_asset"; then
+  printf '%s\n' 'FAIL: generator must remove assets listed in its previous ledger' >&2
+  exit 1
+fi
+test -f "$fallback_asset"
+mv "$fixture/src/plugins.json.assets-saved" "$fixture/src/plugins.json"
+python3 "$fixture/scripts/generate.py"
+cmp "$viewer_source" "$viewer_asset"
+
+cp "$fixture/src/plugins.json" "$fixture/src/plugins.json.all-assets-saved"
+python3 -c '
+import json
+import sys
+from pathlib import Path
+
+source = Path(sys.argv[1])
+data = json.loads(source.read_text(encoding="utf-8"))
+next(plugin for plugin in data["plugins"] if plugin["name"] == "compose-preview")["assets"] = []
+source.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+' "$fixture/src/plugins.json"
+python3 "$fixture/scripts/generate.py"
+test ! -e "$fixture/plugins/compose-preview/assets/.generated-assets.json"
+if python3 "$fixture/scripts/check_generated.py" >"$fixture/deleted-assets.out" 2>"$fixture/deleted-assets.err"; then
+  printf '%s\n' 'FAIL: deleting the final generated assets and ledger must fail the drift check' >&2
+  exit 1
+fi
+grep -q 'generated files differ from their checked-out versions' "$fixture/deleted-assets.err"
+mv "$fixture/src/plugins.json.all-assets-saved" "$fixture/src/plugins.json"
+python3 "$fixture/scripts/generate.py"
+cmp "$viewer_source" "$viewer_asset"
+
 stale_hook="$fixture/plugins/compose-preview/scripts/obsolete-hook.sh"
 printf '%s\n' '#!/bin/sh' 'exit 0' >"$stale_hook"
 if "$fixture/scripts/check-plugins.sh" >"$fixture/stale-hook.out" 2>"$fixture/stale-hook.err"; then

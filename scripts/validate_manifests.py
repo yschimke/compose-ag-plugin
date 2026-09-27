@@ -11,6 +11,7 @@ from pathlib import Path
 
 from generate import (
     ANTIGRAVITY_SCHEMA,
+    ASSET_SOURCE_ROOT,
     HOOK_SOURCE_ROOT,
     SKILL_SOURCE_ROOT,
     render_codex_manifest,
@@ -411,6 +412,18 @@ def main() -> None:
                 )
             if skill_path.read_bytes() != shared_source.read_bytes():
                 raise ValueError(f"{skill_path}: generated copy differs from shared source")
+        assets = plugin.get("assets", [])
+        if not isinstance(assets, list) or not all(isinstance(asset, str) for asset in assets):
+            raise ValueError(f"{name}.assets must be a list of strings")
+        for asset in assets:
+            generated_asset = root / "assets" / asset
+            shared_asset = ASSET_SOURCE_ROOT / asset
+            if not generated_asset.is_file():
+                raise ValueError(f"{generated_asset}: missing generated asset")
+            if not shared_asset.is_file():
+                raise ValueError(f"{generated_asset}: missing shared source")
+            if generated_asset.read_bytes() != shared_asset.read_bytes():
+                raise ValueError(f"{generated_asset}: generated copy differs from shared source")
         hooks = plugin.get("hooks", [])
         if hooks:
             hook_manifest = root / "hooks" / "hooks.json"

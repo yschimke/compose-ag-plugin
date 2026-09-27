@@ -43,10 +43,15 @@ chmod +x "$fake_cli"
 ok_output="$(PATH="$fake_bin:$PATH" "$script")"
 assert_equal '' "$ok_output" 'healthy doctor is a silent no-op'
 
-printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then exit 0; fi' 'if [ "$1 $2" = "design --help" ]; then exit 23; fi' 'exit 0' >"$fake_cli"
+printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then exit 0; fi' 'if [ "$1 $2" = "design --help" ]; then exit 23; fi' 'if [ "$1" = "--help" ]; then echo design; exit 0; fi' 'exit 0' >"$fake_cli"
 chmod +x "$fake_cli"
 failed_design_help_output="$(PATH="$fake_bin:$PATH" "$script")"
 assert_equal "$(expected_output 'Compose Preview needs attention: The design-status capability probe failed.')" "$failed_design_help_output" 'failed design help guidance'
+
+printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then exit 0; fi' 'if [ "$1 $2" = "design --help" ]; then exit 23; fi' 'if [ "$1" = "--help" ]; then echo mcp; exit 0; fi' 'exit 1' >"$fake_cli"
+chmod +x "$fake_cli"
+old_cli_output="$(PATH="$fake_bin:$PATH" "$script")"
+assert_equal '' "$old_cli_output" 'older CLI without design is a silent no-op'
 
 printf '%s\n' '#!/bin/sh' 'if [ "$1 $2" = "mcp --help" ]; then echo doctor; exit 0; fi' 'if [ "$1 $2" = "design --help" ]; then exit 0; fi' 'printf "%s\\n" "COMPOSE_PREVIEW_TOKEN=must-not-leak" >&2' 'exit 1' >"$fake_cli"
 failed_output="$(PATH="$fake_bin:$PATH" "$script")"

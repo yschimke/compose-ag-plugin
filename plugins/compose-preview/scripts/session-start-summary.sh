@@ -120,7 +120,19 @@ fi
 if [ "$design_help_status" -eq 124 ]; then
   append_context "The design-status capability probe timed out."
 elif [ "$design_help_status" -ne 0 ]; then
-  append_context "The design-status capability probe failed."
+  # Older launchers predate the top-level `design` command. A successful root help that does not
+  # advertise it is an unsupported capability, not a broken installation and not session context.
+  root_help_output="$temporary_root/root-help.out"
+  if run_probe "$root_help_output" "$temporary_root/root-help.timed-out" compose-preview --help; then
+    root_help_status=0
+  else
+    root_help_status=$?
+  fi
+  if [ "$root_help_status" -eq 124 ]; then
+    append_context "The design-command capability probe timed out."
+  elif [ "$root_help_status" -ne 0 ] || grep -Eq '(^|[[:space:]])design([[:space:]]|$)' "$root_help_output"; then
+    append_context "The design-status capability probe failed."
+  fi
 elif grep -Eq '(^|[[:space:]])status([[:space:]]|$)' "$design_help_output"; then
   status_output="$temporary_root/status.out"
   workspace_root=${CLAUDE_PROJECT_DIR:-$PWD}

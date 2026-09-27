@@ -51,6 +51,9 @@ instead. It reads the PNG from the `pngPath` that `render_preview` returns with
 skill runs it; `assets/compose-preview-viewer-fallback.md` has the contract and
 the text fallback.
 
+To check an Antigravity install (plugin copies, card helper, CLI `inline=false`
+support, duplicate global MCP entries), run `python3 scripts/antigravity-check.py`.
+
 Every plugin follows the [agent rules](docs/agent-rules.md): the agent sees what the user sees, edits through typed tools with schemas, edits a design at its one canonical home, and keeps discussion there.
 
 See the [harness compatibility matrix](docs/harness-matrix.md) for the verified installation and runtime behaviour of each harness.

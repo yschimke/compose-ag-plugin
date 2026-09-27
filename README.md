@@ -1,11 +1,98 @@
 # Compose Antigravity Plugins
 
-This repository packages the MCP and harness wiring for Compose tooling in
-Antigravity, Claude Code, and Codex. The Compose agent skills remain canonical
-in [`yschimke/skills`](https://github.com/yschimke/skills); this repository does
-not copy or fork them. The generated manifests make the same plugin directories
-usable by all three harnesses. Edit [`src/plugins.json`](src/plugins.json) and
-run `python3 scripts/generate.py` rather than editing a manifest directly.
+Compose `@Preview` rendering, accessibility checks and remote component
+catalogs for Antigravity, Claude Code, Codex and OpenCode. This repository
+holds only the MCP and harness wiring; the Compose skills stay canonical in
+[`yschimke/skills`](https://github.com/yschimke/skills).
+
+Something not working? See [Troubleshooting](docs/troubleshooting.md).
+What works where: [status for launch](docs/harness-matrix.md#status-for-launch).
+
+## Quick start
+
+Local rendering (`compose-preview`) needs Java 17, a Gradle project with
+`@Preview`s, and the `compose-preview` CLI on `PATH`:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/yschimke/skills/main/scripts/install.sh | bash -s -- --cli-only
+compose-preview --version   # open a new terminal first if this is not found
+```
+
+`compose-catalogs` (hosted Material 3 and Wear catalogs, UI Builder) needs no
+local toolchain. Then pick your harness. In every harness, open your Compose
+project and try: **"render the `ListScreenPreview`"** (use one of your own
+preview function names).
+
+### Antigravity
+
+```sh
+git clone https://github.com/yschimke/skills
+git clone https://github.com/yschimke/compose-ag-plugin
+agy plugin install ./skills
+agy plugin install ./compose-ag-plugin/plugins/compose-preview
+agy plugin install ./compose-ag-plugin/plugins/compose-catalogs
+agy plugin enable compose-preview
+# Verify
+python3 compose-ag-plugin/scripts/antigravity-check.py
+```
+
+Install skills from the `yschimke/skills` clone (its root `plugin.json`; this
+route is still being verified), not with `npx skills add … --agent antigravity`:
+Antigravity 1.2.12 does not load `~/.agents/skills` (issue #6 Q14). The wiring
+plugins do not install the canonical skills.
+
+### Claude Code
+
+```text
+/plugin marketplace add yschimke/skills
+/plugin install yschimke-skills@yschimke-skills
+/plugin marketplace add yschimke/compose-ag-plugin
+/plugin install compose-preview@compose-ag-plugin
+/plugin install compose-catalogs@compose-ag-plugin
+```
+
+Verify: restart, then `/mcp` lists `plugin:compose-preview:compose-preview-mcp`
+as connected.
+
+### Codex
+
+```sh
+codex plugin marketplace add yschimke/skills
+codex plugin marketplace add yschimke/compose-ag-plugin
+# Then enable yschimke-skills, compose-preview and compose-catalogs from /plugins.
+```
+
+Verify: `codex mcp list` shows `compose-preview-mcp` and
+`compose-preview-catalog`. Approve the plugin hooks when Codex marks them
+untrusted.
+
+### OpenCode
+
+OpenCode has no plugin marketplace; install the skills and register the server:
+
+```sh
+npx skills add yschimke/skills --global --yes --skill compose-preview --skill compose-ui-builder
+compose-preview mcp install --opencode
+# Verify
+python3 scripts/opencode-check.py   # from a clone of this repository
+```
+
+See [OpenCode](docs/opencode.md) for the catalog server and authentication.
+
+## Updating
+
+```sh
+compose-preview update   # CLI (and PATH)
+npx skills update        # skills installed with npx
+```
+
+- Claude Code and Codex: update the marketplaces and plugins from `/plugin`
+  or `/plugins`.
+- Antigravity copies plugins at install time, so after `git pull` in either
+  clone, run the `agy plugin install` lines again.
+- If renders look out of date after an update, clear the server cache
+  (`rm -rf ~/.cache/composeai/preview-mcp`) and restart the harness. This is
+  needed until yschimke/compose-ai-tools#5602 ships.
 
 ## Plugins
 
@@ -51,57 +138,15 @@ instead. It reads the PNG from the `pngPath` that `render_preview` returns with
 skill runs it; `assets/compose-preview-viewer-fallback.md` has the contract and
 the text fallback.
 
-To time the edit → notify → render loop against the local server without a
-model, run `python3 scripts/edit-render-bench.py --help`.
-
-To check an OpenCode v2 setup (skills, MCP config, `opencode mcp list`, and
-optionally one timed model turn), run `python3 scripts/opencode-check.py`.
-
-To check an Antigravity install (plugin copies, card helper, CLI `inline=false`
-support, duplicate global MCP entries), run `python3 scripts/antigravity-check.py`.
-
 Every plugin follows the [agent rules](docs/agent-rules.md): the agent sees what the user sees, edits through typed tools with schemas, edits a design at its one canonical home, and keeps discussion there.
 
-See the [harness compatibility matrix](docs/harness-matrix.md) for the verified installation and runtime behaviour of each harness.
+The generated manifests make the same plugin directories usable by every
+harness. Edit [`src/plugins.json`](src/plugins.json) and run
+`python3 scripts/generate.py`; never edit a manifest directly.
 
-## Install
-
-```sh
-# Antigravity
-# Install the canonical skills as a plugin from a clone of yschimke/skills
-# (its root plugin.json). To be verified; see the note below.
-git clone https://github.com/yschimke/skills
-agy plugin install ./skills
-# Clone this repository, then install either local plugin directory.
-agy plugin install ./plugins/compose-catalogs
-agy plugin install ./plugins/compose-preview
-agy plugin enable compose-preview
-
-# Claude Code
-/plugin marketplace add yschimke/skills
-/plugin install yschimke-skills@yschimke-skills
-/plugin marketplace add yschimke/compose-ag-plugin
-/plugin install compose-catalogs@compose-ag-plugin
-/plugin install compose-preview@compose-ag-plugin
-
-# Codex
-codex plugin marketplace add yschimke/skills
-codex plugin marketplace add yschimke/compose-ag-plugin
-# Then enable yschimke-skills, compose-catalogs, and compose-preview from /plugins.
-```
-
-In Antigravity, install the canonical skills from `yschimke/skills` as an
-Antigravity plugin through that repository's root `plugin.json`
-(`agy plugin install <clone of yschimke/skills>`); this route is to be
-verified. Do not use the Skills CLI there: Antigravity 1.2.12 did not load
-skills that `npx skills add … --agent antigravity` installed to
-`~/.agents/skills` (issue #6 Q14). Installing the wiring plugin does not
-install the canonical skills.
-For OpenCode MCP configuration, skill installation, and authentication, see
-[OpenCode](docs/opencode.md).
-
-The [agent rule evals](evals/agent-rules.md) and the other cross-harness prompts that verify the upstream skills together with this
-wiring live in [`evals/`](evals/README.md).
+The [agent rule evals](evals/agent-rules.md) and the other cross-harness
+prompts that verify the upstream skills together with this wiring live in
+[`evals/`](evals/README.md).
 
 ## Compose Preview Stop gate
 
@@ -150,3 +195,12 @@ Run the repository gate before sending a change:
 ```sh
 scripts/check-plugins.sh
 ```
+
+Other scripts:
+
+- `python3 scripts/antigravity-check.py`: plugin copies, card helper, CLI
+  `inline=false` support, duplicate global MCP entries, stale servers.
+- `python3 scripts/opencode-check.py [--run --project …]`: skills, MCP config,
+  `opencode mcp list`, and optionally one timed model turn.
+- `python3 scripts/edit-render-bench.py --help`: time the edit → notify →
+  render loop against the local server without a model.

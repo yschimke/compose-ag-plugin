@@ -28,13 +28,17 @@ provenance = json.loads(provenance_bytes)
 assert GENERATED_PROVENANCE.read_bytes() == provenance_bytes
 assert provenance == {
     "repository": "https://github.com/yschimke/compose-preview-server",
-    "pullRequest": "https://github.com/yschimke/compose-preview-server/pull/1135",
-    "commit": "ac8f0333d03960475328965a3310045d3f6d0881",
+    "release": "v3.75.0",
+    "releaseAsset": (
+        "https://github.com/yschimke/compose-preview-server/releases/download/"
+        "v3.75.0/compose-preview-viewer.html"
+    ),
+    "commit": "4c54483502348c3ef1f1773d441227f61ac72f0a",
     "path": "mcp-app/compose-preview-viewer.html",
     # Stable MCP Apps UI protocol revision:
     # https://github.com/modelcontextprotocol/ext-apps/tree/main/specification/2026-01-26
     "mcpAppsProtocolVersion": "2026-01-26",
-    "sha256": "c15dc3000ab6b70a9f80f8a4f205299bf7b56e625773876ae34034c12797b8d8",
+    "sha256": "a621c5fe82d506cb8fd13af49ccb3f92b392321e7800160fe65f470a7d59ea99",
 }
 assert hashlib.sha256(source_bytes).hexdigest() == provenance["sha256"]
 assert f"protocolVersion: '{provenance['mcpAppsProtocolVersion']}'," in source
@@ -42,7 +46,7 @@ assert f"protocolVersion: '{provenance['mcpAppsProtocolVersion']}'," in source
 required = (
     "const REQUEST_TIMEOUT_MS = 5000;",
     "const RESOURCE_READ_TIMEOUT_MS = 65000;",
-    "function request(method, params, timeoutMs = REQUEST_TIMEOUT_MS)",
+    "function request(method, params, timeoutMs = REQUEST_TIMEOUT_MS",
     "const timer = window.setTimeout(() => {",
     "if (!pending.delete(id)) return;",
     "request timed out after ${timeoutMs} ms",

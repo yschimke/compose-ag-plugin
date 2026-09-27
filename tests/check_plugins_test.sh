@@ -194,7 +194,7 @@ test -f "$fallback_asset"
 grep -q '#compose-preview-result=<unpadded-base64url-envelope>' "$fallback_asset"
 grep -q 'Text fallback' "$fallback_asset"
 cmp "$provenance_source" "$provenance_asset"
-grep -q 'c15dc3000ab6b70a9f80f8a4f205299bf7b56e625773876ae34034c12797b8d8' "$provenance_asset"
+grep -q 'a621c5fe82d506cb8fd13af49ccb3f92b392321e7800160fe65f470a7d59ea99' "$provenance_asset"
 test -f "$fixture/plugins/compose-preview/skills/antigravity-viewer-card/SKILL.md"
 test ! -e "$fixture/plugins/compose-catalogs/skills/antigravity-viewer-card/SKILL.md"
 

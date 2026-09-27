@@ -1,0 +1,23 @@
+{
+  "author": {
+    "name": "Yuri Schimke"
+  },
+  "description": "Harness fixture beta",
+  "interface": {
+    "capabilities": [
+      "Interactive"
+    ],
+    "category": "Developer Tools",
+    "defaultPrompt": [
+      "Run the beta harness fixture."
+    ],
+    "developerName": "Yuri Schimke",
+    "displayName": "Harness Fixture Beta",
+    "longDescription": "Exercise plugin discovery and rich MCP transport with the beta fixture.",
+    "shortDescription": "Exercise the beta harness fixture."
+  },
+  "mcpServers": "./.mcp.json",
+  "name": "p2",
+  "skills": "./skills/",
+  "version": "0.0.1"
+}

@@ -31,6 +31,92 @@ for relative in ("plugins/compose-catalogs/.mcp.json", "plugins/compose-catalogs
         raise SystemExit(f"{relative}: expected {expected!r}, got {actual!r}")
 ' "$fixture"
 
+python3 -c '
+import json
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+manifest = json.loads(
+    (root / "plugins/compose-catalogs/.codex-plugin/plugin.json").read_text(encoding="utf-8")
+)
+server = manifest["mcpServers"]["compose-preview-catalog"]
+expected = {"X-Compose-Preview-Token": "COMPOSE_PREVIEW_TOKEN"}
+if server.get("env_http_headers") != expected:
+    raise SystemExit(f"Codex env_http_headers: expected {expected!r}, got {server!r}")
+if "headers" in server or "http_headers" in server:
+    raise SystemExit(f"Codex manifest must not embed a literal token header: {server!r}")
+' "$fixture"
+
+cp "$fixture/src/plugins.json" "$fixture/src/plugins.json.valid-codex-headers"
+python3 -c '
+import json
+import sys
+from pathlib import Path
+
+source = Path(sys.argv[1])
+data = json.loads(source.read_text(encoding="utf-8"))
+catalog = next(plugin for plugin in data["plugins"] if plugin["name"] == "compose-catalogs")
+catalog["mcp"][0].pop("codexEnvHeaders")
+source.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+' "$fixture/src/plugins.json"
+if python3 "$fixture/scripts/generate.py" >"$fixture/missing-codex-header.out" 2>"$fixture/missing-codex-header.err"; then
+  printf '%s\n' 'FAIL: remote headers require a Codex environment mapping' >&2
+  exit 1
+fi
+grep -q 'codexEnvHeaders must cover the same headers as headers' "$fixture/missing-codex-header.err"
+mv "$fixture/src/plugins.json.valid-codex-headers" "$fixture/src/plugins.json"
+python3 "$fixture/scripts/generate.py"
+
+cp "$fixture/src/plugins.json" "$fixture/src/plugins.json.valid-version"
+for invalid_version in next '1.2.3٣'; do
+  cp "$fixture/src/plugins.json.valid-version" "$fixture/src/plugins.json"
+  python3 -c '
+import json
+import sys
+from pathlib import Path
+
+source = Path(sys.argv[1])
+data = json.loads(source.read_text(encoding="utf-8"))
+data["plugins"][0]["version"] = sys.argv[2]
+source.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+' "$fixture/src/plugins.json" "$invalid_version"
+  if python3 "$fixture/scripts/generate.py" >"$fixture/invalid-version.out" 2>"$fixture/invalid-version.err"; then
+    printf '%s\n' "FAIL: non-semver Codex plugin version $invalid_version must fail generation" >&2
+    exit 1
+  fi
+  grep -q 'version must use strict semver' "$fixture/invalid-version.err"
+done
+mv "$fixture/src/plugins.json.valid-version" "$fixture/src/plugins.json"
+
+cp "$fixture/src/plugins.json" "$fixture/src/plugins.json.valid-interface"
+for invalid_interface_field in displayName capability defaultPrompt; do
+  cp "$fixture/src/plugins.json.valid-interface" "$fixture/src/plugins.json"
+  python3 -c '
+import json
+import sys
+from pathlib import Path
+
+source = Path(sys.argv[1])
+field = sys.argv[2]
+data = json.loads(source.read_text(encoding="utf-8"))
+interface = data["plugins"][0]["interface"]
+if field == "capability":
+    interface["capabilities"][0] = "   "
+elif field == "defaultPrompt":
+    interface["defaultPrompt"][0] = "   "
+else:
+    interface[field] = "   "
+source.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+' "$fixture/src/plugins.json" "$invalid_interface_field"
+  if python3 "$fixture/scripts/generate.py" >"$fixture/invalid-interface.out" 2>"$fixture/invalid-interface.err"; then
+    printf '%s\n' "FAIL: whitespace-only Codex interface field $invalid_interface_field must fail generation" >&2
+    exit 1
+  fi
+  grep -q 'must be a non-empty string' "$fixture/invalid-interface.err"
+done
+mv "$fixture/src/plugins.json.valid-interface" "$fixture/src/plugins.json"
+
 for plugin in compose-catalogs compose-preview; do
   reviewer="$fixture/plugins/$plugin/agents/design-reviewer.md"
   test -f "$reviewer"

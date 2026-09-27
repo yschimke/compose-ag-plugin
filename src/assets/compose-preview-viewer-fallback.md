@@ -6,6 +6,15 @@ byte-for-byte. Its release tag, source commit, and SHA-256 are recorded in
 `compose-preview-viewer.provenance.json`. Do not create, edit, or substitute a
 second Antigravity card.
 
+## Not in Antigravity (yet)
+
+Antigravity renders `<agent-embed>` cards as `iframe srcdoc`, and cards showed an
+empty `location.hash` and `location.search` in testing (compose-ag-plugin#6 Q9).
+The agent would also have to type the whole base64 envelope as output, which
+takes minutes for a single render. In Antigravity, rely on the image the render
+tool already returns and send the text fallback below; do not build this card.
+The contract that follows is for hosts that load the file URL with its fragment.
+
 ## Static result contract
 
 Copy the viewer unchanged into the HTML artifact folder for the current

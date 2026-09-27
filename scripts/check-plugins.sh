@@ -15,6 +15,7 @@ python3 scripts/validate_manifests.py
 python3 tests/validate_manifests_test.py
 tests/harness_test.sh
 tests/session_start_summary_test.sh
+tests/stop_gate_test.sh
 python3 tests/viewer_asset_test.py
 python3 tests/echo_mcp_test.py
 python3 tests/spike_fixture_test.py

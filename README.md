@@ -17,9 +17,9 @@ interactive grant flow.
 
 `compose-preview` supplies the local `compose-preview mcp serve` connection for
 iterative Compose rendering and accessibility checks. It requires Java 17,
-Gradle, and the `compose-preview` CLI on the workstation. Its opt-in Stop gate
-remains gated by issue #6. The rendering workflow itself comes from the
-canonical `compose-preview` skill in `yschimke/skills`.
+Gradle, and the `compose-preview` CLI on the workstation. It also ships an
+opt-in [Stop gate](#compose-preview-stop-gate). The rendering workflow itself
+comes from the canonical `compose-preview` skill in `yschimke/skills`.
 
 Both wiring plugins include the same generated `harness-notes` micro-skill. It
 summarizes R1–R4 for the active harness and points back to the full contract; it
@@ -87,6 +87,44 @@ For OpenCode MCP configuration, skill installation, and authentication, see
 
 The [agent rule evals](evals/agent-rules.md) and the other cross-harness prompts that verify the upstream skills together with this
 wiring live in [`evals/`](evals/README.md).
+
+## Compose Preview Stop gate
+
+The `compose-preview` plugin's Stop hook does nothing unless
+`COMPOSE_PREVIEW_GATE=1` is set in the environment the harness starts hooks
+with. When it is set, the hook looks at previews declared in `*.kt` files that
+differ from `HEAD` or are untracked. It runs `compose-preview show --json` and
+`compose-preview a11y --json --fail-on errors`. It keeps the agent working
+only when one of those previews:
+
+- fails to render; or
+- has accessibility errors. Warnings do not count.
+
+It never blocks on image, hash or pixel changes, because a migration is
+expected to change pixels (#10).
+
+The gate lets the agent stop in these cases:
+
+- a Stop hook already continued this turn (`stop_hook_active`);
+- two turns in a row were already blocked in this session;
+- `compose-preview`, `git` or `python3` is missing;
+- the CLI fails, times out, or prints output the gate cannot parse.
+
+Each CLI call is bounded by `COMPOSE_PREVIEW_GATE_TIMEOUT` seconds (default
+150). A Gradle build that fails before it reports any previews counts as a tool
+error, not a render failure.
+
+When `ui-builder/designs/index.json` exists, the gate also asks
+`compose-preview design status` about unacknowledged design comments (R4) and
+unsaved temporary copies (R3). It reports them to the person but never blocks
+because of them.
+
+Claude Code and Codex each get their own generated hook manifest, whose
+commands pass `--harness=claude` or `--harness=codex`. Both harnesses use the
+`{"decision":"block","reason":…}` response. The script can also emit
+Antigravity's `{"decision":"continue","reason":…}`, but no Antigravity hook is
+generated yet: this repository does not generate Antigravity hooks, and #6 Q4
+has not been run in Antigravity.
 
 ## Development
 

@@ -1,0 +1,1 @@
+{"decision":"continue","reason":"Compose Preview gate: 1 changed preview failed to render (com.example.ScreenKt.ScreenPreview). Fix them, or tell the person why they are expected, before finishing. Image and pixel changes are not checked. Run `compose-preview show` and `compose-preview a11y --fail-on errors` to see the details."}

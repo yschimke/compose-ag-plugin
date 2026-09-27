@@ -98,6 +98,11 @@
           "command": "scripts/session-start-summary.sh",
           "matcher": "startup",
           "timeout": 10
+        },
+        {
+          "event": "Stop",
+          "command": "scripts/stop-gate.sh",
+          "timeout": 360
         }
       ]
     }

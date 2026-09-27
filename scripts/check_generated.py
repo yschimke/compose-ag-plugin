@@ -8,6 +8,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from generate import HOOK_MANIFESTS, hook_script
+
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "src" / "plugins.json"
@@ -52,7 +54,7 @@ def generated_paths(source: object) -> tuple[list[Path], set[str]]:
         if not isinstance(hooks, list) or not all(isinstance(hook, dict) for hook in hooks):
             raise ValueError(f"{name}.hooks must be a list of objects")
         if hooks:
-            paths.append(plugin_root / "hooks" / "hooks.json")
+            paths.extend(plugin_root / manifest for manifest in HOOK_MANIFESTS.values())
         for hook in hooks:
             command = hook.get("command")
             if not isinstance(command, str):
@@ -78,24 +80,26 @@ def previous_hook_paths(source: object) -> list[Path]:
     paths: list[Path] = []
     for plugin in source["plugins"]:
         name = plugin["name"]
-        manifest = Path("plugins") / name / "hooks" / "hooks.json"
-        previous = git("show", f"HEAD:{manifest}")
-        if previous.returncode:
-            continue
-        data = json.loads(previous.stdout)
-        hooks = data.get("hooks", {})
-        if not isinstance(hooks, dict):
-            raise ValueError(f"tracked {manifest} hooks must be an object")
-        paths.append(ROOT / manifest)
-        for entries in hooks.values():
-            if not isinstance(entries, list):
-                raise ValueError(f"tracked {manifest} hook entries must be a list")
-            for entry in entries:
-                for hook in entry.get("hooks", []):
-                    command = hook.get("command")
-                    prefix = "${CLAUDE_PLUGIN_ROOT}/"
-                    if isinstance(command, str) and command.startswith(prefix):
-                        paths.append(ROOT / "plugins" / name / command.removeprefix(prefix))
+        for manifest_path in HOOK_MANIFESTS.values():
+            manifest = Path("plugins") / name / manifest_path
+            previous = git("show", f"HEAD:{manifest}")
+            if previous.returncode:
+                continue
+            data = json.loads(previous.stdout)
+            hooks = data.get("hooks", {})
+            if not isinstance(hooks, dict):
+                raise ValueError(f"tracked {manifest} hooks must be an object")
+            paths.append(ROOT / manifest)
+            for entries in hooks.values():
+                if not isinstance(entries, list):
+                    raise ValueError(f"tracked {manifest} hook entries must be a list")
+                for entry in entries:
+                    for hook in entry.get("hooks", []):
+                        command = hook.get("command")
+                        prefix = "${CLAUDE_PLUGIN_ROOT}/"
+                        if isinstance(command, str) and command.startswith(prefix):
+                            script = hook_script(command.removeprefix(prefix))
+                            paths.append(ROOT / "plugins" / name / script)
     return paths
 
 

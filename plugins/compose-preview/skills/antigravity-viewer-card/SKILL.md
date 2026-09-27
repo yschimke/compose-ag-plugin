@@ -24,6 +24,12 @@ description: Show a render of the person's own Compose previews in Antigravity â
 
    If the result lists `otherMatches`, name them in one line.
 
+**After editing a preview's source**, call `render_preview` with the same
+`preview` again; the server recompiles. Never run `./gradlew`, clean, or delete
+build folders. If the image still shows the old code, call `render_preview`
+once more with `force: {"reason": "<what you edited>"}`; if it is still stale,
+say so and stop.
+
 That's the whole task. Don't read other skill, asset or source files, search
 the session or `brain/` folders, call `status`, `register_project` or
 `list_previews` first, or print base64.

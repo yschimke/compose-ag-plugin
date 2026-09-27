@@ -110,6 +110,8 @@ assert "parse,\n  sanitize, and compactly re-encode" in fallback
 skill = (ROOT / "src" / "skills" / "antigravity-viewer-card" / "SKILL.md").read_text(
     encoding="utf-8"
 )
+assert 'preview: "ListScreenPreview"' in skill
+assert "`embed`" in skill
 assert "inline=false" in skill
 assert "compose-preview-card.py" in skill
 assert "print base64" in skill

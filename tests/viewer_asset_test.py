@@ -28,17 +28,17 @@ provenance = json.loads(provenance_bytes)
 assert GENERATED_PROVENANCE.read_bytes() == provenance_bytes
 assert provenance == {
     "repository": "https://github.com/yschimke/compose-preview-server",
-    "release": "v3.75.0",
+    "release": "v3.77.0",
     "releaseAsset": (
         "https://github.com/yschimke/compose-preview-server/releases/download/"
-        "v3.75.0/compose-preview-viewer.html"
+        "v3.77.0/compose-preview-viewer.html"
     ),
-    "commit": "4c54483502348c3ef1f1773d441227f61ac72f0a",
+    "commit": "1c065b55ac889d98df155dda0f6e9676327a57b6",
     "path": "mcp-app/compose-preview-viewer.html",
     # Stable MCP Apps UI protocol revision:
     # https://github.com/modelcontextprotocol/ext-apps/tree/main/specification/2026-01-26
     "mcpAppsProtocolVersion": "2026-01-26",
-    "sha256": "a621c5fe82d506cb8fd13af49ccb3f92b392321e7800160fe65f470a7d59ea99",
+    "sha256": "d5f6b776872dd70a29653a6e2712bdce1eecd961cea53b75d23c6a32a7afe221",
 }
 assert hashlib.sha256(source_bytes).hexdigest() == provenance["sha256"]
 assert f"protocolVersion: '{provenance['mcpAppsProtocolVersion']}'," in source
@@ -67,7 +67,7 @@ required = (
     "for (const [parameter] of url.searchParams)",
     "new URLSearchParams(url.hash.slice(1))",
     "|cookie|session)/i",
-    "const bridgeReady = staticMode ? Promise.resolve() : initializeBridge();",
+    "block.type !== 'application/json'",
     "protocolVersion: '2026-01-26',",
     "Viewer unavailable; use the complete text fallback.",
     "Use the complete text fallback in the surrounding response.",
@@ -110,9 +110,13 @@ assert "parse,\n  sanitize, and compactly re-encode" in fallback
 skill = (ROOT / "src" / "skills" / "antigravity-viewer-card" / "SKILL.md").read_text(
     encoding="utf-8"
 )
-assert "build an `<agent-embed>` card, or print base64" in skill
+assert "inline=false" in skill
+assert "compose-preview-card.py" in skill
+assert "print base64" in skill
+assert "(R1)" in skill
 assert "Never use the `compose-preview-catalog` server for project previews" in skill
 assert "don't look it up" in skill
 assert "iframe srcdoc" in fallback
+assert 'id="compose-preview-result"' in fallback
 
 print("viewer asset tests passed")

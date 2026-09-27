@@ -1,6 +1,7 @@
 {
   "assets": [
     "compose-preview-viewer.html",
+    "compose-preview-card.py",
     "compose-preview-viewer-fallback.md",
     "compose-preview-viewer.provenance.json"
   ]

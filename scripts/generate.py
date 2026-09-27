@@ -14,6 +14,8 @@ SKILL_SOURCE_ROOT = ROOT / "src" / "skills"
 AGENT_SOURCE_ROOT = ROOT / "src" / "agents"
 AGENT_LEDGER_NAME = ".generated-agents.json"
 HOOK_SOURCE_ROOT = ROOT / "src" / "hooks"
+ASSET_SOURCE_ROOT = ROOT / "src" / "assets"
+ASSET_LEDGER_NAME = ".generated-assets.json"
 # Claude Code reads hooks/hooks.json by default. Codex would read that same file,
 # so the Codex manifest names its own copy, whose commands pass --harness=codex.
 HOOK_MANIFESTS = {"claude": "hooks/hooks.json", "codex": "hooks/codex-hooks.json"}
@@ -149,6 +151,18 @@ def write_hook(plugin_root: Path, command: str) -> None:
     target.chmod(source.stat().st_mode)
 
 
+def write_asset(plugin_root: Path, asset: str) -> None:
+    asset_path = Path(asset)
+    if asset_path.is_absolute() or ".." in asset_path.parts or len(asset_path.parts) != 1:
+        raise ValueError(f"asset must be a source-root file name: {asset}")
+    source = ASSET_SOURCE_ROOT / asset_path
+    if not source.is_file():
+        raise ValueError(f"missing shared asset source: {source.relative_to(ROOT)}")
+    target = plugin_root / "assets" / asset_path
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(source.read_bytes())
+
+
 def hook_script(command: str) -> str:
     """Return the plugin-relative script from a generated command string."""
     return command.split(" ", 1)[0]
@@ -257,6 +271,36 @@ def remove_obsolete_generated_hooks(plugin_root: Path, hooks: list[object]) -> N
                     (plugin_root / "scripts" / relative).unlink(missing_ok=True)
 
 
+def synchronize_generated_assets(plugin_root: Path, assets: list[str]) -> None:
+    assets_root = plugin_root / "assets"
+    ledger = assets_root / ASSET_LEDGER_NAME
+    previous: list[str] = []
+    if ledger.is_file():
+        value = json.loads(ledger.read_text(encoding="utf-8"))
+        if (
+            not isinstance(value, dict)
+            or not isinstance(value.get("assets"), list)
+            or not all(isinstance(asset, str) for asset in value["assets"])
+        ):
+            raise ValueError(f"invalid generated asset ledger: {ledger.relative_to(ROOT)}")
+        previous = value["assets"]
+    expected = set(assets)
+    for asset in previous:
+        asset_path = Path(asset)
+        if (
+            asset_path.is_absolute()
+            or ".." in asset_path.parts
+            or len(asset_path.parts) != 1
+        ):
+            raise ValueError(f"invalid generated asset ledger entry: {asset!r}")
+        if asset not in expected:
+            (assets_root / asset_path).unlink(missing_ok=True)
+    if assets:
+        write_json(ledger, {"assets": assets})
+    else:
+        ledger.unlink(missing_ok=True)
+
+
 def render_mcp_servers(plugin_name: str, entries: object, harness: str) -> dict[str, object]:
     if not isinstance(entries, list):
         raise ValueError(f"{plugin_name}.mcp must be a list")
@@ -339,6 +383,7 @@ def main() -> None:
         skills = plugin.get("skills", [])
         agents = plugin.get("agents", [])
         hooks = plugin.get("hooks", [])
+        assets = plugin.get("assets", [])
         mcp = plugin.get("mcp", [])
         interface = plugin.get("interface")
         if name in names:
@@ -351,6 +396,8 @@ def main() -> None:
             raise ValueError(f"{name}.agents must be a list of strings")
         if not isinstance(hooks, list):
             raise ValueError(f"{name}.hooks must be a list")
+        if not isinstance(assets, list) or not all(isinstance(asset, str) for asset in assets):
+            raise ValueError(f"{name}.assets must be a list of strings")
         names.add(name)
 
         root = ROOT / "plugins" / name
@@ -360,6 +407,9 @@ def main() -> None:
         for agent in agents:
             write_agent(root, agent)
         remove_obsolete_generated_hooks(root, hooks)
+        synchronize_generated_assets(root, assets)
+        for asset in assets:
+            write_asset(root, asset)
         for harness, manifest_path in HOOK_MANIFESTS.items():
             if hooks:
                 write_json(root / manifest_path, render_hooks(name, hooks, harness))

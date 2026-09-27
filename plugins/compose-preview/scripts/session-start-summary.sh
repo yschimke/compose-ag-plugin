@@ -5,8 +5,8 @@
 # silent no-op. Every subprocess is bounded independently and receives closed
 # stdin, so neither a help probe nor a status command can accidentally become a
 # long-running stdio server. Diagnostics may include machine-specific paths,
-# configuration details or credentials, so only fixed statuses and the CLI's
-# strictly validated summary grammar are surfaced.
+# configuration details or credentials, so only fixed statuses and integers read
+# from the CLI's versioned status envelope are surfaced.
 
 probe_timeout_seconds=3
 # The manifest gives the whole hook 10 seconds. Reserve time for cleanup and the final JSON write;
@@ -91,8 +91,55 @@ append_context() {
   fi
 }
 
-safe_status_summary() {
-  grep -Eq '^([0-9]+ unacknowledged design comments?|[0-9]+ unsaved temporary (copy|copies)|design inventory unavailable for [0-9]+ workspace-linked designs?)(; ([0-9]+ unsaved temporary (copy|copies)|design inventory unavailable for [0-9]+ workspace-linked designs?))?(; design inventory unavailable for [0-9]+ workspace-linked designs?)?\.$' "$1"
+plural() {
+  if [ "$1" -eq 1 ]; then
+    printf '%s' "$2"
+  else
+    printf '%s' "$3"
+  fi
+}
+
+# Read the versioned `design status --json` envelope (compose-preview-server v3.75.0+) and print
+# the fixed SessionStart sentence, or nothing when there is nothing to act on. Only integers are
+# taken from the output, so paths, URLs or credentials can never reach the session context.
+#
+# The server counts a design whose document records no `home` as MISSING_HOME inside `unavailable`.
+# Recorded homes are not written yet (compose-preview-server#1157), so today that is every design
+# published in the repository. It is not an unsaved copy or an unreachable server, and reporting it
+# would warn on every session, so those designs are left out of the unavailable count.
+status_summary() {
+  status_file=$1
+  status_lines=$(wc -l <"$status_file" | tr -d '[:space:]')
+  [ "$status_lines" = 1 ] || return 1
+  grep -Eq '^\{"schema":"compose-preview-design-status/v1",' "$status_file" || return 1
+  status_totals=$(grep -Eo '"totals":\{[^{}]*\}' "$status_file" | sed -n '1p')
+  [ -n "$status_totals" ] || return 1
+  status_integer='(0|[1-9][0-9]{0,8})'
+  for status_key in unacknowledgedComments unsavedTemporaryCopies unavailable; do
+    printf '%s\n' "$status_totals" | grep -Eq "[{,]\"$status_key\":$status_integer[,}]" || return 1
+  done
+  status_comments=$(printf '%s\n' "$status_totals" | sed -E 's/.*[{,]"unacknowledgedComments":([0-9]+)[,}].*/\1/')
+  status_copies=$(printf '%s\n' "$status_totals" | sed -E 's/.*[{,]"unsavedTemporaryCopies":([0-9]+)[,}].*/\1/')
+  status_unavailable=$(printf '%s\n' "$status_totals" | sed -E 's/.*[{,]"unavailable":([0-9]+)[,}].*/\1/')
+  # Design ids and file names are restricted to [A-Za-z0-9._-], so this code cannot be forged
+  # from inside another field.
+  status_missing_home=$(grep -Eo '"code":"MISSING_HOME"' "$status_file" | wc -l | tr -d '[:space:]')
+  [ "$status_missing_home" -le "$status_unavailable" ] || return 1
+  status_unavailable=$((status_unavailable - status_missing_home))
+
+  status_sentence=
+  if [ "$status_comments" -gt 0 ]; then
+    status_sentence="$status_comments unacknowledged design $(plural "$status_comments" comment comments)"
+  fi
+  if [ "$status_copies" -gt 0 ]; then
+    status_sentence="${status_sentence:+$status_sentence; }$status_copies unsaved temporary $(plural "$status_copies" copy copies)"
+  fi
+  if [ "$status_unavailable" -gt 0 ]; then
+    status_sentence="${status_sentence:+$status_sentence; }design inventory unavailable for $status_unavailable workspace-linked $(plural "$status_unavailable" design designs)"
+  fi
+  if [ -n "$status_sentence" ]; then
+    printf '%s.\n' "$status_sentence"
+  fi
 }
 
 if ! command -v compose-preview >/dev/null 2>&1; then
@@ -150,7 +197,7 @@ elif grep -Eq '(^|[[:space:]])status([[:space:]]|$)' "$design_help_output"; then
   status_output="$temporary_root/status.out"
   workspace_root=${CLAUDE_PROJECT_DIR:-$PWD}
   if run_probe "$status_output" "$temporary_root/status.timed-out" \
-    compose-preview design status --workspace "$workspace_root" --summary --timeout 2; then
+    compose-preview design status --workspace "$workspace_root" --json --timeout 2; then
     status_status=0
   else
     status_status=$?
@@ -160,10 +207,10 @@ elif grep -Eq '(^|[[:space:]])status([[:space:]]|$)' "$design_help_output"; then
   elif [ "$status_status" -ne 0 ]; then
     append_context "Workspace design status failed."
   elif [ -s "$status_output" ]; then
-    status_lines=$(wc -l <"$status_output" | tr -d '[:space:]')
-    if [ "$status_lines" = 1 ] && safe_status_summary "$status_output"; then
-      status_summary=$(sed -n '1p' "$status_output")
-      append_context "$status_summary"
+    if status_summary_text=$(status_summary "$status_output"); then
+      if [ -n "$status_summary_text" ]; then
+        append_context "$status_summary_text"
+      fi
     else
       append_context "Workspace design status returned an unreadable summary."
     fi

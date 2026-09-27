@@ -61,21 +61,44 @@ if [[ "$failed_output" == *must-not-leak* ]]; then
   exit 1
 fi
 
-# The released status command contributes only its fixed, redacted summary grammar.
+# The released status command contributes only integers read from its versioned JSON envelope.
 status_args="$temporary_root/status-args"
 printf '%s\n' \
   '#!/bin/sh' \
   'if [ "$1 $2" = "mcp --help" ]; then echo doctor; exit 0; fi' \
   'if [ "$1 $2" = "mcp doctor" ]; then exit 0; fi' \
   'if [ "$1 $2" = "design --help" ]; then echo status; exit 0; fi' \
-  'if [ "$1 $2" = "design status" ]; then printf "%s\n" "$*" >"$STATUS_ARGS"; echo "2 unacknowledged design comments; 1 unsaved temporary copy; design inventory unavailable for 1 workspace-linked design."; exit 0; fi' \
+  'if [ "$1 $2" = "design status" ]; then printf "%s\n" "$*" >"$STATUS_ARGS"; cat "$STATUS_JSON"; exit 0; fi' \
   'exit 1' >"$fake_cli"
 chmod +x "$fake_cli"
-status_output="$(STATUS_ARGS="$status_args" CLAUDE_PROJECT_DIR="$temporary_root/project with spaces" PATH="$fake_bin:$PATH" "$script")"
+status_json="$temporary_root/status.json"
+# Envelope shape as printed by compose-preview-server v3.75.0 `design status --json`.
+printf '%s\n' '{"schema":"compose-preview-design-status/v1","verdict":"unavailable","totals":{"workspaceDesigns":4,"serverLinked":3,"unsavedTemporaryCopies":1,"unacknowledgedComments":2,"unavailable":2},"designs":[{"designId":"a","file":"ui-builder/designs/a.json","state":"unsaved","unacknowledgedComments":2},{"designId":"b","file":"ui-builder/designs/b.json","state":"clean","unacknowledgedComments":0},{"designId":"c","file":"ui-builder/designs/c.json","state":"unavailable","code":"REMOTE_UNAVAILABLE"},{"designId":"d","file":"ui-builder/designs/d.json","state":"unavailable","code":"MISSING_HOME"}]}' >"$status_json"
+status_output="$(STATUS_JSON="$status_json" STATUS_ARGS="$status_args" CLAUDE_PROJECT_DIR="$temporary_root/project with spaces" PATH="$fake_bin:$PATH" "$script")"
 assert_equal "$(expected_output 'Compose Preview needs attention: 2 unacknowledged design comments; 1 unsaved temporary copy; design inventory unavailable for 1 workspace-linked design.')" "$status_output" 'actionable workspace design status'
-assert_equal "design status --workspace $temporary_root/project with spaces --summary --timeout 2" "$(cat "$status_args")" 'status workspace and bound'
+assert_equal "design status --workspace $temporary_root/project with spaces --json --timeout 2" "$(cat "$status_args")" 'status workspace and bound'
 
-# Even stdout is treated as untrusted until it matches the complete summary grammar.
+# Until designs record a home (compose-preview-server#1157) every repo-published design reports
+# MISSING_HOME. That is not an actionable problem and must not produce a warning on every session.
+printf '%s\n' '{"schema":"compose-preview-design-status/v1","verdict":"unavailable","totals":{"workspaceDesigns":2,"serverLinked":0,"unsavedTemporaryCopies":0,"unacknowledgedComments":0,"unavailable":2},"designs":[{"designId":"a","file":"ui-builder/designs/a.json","state":"unavailable","code":"MISSING_HOME"},{"designId":"b","file":"ui-builder/designs/b.json","state":"unavailable","code":"MISSING_HOME"}]}' >"$status_json"
+missing_home_output="$(STATUS_JSON="$status_json" STATUS_ARGS="$status_args" PATH="$fake_bin:$PATH" "$script")"
+assert_equal '' "$missing_home_output" 'designs without a recorded home are silent'
+
+printf '%s\n' '{"schema":"compose-preview-design-status/v1","verdict":"unavailable","totals":{"workspaceDesigns":3,"serverLinked":2,"unsavedTemporaryCopies":0,"unacknowledgedComments":1,"unavailable":2},"designs":[{"designId":"a","file":"ui-builder/designs/a.json","state":"unavailable","code":"MISSING_HOME"},{"designId":"b","file":"ui-builder/designs/b.json","state":"unavailable","code":"AUTHORIZATION_REQUIRED"},{"designId":"c","file":"ui-builder/designs/c.json","state":"clean","unacknowledgedComments":1}]}' >"$status_json"
+mixed_home_output="$(STATUS_JSON="$status_json" STATUS_ARGS="$status_args" PATH="$fake_bin:$PATH" "$script")"
+assert_equal "$(expected_output 'Compose Preview needs attention: 1 unacknowledged design comment; design inventory unavailable for 1 workspace-linked design.')" "$mixed_home_output" 'missing homes are excluded from the unavailable count only'
+
+# A clean workspace is a silent no-op.
+printf '%s\n' '{"schema":"compose-preview-design-status/v1","verdict":"ok","totals":{"workspaceDesigns":0,"serverLinked":0,"unsavedTemporaryCopies":0,"unacknowledgedComments":0,"unavailable":0},"designs":[]}' >"$status_json"
+clean_status_output="$(STATUS_JSON="$status_json" STATUS_ARGS="$status_args" PATH="$fake_bin:$PATH" "$script")"
+assert_equal '' "$clean_status_output" 'clean workspace status is silent'
+
+# An envelope from another schema version is not guessed at.
+printf '%s\n' '{"schema":"compose-preview-design-status/v2","totals":{"unsavedTemporaryCopies":0,"unacknowledgedComments":0,"unavailable":0}}' >"$status_json"
+other_schema_output="$(STATUS_JSON="$status_json" STATUS_ARGS="$status_args" PATH="$fake_bin:$PATH" "$script")"
+assert_equal "$(expected_output 'Compose Preview needs attention: Workspace design status returned an unreadable summary.')" "$other_schema_output" 'unknown status schema is not parsed'
+
+# Even stdout is treated as untrusted: anything but the versioned envelope is replaced.
 printf '%s\n' \
   '#!/bin/sh' \
   'if [ "$1 $2" = "mcp --help" ]; then exit 0; fi' \
@@ -171,7 +194,7 @@ printf '%s\n' \
   'if [ "$1 $2" = "mcp --help" ]; then echo doctor; exit 0; fi' \
   'if [ "$1 $2" = "mcp doctor" ]; then exit 0; fi' \
   'if [ "$1 $2" = "design --help" ]; then echo status; exit 0; fi' \
-  'if [ "$1 $2" = "design status" ]; then echo "1 unacknowledged design comment."; exit 0; fi' \
+  'if [ "$1 $2" = "design status" ]; then echo "{\"schema\":\"compose-preview-design-status/v1\",\"totals\":{\"unsavedTemporaryCopies\":0,\"unacknowledgedComments\":1,\"unavailable\":0}}"; exit 0; fi' \
   'exit 0' >"$fake_cli"
 chmod +x "$fake_cli"
 started_at=$(date +%s)

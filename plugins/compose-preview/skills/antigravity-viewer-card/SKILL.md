@@ -42,4 +42,9 @@ the session or `brain/` folders, call `status`, `register_project` or
 and use the line it prints. If `preview` is rejected, call `list_previews`
 once, then `render_preview` with the `uri` and `inline=false`.
 
-Do more (variants, accessibility, source locations) only when the person asks.
+When the person asks about accessibility or layout, add
+`details: ["a11y"]`, `["layout"]` or both to that same `render_preview` call:
+the card gains the overlay toggles and the result one summary line each. Don't
+call separate a11y or layout tools for it.
+
+Do more (variants, source locations) only when the person asks.

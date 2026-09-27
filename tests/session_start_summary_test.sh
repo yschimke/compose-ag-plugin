@@ -163,6 +163,26 @@ if ((elapsed < 2 || elapsed >= 8)); then
   exit 1
 fi
 
+# Several individually bounded slow probes must still leave time for the hook to emit context
+# before the manifest's 10-second deadline.
+printf '%s\n' \
+  '#!/bin/sh' \
+  'sleep 2' \
+  'if [ "$1 $2" = "mcp --help" ]; then echo doctor; exit 0; fi' \
+  'if [ "$1 $2" = "mcp doctor" ]; then exit 0; fi' \
+  'if [ "$1 $2" = "design --help" ]; then echo status; exit 0; fi' \
+  'if [ "$1 $2" = "design status" ]; then echo "1 unacknowledged design comment."; exit 0; fi' \
+  'exit 0' >"$fake_cli"
+chmod +x "$fake_cli"
+started_at=$(date +%s)
+cumulative_output="$(PATH="$fake_bin:$PATH" "$script")"
+elapsed=$(($(date +%s) - started_at))
+assert_equal "$(expected_output 'Compose Preview needs attention: Workspace design status timed out.')" "$cumulative_output" 'cumulative hook deadline guidance'
+if ((elapsed < 6 || elapsed >= 10)); then
+  printf 'FAIL: cumulative hook deadline took %s seconds\n' "$elapsed" >&2
+  exit 1
+fi
+
 # A capability probe that ignores SIGTERM must be escalated to SIGKILL.
 printf '%s\n' \
   '#!/bin/sh' \

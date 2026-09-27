@@ -9,6 +9,10 @@
 # strictly validated summary grammar are surfaced.
 
 probe_timeout_seconds=3
+# The manifest gives the whole hook 10 seconds. Reserve time for cleanup and the final JSON write;
+# otherwise several individually valid near-timeout probes can consume the harness deadline before
+# the result is emitted.
+hook_tick_budget=70
 temporary_root=$(mktemp -d "${TMPDIR:-/tmp}/compose-preview-session-start.XXXXXX") || exit 0
 probe_pid=
 
@@ -34,13 +38,22 @@ run_probe() {
   : >"$probe_output"
   rm -f "$probe_marker"
 
+  if [ "$hook_tick_budget" -le 0 ]; then
+    : >"$probe_marker"
+    return 124
+  fi
+
   "$@" </dev/null >"$probe_output" 2>/dev/null &
   probe_pid=$!
   probe_ticks=0
   probe_tick_limit=$((probe_timeout_seconds * 10))
+  if [ "$hook_tick_budget" -lt "$probe_tick_limit" ]; then
+    probe_tick_limit=$hook_tick_budget
+  fi
   while kill -0 "$probe_pid" 2>/dev/null && [ "$probe_ticks" -lt "$probe_tick_limit" ]; do
     sleep 0.1
     probe_ticks=$((probe_ticks + 1))
+    hook_tick_budget=$((hook_tick_budget - 1))
   done
   if kill -0 "$probe_pid" 2>/dev/null; then
     : >"$probe_marker"

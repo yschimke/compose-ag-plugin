@@ -1,26 +1,27 @@
 ---
 name: antigravity-viewer-card
-description: Present a compose-preview render in Antigravity with the packaged portable viewer and its token-free static result fragment, while retaining a complete text fallback.
+description: How to show a compose-preview render in Antigravity. Antigravity already displays MCP image results to the person and the agent, so reply with a short description and the text summary; do not build a viewer card.
 ---
 
-# Antigravity viewer card
+# Showing renders in Antigravity
 
-Use this skill only when the `compose-preview` plugin is active in Antigravity
-and a render result should be shown as an embedded card. Use the exact packaged
-`../../assets/compose-preview-viewer.html`; do not author or modify another
-viewer.
+Antigravity shows the image a `render_preview` call returns, both to the person
+and to you. That image is the render surface. Keep the reply short:
 
-Follow `../../assets/compose-preview-viewer-fallback.md`. Copy the HTML unchanged
-into the current response artifact folder, construct the bounded credential-free
-static result fragment from the typed tool result, embed that file URL, and put
-the complete text fallback in the same response.
+1. Describe what you see in the rendered image (R1), in a few bullets.
+2. Add the text summary from `../../assets/compose-preview-viewer-fallback.md`.
 
-Build the fragment from sanitized copies, never from the original tool-call
-arguments. In particular, remove an in-band `token` obtained through
-`request_access` / `poll_access` before encoding. Apply the same recursive
-credential removal to JSON carried inside text content; if it cannot be parsed
-and proved credential-free, omit the card and use the text fallback alone.
+Do **not** build an `<agent-embed>` card from the packaged viewer. Antigravity
+renders cards as `iframe srcdoc` (compose-ag-plugin#6 Q9): the URL fragment and
+query are dropped, so the viewer never receives its static result and only shows
+"MCP Apps bridge is unavailable". Also do not:
 
-If the result cannot be encoded safely, exceeds either size bound, or the asset,
-artifact copy, or embed surface is unavailable, return the complete text
-fallback alone. Never claim the visual surface was inspected unless it was.
+- show the image again (as markdown, HTML or a card): it is already visible,
+  and a second copy is scaled to the full chat width;
+- search your own session or `brain/` files to reconstruct a tool result;
+- copy, re-encode or print base64 image data, or paste an embed tag as text;
+- run extra shell commands only to measure or re-save the image.
+
+If the person asks to compare variants, render them with the typed tools and
+describe each one. A viewer card returns once the viewer reads an inline result
+block; until then the text summary is the only fallback.

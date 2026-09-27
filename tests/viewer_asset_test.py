@@ -110,8 +110,8 @@ assert "parse,\n  sanitize, and compactly re-encode" in fallback
 skill = (ROOT / "src" / "skills" / "antigravity-viewer-card" / "SKILL.md").read_text(
     encoding="utf-8"
 )
-assert "never from the original tool-call\narguments" in skill
-assert "request_access` / `poll_access" in skill
-assert "JSON carried inside text content" in skill
+assert "Do **not** build an `<agent-embed>` card" in skill
+assert "re-encode or print base64" in skill
+assert "iframe srcdoc" in fallback
 
 print("viewer asset tests passed")

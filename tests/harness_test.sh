@@ -76,6 +76,13 @@ check_detection opencode set_opencode
 check_detection gemini set_gemini
 check_detection unknown set_nothing
 
+# Codex exports CLAUDE_PLUGIN_ROOT to plugin hooks too; its thread id wins.
+clear_harness_environment
+set_codex
+set_claude_plugin
+harness_detect
+assert_equal codex "$HARNESS" 'Codex plugin hook environment detects Codex'
+
 clear_harness_environment
 CODEX_THREAD_ID=thread-1
 export CODEX_THREAD_ID
@@ -102,10 +109,30 @@ harness_detect --harness=antigravity
 antigravity_output=$(harness_emit_continue 'continue "carefully" \\ now')
 assert_equal '{"decision":"continue","reason":"continue \"carefully\" \\\\ now"}' "$antigravity_output" 'Antigravity output contract'
 
-for continue_harness in claude antigravity; do
+harness_detect --harness=codex
+codex_output=$(harness_emit_continue 'continue "carefully" \\ now')
+assert_equal '{"decision":"block","reason":"continue \"carefully\" \\\\ now"}' "$codex_output" 'Codex output contract'
+
+for notice_harness in claude codex; do
+  harness_detect --harness="$notice_harness"
+  notice_output=$(harness_emit_notice 'remember "this"')
+  assert_equal '{"systemMessage":"remember \"this\""}' "$notice_output" "$notice_harness notice contract"
+done
+
+for no_notice_harness in antigravity opencode gemini unknown; do
+  harness_detect --harness="$no_notice_harness"
+  if notice_output=$(harness_emit_notice 'remember' 2>/dev/null); then
+    fail "$no_notice_harness must not emit a notice"
+  else
+    assert_status 2 "$?" "$no_notice_harness notice status"
+  fi
+  assert_equal '' "$notice_output" "$no_notice_harness notice output"
+done
+
+for continue_harness in claude codex antigravity; do
   harness_detect --harness="$continue_harness"
   case "$continue_harness" in
-    claude) expected_decision=block ;;
+    claude|codex) expected_decision=block ;;
     antigravity) expected_decision=continue ;;
   esac
   assert_json_continue "$expected_decision" 'a\b' "$continue_harness escapes one backslash"
@@ -115,15 +142,12 @@ for continue_harness in claude antigravity; do
   assert_json_continue "$expected_decision" 'mix "q" \ end' "$continue_harness escapes mixed punctuation"
 done
 
-for no_stop_harness in codex opencode gemini unknown; do
+for no_stop_harness in opencode gemini unknown; do
   harness_detect --harness="$no_stop_harness"
   if harness_emit_continue 'not supported' >/dev/null 2>&1; then
     fail "$no_stop_harness must not emit a Stop-hook response"
   else
-    case "$no_stop_harness" in
-      codex) assert_status 3 "$?" 'Codex unsupported status' ;;
-      *) assert_status 2 "$?" "$no_stop_harness non-target status" ;;
-    esac
+    assert_status 2 "$?" "$no_stop_harness non-target status"
   fi
 done
 

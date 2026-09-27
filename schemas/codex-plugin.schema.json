@@ -96,6 +96,9 @@
       "additionalProperties": {
         "type": "object"
       }
+    },
+    "hooks": {
+      "const": "./hooks/codex-hooks.json"
     }
   },
   "additionalProperties": false

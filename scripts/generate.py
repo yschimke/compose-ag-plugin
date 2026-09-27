@@ -14,6 +14,9 @@ SKILL_SOURCE_ROOT = ROOT / "src" / "skills"
 AGENT_SOURCE_ROOT = ROOT / "src" / "agents"
 AGENT_LEDGER_NAME = ".generated-agents.json"
 HOOK_SOURCE_ROOT = ROOT / "src" / "hooks"
+# Claude Code reads hooks/hooks.json by default. Codex would read that same file,
+# so the Codex manifest names its own copy, whose commands pass --harness=codex.
+HOOK_MANIFESTS = {"claude": "hooks/hooks.json", "codex": "hooks/codex-hooks.json"}
 ANTIGRAVITY_SCHEMA = "https://antigravity.google/schemas/v1/plugin.json"
 SKILL_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 SEMVER = re.compile(
@@ -53,6 +56,7 @@ def render_codex_manifest(
     skills: list[str],
     mcp: list[object],
     interface: object,
+    hooks: list[object] | None = None,
     owner: str,
     repository: str,
     license_name: str,
@@ -100,6 +104,8 @@ def render_codex_manifest(
         manifest["skills"] = "./skills/"
     if mcp:
         manifest["mcpServers"] = render_mcp_servers(name, mcp, "codex")
+    if hooks:
+        manifest["hooks"] = f"./{HOOK_MANIFESTS['codex']}"
     return manifest
 
 
@@ -143,7 +149,15 @@ def write_hook(plugin_root: Path, command: str) -> None:
     target.chmod(source.stat().st_mode)
 
 
-def render_hooks(plugin_name: str, entries: object) -> dict[str, object]:
+def hook_script(command: str) -> str:
+    """Return the plugin-relative script from a generated command string."""
+    return command.split(" ", 1)[0]
+
+
+def render_hooks(plugin_name: str, entries: object, harness: str) -> dict[str, object]:
+    """Render one harness's hook manifest; every command names its harness explicitly."""
+    if harness not in HOOK_MANIFESTS:
+        raise ValueError(f"{plugin_name}.hooks: unsupported hook harness {harness}")
     if not isinstance(entries, list):
         raise ValueError(f"{plugin_name}.hooks must be a list")
 
@@ -174,7 +188,7 @@ def render_hooks(plugin_name: str, entries: object) -> dict[str, object]:
                 f"missing shared hook source: {(HOOK_SOURCE_ROOT / command_path.name).relative_to(ROOT)}"
             )
         command_hook: dict[str, object] = {
-            "command": f"${{CLAUDE_PLUGIN_ROOT}}/{command}",
+            "command": f"${{CLAUDE_PLUGIN_ROOT}}/{command} --harness={harness}",
             "type": "command",
         }
         if timeout is not None:
@@ -213,33 +227,34 @@ def synchronize_generated_agents(plugin_root: Path, agents: list[str]) -> None:
 
 
 def remove_obsolete_generated_hooks(plugin_root: Path, hooks: list[object]) -> None:
-    """Remove only scripts proven to belong to the previously generated hook manifest."""
-    manifest = plugin_root / "hooks" / "hooks.json"
-    if not manifest.is_file():
-        return
-    previous = json.loads(manifest.read_text(encoding="utf-8"))
+    """Remove only scripts proven to belong to a previously generated hook manifest."""
     expected = {
         Path(hook["command"]).name
         for hook in hooks
         if isinstance(hook, dict) and isinstance(hook.get("command"), str)
     }
     prefix = "${CLAUDE_PLUGIN_ROOT}/scripts/"
-    for event_entries in previous.get("hooks", {}).values():
-        if not isinstance(event_entries, list):
+    for manifest_path in HOOK_MANIFESTS.values():
+        manifest = plugin_root / manifest_path
+        if not manifest.is_file():
             continue
-        for event_entry in event_entries:
-            if not isinstance(event_entry, dict):
+        previous = json.loads(manifest.read_text(encoding="utf-8"))
+        for event_entries in previous.get("hooks", {}).values():
+            if not isinstance(event_entries, list):
                 continue
-            for hook in event_entry.get("hooks", []):
-                if not isinstance(hook, dict):
+            for event_entry in event_entries:
+                if not isinstance(event_entry, dict):
                     continue
-                command = hook.get("command")
-                if not isinstance(command, str) or not command.startswith(prefix):
-                    continue
-                relative = command.removeprefix(prefix)
-                if not relative or "/" in relative or relative in expected:
-                    continue
-                (plugin_root / "scripts" / relative).unlink(missing_ok=True)
+                for hook in event_entry.get("hooks", []):
+                    if not isinstance(hook, dict):
+                        continue
+                    command = hook.get("command")
+                    if not isinstance(command, str) or not command.startswith(prefix):
+                        continue
+                    relative = hook_script(command.removeprefix(prefix))
+                    if not relative or "/" in relative or relative in expected:
+                        continue
+                    (plugin_root / "scripts" / relative).unlink(missing_ok=True)
 
 
 def render_mcp_servers(plugin_name: str, entries: object, harness: str) -> dict[str, object]:
@@ -345,12 +360,13 @@ def main() -> None:
         for agent in agents:
             write_agent(root, agent)
         remove_obsolete_generated_hooks(root, hooks)
-        if hooks:
-            for hook in hooks:
-                write_hook(root, hook["command"])
-            write_json(root / "hooks" / "hooks.json", render_hooks(name, hooks))
-        else:
-            (root / "hooks" / "hooks.json").unlink(missing_ok=True)
+        for harness, manifest_path in HOOK_MANIFESTS.items():
+            if hooks:
+                write_json(root / manifest_path, render_hooks(name, hooks, harness))
+            else:
+                (root / manifest_path).unlink(missing_ok=True)
+        for hook in hooks:
+            write_hook(root, hook["command"])
         write_json(
             root / "plugin.json",
             {"$schema": ANTIGRAVITY_SCHEMA, "description": description, "name": name},
@@ -377,6 +393,7 @@ def main() -> None:
                 skills=skills,
                 mcp=mcp,
                 interface=interface,
+                hooks=hooks,
                 owner=owner,
                 repository=repository,
                 license_name=license_name,

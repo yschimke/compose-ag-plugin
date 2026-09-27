@@ -2,8 +2,15 @@
 # Shared harness selection for compose-preview hooks.
 #
 # Generated hook commands must pass --harness=<name>. Environment detection is
-# only a compatibility fallback. Codex Stop-hook semantics are unverified
-# (issue #6 Q4), so this library deliberately emits no Codex response.
+# only a compatibility fallback.
+#
+# Stop-hook output contracts:
+# - Claude Code: {"decision":"block","reason":...} keeps the agent working.
+# - Codex: the same shape. Checked against codex-rs/hooks
+#   schema/generated/stop.command.output.schema.json (openai/codex 67a7096),
+#   which also sends stop_hook_active on input. A live Codex turn has not yet
+#   observed a block (issue #6 Q4).
+# - Antigravity: {"decision":"continue","reason":...}, a capped nudge.
 
 # Sets HARNESS to one of: antigravity, claude, codex, opencode, gemini, unknown.
 # An explicit --harness=<name> takes precedence over environment detection.
@@ -43,12 +50,15 @@ harness_detect() {
     esac
   fi
 
-  # Keep these ordered: an explicitly requested Claude plugin environment is
-  # more specific than any inherited terminal variables from another harness.
-  if [ "${CLAUDECODE-}" = "1" ] || [ -n "${CLAUDE_PLUGIN_ROOT-}" ]; then
+  # Keep these ordered. CLAUDECODE=1 is Claude Code's own marker. Codex also
+  # exports CLAUDE_PLUGIN_ROOT to plugin hooks for compatibility, so its thread
+  # id must be checked before that shared variable.
+  if [ "${CLAUDECODE-}" = "1" ]; then
     HARNESS=claude
   elif [ -n "${CODEX_THREAD_ID-}" ]; then
     HARNESS=codex
+  elif [ -n "${CLAUDE_PLUGIN_ROOT-}" ]; then
+    HARNESS=claude
   elif [ "${__CFBundleIdentifier-}" = "com.google.antigravity" ] || [ -n "${ANTIGRAVITY_CLI_ALIAS-}" ]; then
     HARNESS=antigravity
   elif [ "${OPENCODE-}" = "1" ]; then
@@ -60,40 +70,40 @@ harness_detect() {
   fi
 }
 
-# Emits the harness's verified "keep going" response to stdout.
-#
-# Claude and Antigravity have different, known JSON contracts. Codex is
-# intentionally fail-closed until #6 Q4 establishes whether a Stop event and
-# response contract exist. OpenCode and Gemini are detected but not Stop-hook
-# targets. Unknown callers are likewise not allowed to proceed silently.
-# Returns 2 for invalid input or a non-target harness; returns 3 for Codex.
-harness_emit_continue() {
-  harness_reason=${1-}
-  if [ "$#" -ne 1 ] || [ -z "$harness_reason" ]; then
-    printf '%s\n' 'harness: harness_emit_continue requires one non-empty reason' >&2
+# Escapes one printable reason for a JSON string. Returns 2 for an empty
+# reason or one containing control characters, so the JSON is never malformed.
+harness_json_string() {
+  harness_text=${1-}
+  if [ -z "$harness_text" ]; then
+    printf '%s\n' 'harness: a message must be non-empty' >&2
     return 2
   fi
-
-  # Reasons are protocol data. Reject control characters instead of risking
-  # malformed JSON; printable UTF-8 text is accepted by a normal locale.
-  case "$harness_reason" in
+  case "$harness_text" in
     *[![:print:]]*)
       printf '%s\n' 'harness: reason must contain printable characters only' >&2
       return 2
       ;;
   esac
+  printf '%s' "$harness_text" | sed 's/\\/\\\\/g; s/"/\\"/g'
+}
 
-  harness_json_reason=$(printf '%s' "$harness_reason" | sed 's/\\/\\\\/g; s/"/\\"/g')
+# Emits the harness's "keep going" Stop response to stdout.
+#
+# OpenCode and Gemini are detected but not Stop-hook targets. Unknown callers
+# are likewise not allowed to proceed silently.
+# Returns 2 for invalid input or a non-target harness.
+harness_emit_continue() {
+  if [ "$#" -ne 1 ] || [ -z "${1-}" ]; then
+    printf '%s\n' 'harness: harness_emit_continue requires one non-empty reason' >&2
+    return 2
+  fi
+  harness_json_reason=$(harness_json_string "$1") || return 2
   case "${HARNESS-}" in
     antigravity)
       printf '{"decision":"continue","reason":"%s"}\n' "$harness_json_reason"
       ;;
-    claude)
+    claude|codex)
       printf '{"decision":"block","reason":"%s"}\n' "$harness_json_reason"
-      ;;
-    codex)
-      printf '%s\n' 'harness: Codex Stop-hook output is unsupported pending issue #6 Q4' >&2
-      return 3
       ;;
     opencode|gemini)
       printf 'harness: %s is not a Stop-hook target\n' "$HARNESS" >&2
@@ -101,6 +111,26 @@ harness_emit_continue() {
       ;;
     *)
       printf '%s\n' 'harness: unknown harness has no Stop-hook output contract' >&2
+      return 2
+      ;;
+  esac
+}
+
+# Emits a Stop response that shows a message to the person without keeping the
+# agent working. Only Claude Code and Codex define one (systemMessage); every
+# other harness gets no output and status 2, so a reminder can never block.
+harness_emit_notice() {
+  if [ "$#" -ne 1 ] || [ -z "${1-}" ]; then
+    printf '%s\n' 'harness: harness_emit_notice requires one non-empty message' >&2
+    return 2
+  fi
+  harness_json_message=$(harness_json_string "$1") || return 2
+  case "${HARNESS-}" in
+    claude|codex)
+      printf '{"systemMessage":"%s"}\n' "$harness_json_message"
+      ;;
+    *)
+      printf 'harness: %s has no non-blocking Stop message\n' "${HARNESS:-unknown}" >&2
       return 2
       ;;
   esac

@@ -140,10 +140,20 @@ import json
 import sys
 from pathlib import Path
 
-entry = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))["hooks"]["SessionStart"][0]
-assert entry["matcher"] == "startup", entry
-assert entry["hooks"][0]["timeout"] == 10, entry
-' "$hook"
+root = Path(sys.argv[1])
+for harness, name in (("claude", "hooks.json"), ("codex", "codex-hooks.json")):
+    hooks = json.loads((root / "hooks" / name).read_text(encoding="utf-8"))["hooks"]
+    entry = hooks["SessionStart"][0]
+    assert entry["matcher"] == "startup", entry
+    assert entry["hooks"][0]["timeout"] == 10, entry
+    # Every generated command names its harness explicitly (#9).
+    for entries in hooks.values():
+        for group in entries:
+            for hook in group["hooks"]:
+                assert hook["command"].endswith(f" --harness={harness}"), hook
+codex = json.loads((root / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))
+assert codex["hooks"] == "./hooks/codex-hooks.json", codex
+' "$(dirname "$(dirname "$hook")")"
 
 # The hook generator is event-generic so the future opt-in Stop gate can use
 # the same source-of-truth rather than bypassing generated manifests.
@@ -167,13 +177,14 @@ import json
 import sys
 from pathlib import Path
 
-hooks = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))["hooks"]
-assert hooks["Stop"][0]["hooks"][0] == {
-    "command": "${CLAUDE_PLUGIN_ROOT}/scripts/future-stop.sh",
-    "timeout": 15,
-    "type": "command",
-}
-' "$hook"
+for harness, name in (("claude", "hooks.json"), ("codex", "codex-hooks.json")):
+    hooks = json.loads((Path(sys.argv[1]) / name).read_text(encoding="utf-8"))["hooks"]
+    assert hooks["Stop"][-1]["hooks"][0] == {
+        "command": f"${{CLAUDE_PLUGIN_ROOT}}/scripts/future-stop.sh --harness={harness}",
+        "timeout": 15,
+        "type": "command",
+    }, hooks
+' "$(dirname "$hook")"
 test -x "$fixture/plugins/compose-preview/scripts/future-stop.sh"
 mv "$fixture/src/plugins.json.before-stop" "$fixture/src/plugins.json"
 rm "$fixture/src/hooks/future-stop.sh"
@@ -206,6 +217,11 @@ if test -e "$fixture/plugins/compose-preview/scripts/session-start-summary.sh"; 
   exit 1
 fi
 test ! -e "$fixture/plugins/compose-preview/hooks/hooks.json"
+test ! -e "$fixture/plugins/compose-preview/hooks/codex-hooks.json"
+if grep -q '"hooks"' "$fixture/plugins/compose-preview/.codex-plugin/plugin.json"; then
+  printf '%s\n' 'FAIL: Codex manifest must not name a removed hook manifest' >&2
+  exit 1
+fi
 if python3 "$fixture/scripts/check_generated.py" >"$fixture/deleted-hook.out" 2>"$fixture/deleted-hook.err"; then
   printf '%s\n' 'FAIL: deleted generated hooks must fail the drift check' >&2
   exit 1

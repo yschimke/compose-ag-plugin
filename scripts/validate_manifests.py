@@ -11,6 +11,7 @@ from pathlib import Path
 
 from generate import (
     ANTIGRAVITY_SCHEMA,
+    HOOK_MANIFESTS,
     HOOK_SOURCE_ROOT,
     SKILL_SOURCE_ROOT,
     render_codex_manifest,
@@ -396,6 +397,7 @@ def main() -> None:
             skills=plugin.get("skills", []),
             mcp=plugin.get("mcp", []),
             interface=plugin.get("interface"),
+            hooks=plugin.get("hooks", []),
             owner=source["owner"],
             repository=source["repository"],
             license_name=source["license"],
@@ -413,9 +415,10 @@ def main() -> None:
                 raise ValueError(f"{skill_path}: generated copy differs from shared source")
         hooks = plugin.get("hooks", [])
         if hooks:
-            hook_manifest = root / "hooks" / "hooks.json"
-            if read_json(hook_manifest) != render_hooks(name, hooks):
-                raise ValueError(f"{hook_manifest} does not match the hook contract")
+            for harness, manifest_path in HOOK_MANIFESTS.items():
+                hook_manifest = root / manifest_path
+                if read_json(hook_manifest) != render_hooks(name, hooks, harness):
+                    raise ValueError(f"{hook_manifest} does not match the hook contract")
             for hook in hooks:
                 command = hook["command"]
                 generated_hook = root / command
@@ -424,7 +427,7 @@ def main() -> None:
                     raise ValueError(f"{generated_hook}: missing generated hook script")
                 if generated_hook.read_bytes() != shared_hook.read_bytes():
                     raise ValueError(f"{generated_hook}: generated hook differs from shared source")
-        elif (root / "hooks" / "hooks.json").exists():
+        elif any((root / path).exists() for path in HOOK_MANIFESTS.values()):
             raise ValueError(f"{root} contains stale hook configuration")
         mcp = plugin.get("mcp", [])
         if mcp:

@@ -17,7 +17,7 @@ rules that must remain consistent across Antigravity, Claude Code, and Codex.
 Pick the server by what is being rendered: the person's own `@Preview`s come from the local
 `compose-preview-mcp` server; library components come from `compose-preview-catalog`. R3 and R4
 apply to UI Builder designs, not to plain preview renders. Keep a simple render short: in Antigravity,
-follow `antigravity-viewer-card` (render, card helper, look at the PNG, a few bullets); elsewhere, one
+follow `antigravity-viewer-card` (`render_preview preview=<Name>`, look at the PNG, a few bullets); elsewhere, one
 render call and a short reply.
 
 Claude Code ≥2.1.281 supports URL elicitation only on 2026-07-28-protocol connections; otherwise use the text fallback for the access grant.

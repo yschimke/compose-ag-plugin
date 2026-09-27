@@ -11,6 +11,10 @@ overhead can be told apart from render cost.
 Each cycle replaces --find with a numbered variant (text = "Header 1", ...),
 calls notify_file_changed, then render_preview, and checks the PNG hash
 changed. The file is restored at the end, even on failure.
+
+The bench offers the project as its MCP root, so the server registers it. If the
+server still reports no daemon launch file, run `compose-preview mcp install`
+in the project once first.
 """
 
 import argparse
@@ -26,6 +30,7 @@ from pathlib import Path
 
 class Mcp:
     def __init__(self, command, cwd):
+        self.root_uri = Path(cwd).resolve().as_uri()
         self.process = subprocess.Popen(command, cwd=cwd, stdin=subprocess.PIPE,
                                         stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
         self.replies, self.next_id = {}, 1
@@ -43,7 +48,8 @@ class Mcp:
                     self.replies[message["id"]] = message
                     self.ready.notify_all()
             elif message.get("method") == "roots/list" and "id" in message:
-                self._send({"jsonrpc": "2.0", "id": message["id"], "result": {"roots": []}})
+                self._send({"jsonrpc": "2.0", "id": message["id"],
+                            "result": {"roots": [{"uri": self.root_uri, "name": "project"}]}})
 
     def _send(self, message):
         self.process.stdin.write(json.dumps(message) + "\n")
@@ -102,7 +108,7 @@ def main():
     mcp = Mcp([args.cli, "mcp", "serve"], cwd=project)
     rows = []
     try:
-        mcp.call("initialize", {"protocolVersion": "2025-06-18", "capabilities": {},
+        mcp.call("initialize", {"protocolVersion": "2025-06-18", "capabilities": {"roots": {"listChanged": False}},
                                 "clientInfo": {"name": "edit-render-bench", "version": "1"}}, timeout=120)
         mcp._send({"jsonrpc": "2.0", "method": "notifications/initialized"})
         first, cold, size, _ = render(mcp, args.preview)

@@ -9,7 +9,14 @@ import re
 import sys
 from pathlib import Path
 
-from generate import ANTIGRAVITY_SCHEMA, HOOK_SOURCE_ROOT, SKILL_SOURCE_ROOT, render_hooks, render_mcp_servers
+from generate import (
+    ANTIGRAVITY_SCHEMA,
+    HOOK_SOURCE_ROOT,
+    SKILL_SOURCE_ROOT,
+    render_codex_manifest,
+    render_hooks,
+    render_mcp_servers,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -357,9 +364,13 @@ def main() -> None:
             raise ValueError(f"{root}: {'; '.join(details)}")
         antigravity = read_json(root / "plugin.json")
         claude = read_json(root / ".claude-plugin" / "plugin.json")
+        codex = read_json(root / ".codex-plugin" / "plugin.json")
         validate_manifest_schema(antigravity, "antigravity-plugin.schema.json", root / "plugin.json")
         validate_manifest_schema(
             claude, "claude-plugin.schema.json", root / ".claude-plugin" / "plugin.json"
+        )
+        validate_manifest_schema(
+            codex, "codex-plugin.schema.json", root / ".codex-plugin" / "plugin.json"
         )
         expected_antigravity = {
             "$schema": ANTIGRAVITY_SCHEMA,
@@ -377,6 +388,20 @@ def main() -> None:
             raise ValueError(f"{root}/.claude-plugin/plugin.json has invalid package metadata")
         if claude.get("keywords") != plugin.get("keywords", []):
             raise ValueError(f"{root}/.claude-plugin/plugin.json has invalid keywords")
+        expected_codex = render_codex_manifest(
+            name=name,
+            version=plugin["version"],
+            description=plugin["description"],
+            keywords=plugin.get("keywords", []),
+            skills=plugin.get("skills", []),
+            mcp=plugin.get("mcp", []),
+            interface=plugin.get("interface"),
+            owner=source["owner"],
+            repository=source["repository"],
+            license_name=source["license"],
+        )
+        if codex != expected_codex:
+            raise ValueError(f"{root}/.codex-plugin/plugin.json does not match the Codex contract")
         for skill_path in expected_skills:
             validate_skill(skill_path)
             shared_source = SKILL_SOURCE_ROOT / skill_path.parent.name / "SKILL.md"

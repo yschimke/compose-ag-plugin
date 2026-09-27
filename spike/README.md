@@ -2,7 +2,11 @@
 
 This fixture supports issue [#6](https://github.com/yschimke/compose-ag-plugin/issues/6). It is deliberately separate from shipping plugins and makes no claim about a harness until that harness has run it.
 
-The Antigravity root manifests follow the current official schema URL and omit the older `version` field. The adjacent Claude/Codex manifests retain `name` and `version` because they exercise a separate manifest format.
+The Antigravity root manifests follow the current official schema URL and omit
+the older `version` field. Claude Code uses the adjacent `.claude-plugin`
+manifest. Codex uses the `.codex-plugin` compatibility manifest, which points
+at the fixture's `skills/` and `.mcp.json` paths without competing with the
+Antigravity root `plugin.json`.
 
 ## Prepare and verify the fixture
 
@@ -44,7 +48,13 @@ Install or enable both `p1` and `p2` using the harness-specific procedure under 
   and Codex, confirm the SessionStart hook both logs and prints
   `SPIKE-SESSION-START` so the model can be asked to repeat it (Q21).
 
-The static marketplace fixture is at `.claude-plugin/marketplace.json`; the same entries are also available as `.agents/plugins/marketplace.json` for Codex marketplace resolution tests. The fixture uses `CLAUDE_PLUGIN_ROOT` only for paths inside each plugin in the Claude/Codex MCP and hook configurations. Its Antigravity config is generated because variable expansion for command paths is itself unverified.
+The static marketplace fixture is at `.claude-plugin/marketplace.json`; the
+same entries are also available as `.agents/plugins/marketplace.json` for
+Codex marketplace resolution tests. Its shared `.mcp.json` starts the bundled
+server from package-relative `cwd: "."`; hook commands use
+`CLAUDE_PLUGIN_ROOT`, which Codex also supplies for compatibility. The
+Antigravity config is generated because variable expansion for command paths
+is itself unverified.
 
 ## Hook decisions
 

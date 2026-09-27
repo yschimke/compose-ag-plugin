@@ -1,0 +1,23 @@
+{
+  "author": {
+    "name": "Yuri Schimke"
+  },
+  "description": "Harness fixture alpha",
+  "interface": {
+    "capabilities": [
+      "Interactive"
+    ],
+    "category": "Developer Tools",
+    "defaultPrompt": [
+      "Run the alpha harness fixture."
+    ],
+    "developerName": "Yuri Schimke",
+    "displayName": "Harness Fixture Alpha",
+    "longDescription": "Exercise plugin discovery and rich MCP transport with the alpha fixture.",
+    "shortDescription": "Exercise the alpha harness fixture."
+  },
+  "mcpServers": "./.mcp.json",
+  "name": "p1",
+  "skills": "./skills/",
+  "version": "0.0.1"
+}

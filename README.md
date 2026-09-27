@@ -32,10 +32,11 @@ micro-skill. Keeping that instruction out of `compose-catalogs` avoids
 advertising a local artifact that the remote-catalog plugin does not package.
 
 Both plugins also ship the shared, read-only `design-reviewer` agent for Claude
-Code. It performs semantic, accessibility, font-scale, and device checks in its
-own context, then returns a short verdict with viewer or artifact links so
-rendered image payloads do not consume the main conversation. Codex and
-Antigravity support remains unverified in issue #6 Q20.
+Code and Antigravity. It performs semantic, accessibility, font-scale, and
+device checks in its own context, then returns a short verdict with viewer or
+artifact links so rendered image payloads do not consume the main conversation.
+Antigravity 1.2.12 discovered and ran a plugin fixture agent (issue #6 Q20);
+Codex support remains unverified.
 
 `compose-preview` also ships the portable viewer bundle at
 `assets/compose-preview-viewer.html`, the unmodified `compose-preview-viewer.html`
@@ -56,9 +57,10 @@ See the [harness compatibility matrix](docs/harness-matrix.md) for the verified 
 
 ```sh
 # Antigravity
-# Install the canonical skills. Harness discovery is still being verified in #6.
-npx skills add yschimke/skills --skill compose-preview \
-  --skill compose-ui-builder --agent antigravity --global --yes
+# Install the canonical skills as a plugin from a clone of yschimke/skills
+# (its root plugin.json). To be verified; see the note below.
+git clone https://github.com/yschimke/skills
+agy plugin install ./skills
 # Clone this repository, then install either local plugin directory.
 agy plugin install ./plugins/compose-catalogs
 agy plugin install ./plugins/compose-preview
@@ -77,9 +79,13 @@ codex plugin marketplace add yschimke/compose-ag-plugin
 # Then enable yschimke-skills, compose-catalogs, and compose-preview from /plugins.
 ```
 
-Antigravity discovery of the Skills CLI's installed files is still being
-verified in issue #6; do not assume that installing the wiring plugin also
-installs the canonical skills.
+In Antigravity, install the canonical skills from `yschimke/skills` as an
+Antigravity plugin through that repository's root `plugin.json`
+(`agy plugin install <clone of yschimke/skills>`); this route is to be
+verified. Do not use the Skills CLI there: Antigravity 1.2.12 did not load
+skills that `npx skills add … --agent antigravity` installed to
+`~/.agents/skills` (issue #6 Q14). Installing the wiring plugin does not
+install the canonical skills.
 For OpenCode MCP configuration, skill installation, and authentication, see
 [OpenCode](docs/opencode.md).
 
@@ -121,8 +127,10 @@ Claude Code and Codex each get their own generated hook manifest, whose
 commands pass `--harness=claude` or `--harness=codex`. Both harnesses use the
 `{"decision":"block","reason":…}` response. The script can also emit
 Antigravity's `{"decision":"continue","reason":…}`, but no Antigravity hook is
-generated yet: this repository does not generate Antigravity hooks, and #6 Q4
-has not been run in Antigravity.
+generated yet. In Antigravity 1.2.12, #6 Q4 showed that `continue` keeps the
+agent working with no observed cap, and its Stop payload has neither
+`stop_hook_active` nor a re-entry counter, so an Antigravity gate needs its
+own per-`conversationId` loop state first.
 
 ## Development
 

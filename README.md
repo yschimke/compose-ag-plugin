@@ -51,6 +51,9 @@ instead. It reads the PNG from the `pngPath` that `render_preview` returns with
 skill runs it; `assets/compose-preview-viewer-fallback.md` has the contract and
 the text fallback.
 
+To check an OpenCode v2 setup (skills, MCP config, `opencode mcp list`, and
+optionally one timed model turn), run `python3 scripts/opencode-check.py`.
+
 To check an Antigravity install (plugin copies, card helper, CLI `inline=false`
 support, duplicate global MCP entries), run `python3 scripts/antigravity-check.py`.
 

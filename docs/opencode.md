@@ -35,6 +35,17 @@ Create `opencode.jsonc` in the Compose project (or `.opencode/opencode.jsonc`), 
 
 `codemode: false` exposes the individual tools directly. OpenCode prefixes them with the server name, so the two `render_preview` tools are distinct: `compose-preview-mcp_render_preview` and `compose-preview-catalog_render_preview`. Omit `codemode: false` if you prefer OpenCode's default Code Mode grouping.
 
+### Let the CLI write the local server
+
+`compose-preview` 2.28.0 and later can register the local server for you. Run it from the Compose project root:
+
+```sh
+compose-preview mcp install --opencode                  # user scope: ~/.config/opencode/opencode.json
+compose-preview mcp install --opencode --scope project  # project scope: ./opencode.json
+```
+
+It upserts `mcp.servers.compose-preview-mcp` with `--project=<absolute project path>` and keeps every other key. It never rewrites a `.jsonc` file or a file with comments. For those it prints the snippet and the file to merge it into by hand. Plain `compose-preview mcp install` also selects OpenCode automatically when `opencode` is on `PATH`, `~/.config/opencode/` exists, or `OPENCODE=1` is set. It does not add the remote catalog server; add that entry from the block above.
+
 Check the connections after restarting OpenCode:
 
 ```sh
@@ -46,13 +57,10 @@ opencode mcp list
 Install the canonical Compose skills through the Skills CLI:
 
 ```sh
-npx skills add yschimke/skills \
-  --skill compose-preview \
-  --skill compose-ui-builder \
-  --agent opencode \
-  --global \
-  --yes
+npx skills add yschimke/skills --global --yes --skill compose-preview --skill compose-ui-builder
 ```
+
+This installs the skills into `~/.agents/skills`, which OpenCode reads, and also sets them up for any other agents the Skills CLI detects. Add `--agent opencode` to set up OpenCode only. The files land in the same `~/.agents/skills` directory.
 
 This repository deliberately carries no copies of `compose-preview` or
 `compose-ui-builder`. Their detailed workflows, including catalog access, live
@@ -96,3 +104,16 @@ opencode
 ```
 
 The config passes it through the `X-Compose-Preview-Token` header. Do not put the token directly in `opencode.jsonc` or commit it. If a token-only deployment must never attempt OAuth, add `"oauth": false` to the `compose-preview-catalog` server entry.
+
+## Verification record
+
+Checked on 2026-09-27 with `opencode-ai@1.18.32` (the npm `latest`, OpenCode v1), Skills CLI 1.7.0 and `compose-preview` 2.28.0. No model or provider was configured, and each check ran in an empty `HOME`.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Skills discovery | the `npx skills add … --global --yes` command above, then `opencode debug skill` | Both `compose-preview` and `compose-ui-builder` listed from `~/.agents/skills`. The same result with `--agent opencode`. |
+| Local server config | `opencode mcp list` with the `mcp.servers.compose-preview-mcp` entry that `mcp install --opencode` writes, pointed at a stub stdio MCP server | Parsed and `connected`. OpenCode 1.18.32 also accepts the v1 `mcp.<name>` shape. |
+| Remote catalog config | `opencode mcp list` with the `compose-preview-catalog` entry above and no token | `connected`. |
+| Catalog OAuth discovery | `opencode mcp debug compose-preview-catalog` | Server `compose-preview-catalog` 3.77.0 answered `200 OK`, auth status `not authenticated`. The interactive `opencode mcp auth` browser flow was not exercised. |
+
+Not verified: OpenCode v2 (its installer host was unreachable from the test environment), a real `compose-preview mcp serve` session against a Gradle project, and tool calls through either server.

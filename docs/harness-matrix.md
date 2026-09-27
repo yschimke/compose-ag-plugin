@@ -2,6 +2,19 @@
 
 This matrix records only observed results for the compatibility investigation in [issue #6](https://github.com/yschimke/compose-ag-plugin/issues/6). A blank result has not been inferred from documentation or another harness.
 
+## Status for launch
+
+A summary of the detailed rows below as of 2026-09-27. "…" means not yet
+verified. Setup: [README quick start](../README.md#quick-start); fixes:
+[troubleshooting](troubleshooting.md).
+
+| Harness | Install | Render path | Card / UI | Hooks | Elicitation | Known gaps |
+| --- | --- | --- | --- | --- | --- | --- |
+| Antigravity (`agy` 1.2.12) | ✅ local path (plugins are copied; reinstall after `git pull`) | ✅ one `render_preview` call, 53 s on a cold daemon | ✅ static card from the server `embed`; no MCP Apps | Stop and post-tool-use ✅; no SessionStart; Stop gate not packaged yet | ❌ neither mode; text fallback | [#39](https://github.com/yschimke/compose-ag-plugin/issues/39): 30 s budget, git-URL install, Stop gate `hooks.json`, grant flow |
+| Claude Code (2.1.283) | ✅ GitHub marketplace | ✅ image reaches the model; `inline=false` + Read planned | Print mode only; no MCP Apps in CLI/IDE | ✅ SessionStart, PostToolUse, Stop (cap 9) | Form advertised; URL mode … | [#40](https://github.com/yschimke/compose-ag-plugin/issues/40): URL elicitation, plugin directory |
+| Codex (0.157.1) | ✅ GitHub marketplace | Transport ✅ (fixture); product render … | … (Desktop renders MCP Apps, untested) | Registered, `untrusted` until approved; behaviour … | … | [#41](https://github.com/yschimke/compose-ag-plugin/issues/41): column gaps, no `design-reviewer`, MCP Apps |
+| OpenCode (1.18.32) | ✅ skills via npx; server via `mcp install --opencode` | … | None (no MCP Apps) | None | None | [#42](https://github.com/yschimke/compose-ag-plugin/issues/42): v2 and a real render unverified |
+
 ## Fixture baseline
 
 On 2026-09-26, `python3 spike/prepare.py && python3 spike/run-protocol-smoke.py` passed locally. The direct JSON-RPC client verified that both `alpha` and `beta` expose `render_preview` and `status`; `render_preview` returns a text item and a 1×1 PNG image. This establishes the fixture only, not host behaviour.

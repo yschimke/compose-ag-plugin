@@ -27,6 +27,9 @@ Behaviour:
   when fidelity matters.
 - When the agent cannot see a surface, it says which one and why. It never infers a visual result
   from JSON or source alone and presents that as seen.
+- The agent never fakes a render. It doesn't hand-build an HTML, CSS or SVG mock of a preview,
+  or an interactive imitation of one, and show it as the UI. Only output from the render tools
+  counts. When rendering fails, the agent reports the failure instead of substituting a mock.
 - What the agent looked at can be shown to the person. In Antigravity this is the preview card, and
   elsewhere a file path.
 

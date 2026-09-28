@@ -33,6 +33,11 @@ build folders. If the image still shows the old code, call `render_preview`
 once more with `force: {"reason": "<what you edited>"}`; if it is still stale,
 say so and stop.
 
+**Never fake a render.** Don't hand-build HTML, CSS, SVG or any other mock
+of the preview, and don't draw it from the source. Only the PNG and card
+from `render_preview` count as a preview. If rendering fails, say so, include
+the error, and stop.
+
 That's the whole task. Don't read other skill, asset or source files, search
 the session or `brain/` folders, call `status`, `register_project` or
 `list_previews` first, or print base64.

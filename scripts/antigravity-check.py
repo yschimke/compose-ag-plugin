@@ -58,11 +58,11 @@ def check_plugins() -> None:
     for name in PLUGINS:
         installed = INSTALLED / name
         if not installed.is_dir():
-            report("FIX", f"{name}: not installed (agy plugin install ./plugins/{name})")
+            report("FIX", f"{name}: not installed (agy plugin install {ROOT / 'plugins' / name})")
             continue
         stale = differing_files(ROOT / "plugins" / name, installed)
         if stale:
-            report("FIX", f"{name}: differs from this checkout ({', '.join(stale[:3])}…); reinstall")
+            report("FIX", f"{name}: differs from this checkout ({', '.join(stale[:3])}…); reinstall with agy plugin install {ROOT / 'plugins' / name}")
         else:
             report("ok", f"{name}: installed copy matches this checkout")
     helper = INSTALLED / "compose-preview" / "assets" / "compose-preview-card.py"

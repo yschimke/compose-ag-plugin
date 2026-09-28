@@ -39,11 +39,13 @@ ps -axo pid=,command= | grep 'compose-preview.*mcp serve'
 
 The card came from an old plugin that expected an MCP Apps bridge, which
 Antigravity does not have. Antigravity copies plugins at install time, so
-`git pull` alone does not update them. Reinstall:
+`git pull` alone does not update them. From the folder that holds both clones:
 
 ```sh
-agy plugin install ./plugins/compose-preview
-agy plugin install ./plugins/compose-catalogs
+git -C skills pull && git -C compose-ag-plugin pull
+agy plugin install ./skills
+agy plugin install ./compose-ag-plugin/plugins/compose-preview
+agy plugin install ./compose-ag-plugin/plugins/compose-catalogs   # if installed
 ```
 
 ## The render does not show my edit

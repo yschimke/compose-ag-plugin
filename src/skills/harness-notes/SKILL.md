@@ -21,6 +21,7 @@ follow `antigravity-viewer-card` (`render_preview preview=<Name>`, look at the P
 render call and a short reply.
 
 Claude Code ≥2.1.281 supports URL elicitation only on 2026-07-28-protocol connections; otherwise use the text fallback for the access grant.
+Claude Code does not load a plugin's `rules/AGENTS.md`; guidance it must always see belongs in a skill or the SessionStart message.
 
 The full, authoritative contract and current tooling gaps are in
 [`docs/agent-rules.md`](https://github.com/yschimke/compose-ag-plugin/blob/main/docs/agent-rules.md).

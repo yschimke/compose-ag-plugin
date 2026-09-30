@@ -19,6 +19,12 @@ ASSET_LEDGER_NAME = ".generated-assets.json"
 # Claude Code reads hooks/hooks.json by default. Codex would read that same file,
 # so the Codex manifest names its own copy, whose commands pass --harness=codex.
 HOOK_MANIFESTS = {"claude": "hooks/hooks.json", "codex": "hooks/codex-hooks.json"}
+# Antigravity reads a root hooks.json keyed by plugin name (the spike/prepare.py
+# shape from #6). It has no SessionStart event, and it runs the installed copy
+# under ~/.gemini/config/plugins/<name>, so only Stop hooks are rendered there.
+ANTIGRAVITY_HOOK_MANIFEST = "hooks.json"
+ANTIGRAVITY_HOOK_EVENTS = ("Stop",)
+ANTIGRAVITY_PLUGIN_ROOT = "$HOME/.gemini/config/plugins"
 ANTIGRAVITY_SCHEMA = "https://antigravity.google/schemas/v1/plugin.json"
 SKILL_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 SEMVER = re.compile(
@@ -227,6 +233,24 @@ def render_hooks(plugin_name: str, entries: object, harness: str) -> dict[str, o
     return {"hooks": hooks}
 
 
+def render_antigravity_hooks(plugin_name: str, entries: object) -> dict[str, object] | None:
+    """Render Antigravity's hooks.json, or None when no hook maps to an Antigravity event."""
+    render_hooks(plugin_name, entries, "claude")  # Same validation as the other harnesses.
+    assert isinstance(entries, list)
+    events: dict[str, list[dict[str, object]]] = {}
+    for entry in entries:
+        event = entry["event"].strip()
+        if event not in ANTIGRAVITY_HOOK_EVENTS:
+            continue
+        script = f"{ANTIGRAVITY_PLUGIN_ROOT}/{plugin_name}/{entry['command'].strip()}"
+        events.setdefault(event, []).append(
+            {"command": f'"{script}" --harness=antigravity', "type": "command"}
+        )
+    if not events:
+        return None
+    return {plugin_name: {"enabled": True, **events}}
+
+
 def synchronize_generated_agents(plugin_root: Path, agents: list[str]) -> None:
     agents_root = plugin_root / "agents"
     ledger = agents_root / AGENT_LEDGER_NAME
@@ -428,6 +452,11 @@ def main() -> None:
                 write_json(root / manifest_path, render_hooks(name, hooks, harness))
             else:
                 (root / manifest_path).unlink(missing_ok=True)
+        antigravity_hooks = render_antigravity_hooks(name, hooks) if hooks else None
+        if antigravity_hooks:
+            write_json(root / ANTIGRAVITY_HOOK_MANIFEST, antigravity_hooks)
+        else:
+            (root / ANTIGRAVITY_HOOK_MANIFEST).unlink(missing_ok=True)
         for hook in hooks:
             write_hook(root, hook["command"])
         write_json(

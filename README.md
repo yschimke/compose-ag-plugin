@@ -182,14 +182,21 @@ When `ui-builder/designs/index.json` exists, the gate also asks
 unsaved temporary copies (R3). It reports them to the person but never blocks
 because of them.
 
-Claude Code and Codex each get their own generated hook manifest, whose
-commands pass `--harness=claude` or `--harness=codex`. Both harnesses use the
-`{"decision":"block","reason":…}` response. The script can also emit
-Antigravity's `{"decision":"continue","reason":…}`, but no Antigravity hook is
-generated yet. In Antigravity 1.2.12, #6 Q4 showed that `continue` keeps the
-agent working with no observed cap, and its Stop payload has neither
-`stop_hook_active` nor a re-entry counter, so an Antigravity gate needs its
-own per-`conversationId` loop state first.
+Each harness gets its own generated hook manifest, and every command passes
+its harness explicitly:
+
+- Claude Code (`hooks/hooks.json`, `--harness=claude`) and Codex
+  (`hooks/codex-hooks.json`, `--harness=codex`) use the
+  `{"decision":"block","reason":…}` response.
+- Antigravity (the root `hooks.json`, `--harness=antigravity`) uses
+  `{"decision":"continue","reason":…}`. It has no SessionStart event, so it
+  gets only the Stop gate, run from the installed copy under
+  `~/.gemini/config/plugins/compose-preview`. Its Stop payload has no
+  `stop_hook_active` and #6 Q4 observed no host cap, so the two-turn cap,
+  keyed by `conversationId`, is the only loop guard. The gate finds the
+  checkout from the first `workspacePaths` entry. Antigravity has no
+  non-blocking Stop message, so the design reminder is not shown there. A live
+  Antigravity block has not been recorded yet (#39).
 
 ## Development
 

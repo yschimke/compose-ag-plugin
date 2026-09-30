@@ -68,7 +68,10 @@ def check_plugins() -> None:
     helper = INSTALLED / "compose-preview" / "assets" / "compose-preview-card.py"
     report("ok" if helper.is_file() else "FIX", f"card helper: {helper}")
     hooks = INSTALLED / "compose-preview" / "hooks.json"
-    report("info", "Stop gate hooks.json: " + ("installed" if hooks.is_file() else "not generated for Antigravity yet (#39)"))
+    if hooks.is_file():
+        report("ok", f"Stop gate hooks.json: {hooks} (runs only with COMPOSE_PREVIEW_GATE=1)")
+    else:
+        report("FIX", f"Stop gate hooks.json missing: reinstall with agy plugin install {ROOT / 'plugins' / 'compose-preview'}")
 
 
 def check_helper() -> None:

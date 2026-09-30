@@ -123,8 +123,9 @@ run the generator.
 micro-skill. Keeping that instruction out of `compose-catalogs` avoids
 advertising a local artifact that the remote-catalog plugin does not package.
 
-Both plugins also ship the shared, read-only `design-reviewer` agent for Claude
-Code and Antigravity. It performs semantic, accessibility, font-scale, and
+`compose-preview` also ships the read-only `design-reviewer` agent for Claude
+Code and Antigravity. It uses the `compose-catalogs` tools too when that plugin
+is installed, so it ships once rather than in both plugins. It performs semantic, accessibility, font-scale, and
 device checks in its own context, then returns a short verdict with viewer or
 artifact links so rendered image payloads do not consume the main conversation.
 Antigravity 1.2.12 discovered and ran a plugin fixture agent (issue #6 Q20);

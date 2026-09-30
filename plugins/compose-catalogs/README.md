@@ -16,7 +16,8 @@ see that repository's README for install steps in each harness.
 - The `harness-notes` skill, which summarizes the
   [agent rules](https://github.com/yschimke/compose-ag-plugin/blob/main/docs/agent-rules.md)
   for the active harness.
-- The read-only `design-reviewer` agent.
+- No agents. The read-only `design-reviewer` agent ships in `compose-preview`
+  and uses this plugin's tools when both are installed.
 
 It has no hooks and runs no local programs.
 

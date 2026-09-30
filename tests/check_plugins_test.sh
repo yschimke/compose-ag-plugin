@@ -147,7 +147,12 @@ source.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 done
 mv "$fixture/src/plugins.json.valid-interface" "$fixture/src/plugins.json"
 
-for plugin in compose-catalogs compose-preview; do
+# design-reviewer ships once, in compose-preview (#34); a second copy is a duplicate Claude Code agent.
+if test -e "$fixture/plugins/compose-catalogs/agents/design-reviewer.md"; then
+  printf '%s\n' 'FAIL: design-reviewer must ship only in compose-preview' >&2
+  exit 1
+fi
+for plugin in compose-preview; do
   reviewer="$fixture/plugins/$plugin/agents/design-reviewer.md"
   test -f "$reviewer"
   grep -q '^name: design-reviewer$' "$reviewer"

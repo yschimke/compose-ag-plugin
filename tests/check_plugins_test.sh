@@ -153,6 +153,20 @@ for harness, name in (("claude", "hooks.json"), ("codex", "codex-hooks.json")):
                 assert hook["command"].endswith(f" --harness={harness}"), hook
 codex = json.loads((root / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))
 assert codex["hooks"] == "./hooks/codex-hooks.json", codex
+# Antigravity gets only the Stop gate (it has no SessionStart), from its
+# installed copy, with its own --harness (#9, #39).
+antigravity = json.loads((root / "hooks.json").read_text(encoding="utf-8"))
+assert antigravity == {
+    "compose-preview": {
+        "enabled": True,
+        "Stop": [
+            {
+                "command": "\"$HOME/.gemini/config/plugins/compose-preview/scripts/stop-gate.sh\" --harness=antigravity",
+                "type": "command",
+            }
+        ],
+    }
+}, antigravity
 ' "$(dirname "$(dirname "$hook")")"
 
 # The hook generator is event-generic so the future opt-in Stop gate can use
@@ -290,6 +304,7 @@ if test -e "$fixture/plugins/compose-preview/scripts/session-start-summary.sh"; 
 fi
 test ! -e "$fixture/plugins/compose-preview/hooks/hooks.json"
 test ! -e "$fixture/plugins/compose-preview/hooks/codex-hooks.json"
+test ! -e "$fixture/plugins/compose-preview/hooks.json"
 if grep -q '"hooks"' "$fixture/plugins/compose-preview/.codex-plugin/plugin.json"; then
   printf '%s\n' 'FAIL: Codex manifest must not name a removed hook manifest' >&2
   exit 1

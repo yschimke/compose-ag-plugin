@@ -124,6 +124,16 @@ run_gate() {
 }
 mkdir "$temporary_root/tmp"
 
+run_antigravity_gate() {
+  # run_antigravity_gate <workspace> <conversation> : the payload #6 Q4 recorded
+  # for agy 1.2.12, with no cwd and no stop_hook_active. It runs from / so the
+  # workspace can only come from workspacePaths.
+  local cwd=$1 conversation=$2
+  printf '{"artifactDirectoryPath":"/tmp/artifacts","conversationId":"%s","error":null,"executionNum":0,"fullyIdle":true,"modelName":"m","terminationReason":"NO_TOOL_CALL","transcriptPath":"/tmp/t.jsonl","workspacePaths":["%s"]}' \
+    "$conversation" "$cwd" |
+    (cd / && TMPDIR="$temporary_root/tmp" "$gate" --harness=antigravity)
+}
+
 log="$temporary_root/cli.log"
 reset_fake() {
   : >"$log"
@@ -177,11 +187,15 @@ export COMPOSE_PREVIEW_GATE
 expect_output 'COMPOSE_PREVIEW_GATE=0 allows the stop' '' "$(run_gate claude "$workspace")"
 expect_no_cli 'COMPOSE_PREVIEW_GATE=0'
 
-reset_fake
-expect_output 'image and hash changes only allow the stop' '' "$(run_gate claude "$workspace")"
-grep -q '^show --json$' "$log" || fail 'the gate must render the previews'
-grep -q '^a11y --json --fail-on errors --id com.example.ScreenKt.ScreenPreview$' "$log" ||
-  fail 'the gate must scope a11y to the one changed preview'
+# #10 T4: a migration changes pixels, so image and hash changes never block.
+for harness in claude codex antigravity; do
+  reset_fake
+  expect_output "$harness image and hash changes only allow the stop" '' \
+    "$(run_gate "$harness" "$workspace")"
+  grep -q '^show --json$' "$log" || fail "$harness: the gate must render the previews"
+  grep -q '^a11y --json --fail-on errors --id com.example.ScreenKt.ScreenPreview$' "$log" ||
+    fail "$harness: the gate must scope a11y to the one changed preview"
+done
 
 reset_fake
 FAKE_A11Y_JSON="$data/a11y-warning.json"
@@ -223,6 +237,33 @@ expect_golden 'second blocked turn' render-failure.claude.json "$(run_gate claud
 expect_output 'third consecutive turn is allowed' '' "$(run_gate claude "$workspace")"
 expect_no_cli 'after the consecutive-block cap'
 expect_golden 'the cap resets after allowing' render-failure.claude.json "$(run_gate claude "$workspace")"
+
+# Antigravity: workspacePaths locates the checkout, and conversationId keys the
+# consecutive-block cap, which is its only loop guard.
+reset_fake
+expect_output 'Antigravity pixel changes allow the stop' '' \
+  "$(run_antigravity_gate "$workspace" conversation-pixels)"
+grep -q '^show --json$' "$log" || fail 'Antigravity: workspacePaths must locate the checkout'
+
+reset_fake
+FAKE_SHOW_JSON="$data/show-render-failed.json" FAKE_SHOW_STATUS=2
+expect_golden 'Antigravity payload first block' render-failure.antigravity.json \
+  "$(run_antigravity_gate "$workspace" conversation-a)"
+expect_golden 'Antigravity payload second block' render-failure.antigravity.json \
+  "$(run_antigravity_gate "$workspace" conversation-a)"
+expect_golden 'another Antigravity conversation has its own cap' render-failure.antigravity.json \
+  "$(run_antigravity_gate "$workspace" conversation-b)"
+: >"$log"
+expect_output 'third Antigravity block in one conversation is allowed' '' \
+  "$(run_antigravity_gate "$workspace" conversation-a)"
+expect_no_cli 'after the Antigravity consecutive-block cap'
+expect_golden 'the Antigravity cap resets after allowing' render-failure.antigravity.json \
+  "$(run_antigravity_gate "$workspace" conversation-a)"
+
+reset_fake
+FAKE_SHOW_JSON="$data/show-render-failed.json" FAKE_SHOW_STATUS=2
+expect_golden 'file:// workspacePaths are accepted' render-failure.antigravity.json \
+  "$(run_antigravity_gate "file://$workspace" conversation-file-url)"
 
 reset_fake
 expect_output 'no changed Kotlin allows the stop' '' "$(run_gate claude "$clean_workspace")"

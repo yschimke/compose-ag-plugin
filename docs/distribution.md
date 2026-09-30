@@ -1,0 +1,94 @@
+# Distribution
+
+Where the plugins and the hosted server are listed, what this repository
+generates for each listing, and what still needs an account or a person. Every
+file named here is generated from [`src/plugins.json`](../src/plugins.json) by
+`python3 scripts/generate.py`; edit the source, never the output.
+
+| Listing | Issue | Generated here | CI check | Still needs |
+| --- | --- | --- | --- | --- |
+| Claude plugin directory | [#53](https://github.com/yschimke/compose-ag-plugin/issues/53) | `plugins/*/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `plugins/*/README.md`, `plugins/*/LICENSE` | `claude plugin validate --strict` on both plugins and the marketplace | Portal **Validate**, submission, tracked branch or tag |
+| Official MCP Registry | [#55](https://github.com/yschimke/compose-ag-plugin/issues/55) | `server.json` | Upstream `server.schema.json` | First publish (below) |
+| Cursor Marketplace | [#59](https://github.com/yschimke/compose-ag-plugin/issues/59) | `plugins/*/.cursor-plugin/plugin.json`, `.cursor-plugin/marketplace.json` | Cursor's `plugin.schema.json` and `marketplace.schema.json` | Smoke test in Cursor, submission |
+| Gemini CLI extensions gallery | [#58](https://github.com/yschimke/compose-ag-plugin/issues/58) | `gemini-extension.json` | `gemini extensions validate` | Smoke test, `gemini-cli-extension` repository topic |
+| Claude Connectors Directory | [#54](https://github.com/yschimke/compose-ag-plugin/issues/54) | — | — | Tool titles and annotations live in compose-preview-server |
+| skills.sh | [#57](https://github.com/yschimke/compose-ag-plugin/issues/57) | — | — | The canonical skills live in yschimke/skills |
+
+## The Compose Preview token
+
+The hosted server reads an optional `X-Compose-Preview-Token` header. Each
+harness gets it differently, and all of them come from the one `userConfig`
+entry and `envHeaders` mapping in `src/plugins.json`:
+
+| Harness | Header value | Where the user sets it |
+| --- | --- | --- |
+| Claude Code | `${user_config.compose_preview_token}` | Prompted when the plugin is enabled; stored in the credential store |
+| Codex | `env_http_headers` → `COMPOSE_PREVIEW_TOKEN` | Environment |
+| Antigravity | `${COMPOSE_PREVIEW_TOKEN:-}` | Environment |
+| Cursor | `${COMPOSE_PREVIEW_TOKEN}`, declared in `variables` | Plugin variables (unverified) |
+| Gemini CLI | `${COMPOSE_PREVIEW_TOKEN}`, declared in `settings` | `gemini extensions config` (unverified) |
+
+Claude Code no longer reads `COMPOSE_PREVIEW_TOKEN` from the environment. The
+directory holds a plugin that forwards a credential from the user's environment
+for review, so the Claude manifest takes it from a sensitive `userConfig`
+option instead. A blank option sends an empty header, and the server still
+connects (checked with Claude Code 2.1.285).
+
+## Claude plugin directory
+
+The [pre-submission checklist](https://claude.com/docs/plugins/pre-submission-checklist)
+was worked through on 2026-09-30. Fixed here: a README of at least 40 words and
+a LICENSE in each plugin folder, `displayName`, a marketplace description, and
+the token (above). `scripts/validate_manifests.py` enforces the README length
+and the no-environment-credential rule.
+
+Expected reviewer holds that are not bugs. Both plugins live in subfolders of a
+marketplace repository, so the validator follows only plain shell scripts:
+
+- `compose-preview` starts `compose-preview mcp serve` from `PATH`, not a file
+  in the plugin (**MCP server command wasn't read**). The CLI needs Java and
+  Gradle, so it can't be bundled.
+- The hook scripts source `scripts/lib/harness.sh` and use shell variables
+  (**Scripts the validator couldn't follow**).
+- `compose-preview` only works where a local shell and JDK exist, so it is a
+  Claude Code plugin; chat and Cowork can't run it.
+
+Each plugin README lists what the plugin runs and what it sends, for the
+security scan's undisclosed-destination check.
+
+## Official MCP Registry
+
+`server.json` lists the hosted server as `io.github.yschimke/compose-preview`,
+a `streamable-http` remote at `https://preview.coo.ee/mcp` with the optional
+secret header. The local server has no registry package type (it is a JVM CLI
+launched from `PATH`), so it is not listed.
+
+[`.github/workflows/mcp-registry.yml`](../.github/workflows/mcp-registry.yml)
+publishes it with `mcp-publisher` and GitHub OIDC, so no secret is needed. It
+sets `version` to the compose-preview-server release, and skips a version the
+registry already has. It runs:
+
+- daily, for the newest `vX.Y.Z` tag of compose-preview-server;
+- on a `repository_dispatch` of type `compose-preview-server-release` with
+  `client_payload.version`, which that repository's release workflow can send;
+- by hand, with an optional version.
+
+## Cursor
+
+Cursor reads `.cursor-plugin/marketplace.json` at the repository root and
+`.cursor-plugin/plugin.json` in each plugin folder. The MCP servers are inline
+in the manifest. `compose-preview` sets `hooks` to an empty inline config
+because Cursor would otherwise discover `hooks/hooks.json`, which holds Claude
+Code hooks whose event names and payloads Cursor does not share. Whether the
+inline config replaces that discovery, and whether Cursor expands the token
+variable in headers, is unverified until a smoke test.
+
+## Gemini CLI
+
+Gemini CLI reads `gemini-extension.json` only from the root of a repository or
+release archive, so this repository ships one extension, `compose-preview`,
+that wraps the servers of both plugins: the local `compose-preview-mcp` and the
+hosted `compose-preview-catalog`. It carries no skills, hooks or agents; the
+repository root has none, and the canonical skills come from yschimke/skills.
+Install with `gemini extensions install https://github.com/yschimke/compose-ag-plugin`.
+Header expansion of the declared token setting is unverified.

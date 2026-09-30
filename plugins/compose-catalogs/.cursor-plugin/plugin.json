@@ -1,0 +1,41 @@
+{
+  "agents": "./agents/",
+  "author": {
+    "name": "Yuri Schimke"
+  },
+  "category": "developer-tools",
+  "description": "Discover Compose components, inspect properties, and render catalog variants.",
+  "displayName": "Compose Catalogs",
+  "homepage": "https://github.com/yschimke/compose-ag-plugin/tree/main/plugins/compose-catalogs",
+  "keywords": [
+    "compose",
+    "catalog",
+    "material3",
+    "wear"
+  ],
+  "license": "Apache-2.0",
+  "mcpServers": {
+    "compose-preview-catalog": {
+      "headers": {
+        "X-Compose-Preview-Token": "${COMPOSE_PREVIEW_TOKEN}"
+      },
+      "type": "http",
+      "url": "https://preview.coo.ee/mcp"
+    }
+  },
+  "name": "compose-catalogs",
+  "repository": "https://github.com/yschimke/compose-ag-plugin",
+  "skills": "./skills/",
+  "variables": {
+    "properties": {
+      "COMPOSE_PREVIEW_TOKEN": {
+        "description": "Optional access token for the hosted preview.coo.ee service. Leave it blank to use the service's interactive access grant.",
+        "title": "Compose Preview token",
+        "type": "string"
+      }
+    },
+    "required": [],
+    "type": "object"
+  },
+  "version": "0.2.0"
+}

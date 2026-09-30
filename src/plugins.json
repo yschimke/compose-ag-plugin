@@ -2,6 +2,7 @@
   "repository": "https://github.com/yschimke/compose-ag-plugin",
   "license": "Apache-2.0",
   "owner": "Yuri Schimke",
+  "description": "Compose @Preview rendering, accessibility checks and remote component catalogs.",
   "plugins": [
     {
       "name": "compose-catalogs",
@@ -34,11 +35,22 @@
           "headers": {
             "X-Compose-Preview-Token": "${COMPOSE_PREVIEW_TOKEN:-}"
           },
-          "codexEnvHeaders": {
+          "envHeaders": {
             "X-Compose-Preview-Token": "COMPOSE_PREVIEW_TOKEN"
+          },
+          "userConfigHeaders": {
+            "X-Compose-Preview-Token": "compose_preview_token"
           }
         }
       ],
+      "userConfig": {
+        "compose_preview_token": {
+          "type": "string",
+          "title": "Compose Preview token",
+          "description": "Optional access token for the hosted preview.coo.ee service. Leave it blank to use the service's interactive access grant.",
+          "sensitive": true
+        }
+      },
       "skills": [
         "harness-notes"
       ],
@@ -107,5 +119,23 @@
         }
       ]
     }
-  ]
+  ],
+  "gemini": {
+    "name": "compose-preview",
+    "version": "0.2.0",
+    "description": "Render Compose @Preview functions locally and browse hosted Material 3 and Wear component catalogs.",
+    "plugins": [
+      "compose-preview",
+      "compose-catalogs"
+    ]
+  },
+  "registry": {
+    "name": "io.github.yschimke/compose-preview",
+    "title": "Compose Preview Catalogs",
+    "description": "Browse, inspect and render Jetpack Compose Material 3 and Wear component catalogs.",
+    "version": "3.88.0",
+    "plugin": "compose-catalogs",
+    "server": "compose-preview-catalog",
+    "repository": "https://github.com/yschimke/compose-preview-server"
+  }
 }

@@ -16,6 +16,8 @@ AGENT_LEDGER_NAME = ".generated-agents.json"
 HOOK_SOURCE_ROOT = ROOT / "src" / "hooks"
 ASSET_SOURCE_ROOT = ROOT / "src" / "assets"
 ASSET_LEDGER_NAME = ".generated-assets.json"
+README_SOURCE_ROOT = ROOT / "src" / "readmes"
+LICENSE_SOURCE = ROOT / "LICENSE"
 # Claude Code reads hooks/hooks.json by default. Codex would read that same file,
 # so the Codex manifest names its own copy, whose commands pass --harness=codex.
 HOOK_MANIFESTS = {"claude": "hooks/hooks.json", "codex": "hooks/codex-hooks.json"}
@@ -26,6 +28,12 @@ ANTIGRAVITY_HOOK_MANIFEST = "hooks.json"
 ANTIGRAVITY_HOOK_EVENTS = ("Stop",)
 ANTIGRAVITY_PLUGIN_ROOT = "$HOME/.gemini/config/plugins"
 ANTIGRAVITY_SCHEMA = "https://antigravity.google/schemas/v1/plugin.json"
+MCP_REGISTRY_SCHEMA = "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json"
+MARKETPLACE_NAME = "compose-ag-plugin"
+# Claude Code userConfig options are strict objects; reject anything else here.
+USER_CONFIG_FIELDS = {"type", "title", "description", "sensitive", "required", "default"}
+USER_CONFIG_KEY = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+ENV_NAME = re.compile(r"^[A-Z_][A-Z0-9_]*$")
 SKILL_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 SEMVER = re.compile(
     r"^(0|[1-9][0-9]*)\."
@@ -167,6 +175,38 @@ def write_asset(plugin_root: Path, asset: str) -> None:
     target = plugin_root / "assets" / asset_path
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(source.read_bytes())
+
+
+def write_readme(plugin_root: Path, name: str) -> None:
+    """Every plugin folder carries its own README and LICENSE (directory submission rules)."""
+    source = README_SOURCE_ROOT / f"{name}.md"
+    if not source.is_file():
+        raise ValueError(f"missing plugin README source: {source.relative_to(ROOT)}")
+    (plugin_root / "README.md").write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+    (plugin_root / "LICENSE").write_text(LICENSE_SOURCE.read_text(encoding="utf-8"), encoding="utf-8")
+
+
+def validate_user_config(plugin_name: str, value: object) -> dict[str, dict[str, object]]:
+    if not isinstance(value, dict):
+        raise ValueError(f"{plugin_name}.userConfig must be an object")
+    for key, option in value.items():
+        if not isinstance(key, str) or not USER_CONFIG_KEY.fullmatch(key):
+            raise ValueError(f"{plugin_name}.userConfig key {key!r} must be an identifier")
+        if not isinstance(option, dict):
+            raise ValueError(f"{plugin_name}.userConfig.{key} must be an object")
+        unknown = set(option) - USER_CONFIG_FIELDS
+        if unknown:
+            raise ValueError(
+                f"{plugin_name}.userConfig.{key} has unsupported fields: {', '.join(sorted(unknown))}"
+            )
+        if option.get("type") != "string":
+            raise ValueError(f"{plugin_name}.userConfig.{key}.type must be string")
+        for field in ("title", "description"):
+            require_string(option.get(field), f"{plugin_name}.userConfig.{key}.{field}")
+        for field in ("sensitive", "required"):
+            if field in option and not isinstance(option[field], bool):
+                raise ValueError(f"{plugin_name}.userConfig.{key}.{field} must be a boolean")
+    return value
 
 
 HOOK_ROOT = "${CLAUDE_PLUGIN_ROOT}/"
@@ -338,7 +378,36 @@ def synchronize_generated_assets(plugin_root: Path, assets: list[str]) -> None:
         ledger.unlink(missing_ok=True)
 
 
-def render_mcp_servers(plugin_name: str, entries: object, harness: str) -> dict[str, object]:
+def header_map(plugin_name: str, entry: dict[str, object], field: str, headers: dict[str, str]) -> dict[str, str]:
+    """Return a per-header mapping that must name exactly the entry's headers."""
+    name = entry.get("name")
+    mapping = entry.get(field, {})
+    if not isinstance(mapping, dict) or not all(
+        isinstance(key, str) and key and isinstance(value, str) and value
+        for key, value in mapping.items()
+    ):
+        raise ValueError(f"{plugin_name}.mcp.{name}.{field} must map header names to non-empty strings")
+    if set(mapping) != set(headers):
+        raise ValueError(f"{plugin_name}.mcp.{name}.{field} must cover the same headers as headers")
+    return mapping
+
+
+def env_headers(plugin_name: str, entry: dict[str, object], headers: dict[str, str]) -> dict[str, str]:
+    mapping = header_map(plugin_name, entry, "envHeaders", headers)
+    for header, env in mapping.items():
+        if not ENV_NAME.fullmatch(env):
+            raise ValueError(
+                f"{plugin_name}.mcp.{entry.get('name')}.envHeaders.{header} must be an environment variable name"
+            )
+    return mapping
+
+
+def render_mcp_servers(
+    plugin_name: str,
+    entries: object,
+    harness: str,
+    user_config: dict[str, dict[str, object]] | None = None,
+) -> dict[str, object]:
     if not isinstance(entries, list):
         raise ValueError(f"{plugin_name}.mcp must be a list")
 
@@ -373,28 +442,243 @@ def render_mcp_servers(plugin_name: str, entries: object, harness: str) -> dict[
             if harness == "antigravity":
                 server = {"headers": headers, "serverUrl": url}
             elif harness == "codex":
-                env_headers = entry.get("codexEnvHeaders", {})
-                if not isinstance(env_headers, dict) or not all(
-                    isinstance(key, str)
-                    and key
-                    and isinstance(value, str)
-                    and value
-                    for key, value in env_headers.items()
-                ):
-                    raise ValueError(
-                        f"{plugin_name}.mcp.{name}.codexEnvHeaders must map header names to environment variable names"
-                    )
-                if set(env_headers) != set(headers):
-                    raise ValueError(
-                        f"{plugin_name}.mcp.{name}.codexEnvHeaders must cover the same headers as headers"
-                    )
-                server = {"env_http_headers": env_headers, "type": "http", "url": url}
+                server = {
+                    "env_http_headers": env_headers(plugin_name, entry, headers),
+                    "type": "http",
+                    "url": url,
+                }
+            elif harness == "cursor":
+                # Cursor and Gemini CLI expand ${VAR}, but not ${VAR:-default}.
+                server = {
+                    "headers": {
+                        header: f"${{{env}}}"
+                        for header, env in env_headers(plugin_name, entry, headers).items()
+                    },
+                    "type": "http",
+                    "url": url,
+                }
+            elif harness == "gemini":
+                server = {
+                    "headers": {
+                        header: f"${{{env}}}"
+                        for header, env in env_headers(plugin_name, entry, headers).items()
+                    },
+                    "httpUrl": url,
+                }
+            elif harness == "claude":
+                # Credentials come from a sensitive userConfig option, never the user's environment.
+                keys = header_map(plugin_name, entry, "userConfigHeaders", headers) if headers else {}
+                for header, key in keys.items():
+                    if key not in (user_config or {}):
+                        raise ValueError(
+                            f"{plugin_name}.mcp.{name}.userConfigHeaders.{header} names undeclared userConfig {key}"
+                        )
+                server = {
+                    "headers": {header: f"${{user_config.{key}}}" for header, key in keys.items()},
+                    "type": "http",
+                    "url": url,
+                }
             else:
-                server = {"headers": headers, "type": "http", "url": url}
+                raise ValueError(f"{plugin_name}.mcp.{name}: unsupported MCP harness {harness}")
         else:
             raise ValueError(f"{plugin_name}.mcp.{name}.kind must be stdio or http")
         servers[name] = server
     return servers
+
+
+def render_claude_manifest(
+    *,
+    plugin: dict[str, object],
+    user_config: dict[str, dict[str, object]],
+    owner: str,
+    repository: str,
+    license_name: str,
+) -> dict[str, object]:
+    interface = plugin.get("interface")
+    manifest: dict[str, object] = {
+        "author": {"name": owner},
+        "description": plugin["description"],
+        "keywords": plugin.get("keywords", []),
+        "license": license_name,
+        "name": plugin["name"],
+        "repository": repository,
+        "version": plugin["version"],
+    }
+    if isinstance(interface, dict) and interface.get("displayName"):
+        manifest["displayName"] = require_string(
+            interface["displayName"], f"{plugin['name']}.interface.displayName"
+        )
+    if user_config:
+        manifest["userConfig"] = user_config
+    return manifest
+
+
+def render_cursor_manifest(
+    *,
+    plugin: dict[str, object],
+    user_config: dict[str, dict[str, object]],
+    owner: str,
+    repository: str,
+    license_name: str,
+) -> dict[str, object]:
+    """Render .cursor-plugin/plugin.json (schema: github.com/cursor/plugins/schemas)."""
+    name = plugin["name"]
+    interface = plugin.get("interface")
+    if not isinstance(interface, dict):
+        raise ValueError(f"{name}.interface must be an object")
+    manifest: dict[str, object] = {
+        "author": {"name": owner},
+        "category": "developer-tools",
+        "description": plugin["description"],
+        "displayName": require_string(interface.get("displayName"), f"{name}.interface.displayName"),
+        "homepage": f"{repository}/tree/main/plugins/{name}",
+        "keywords": plugin.get("keywords", []),
+        "license": license_name,
+        "name": name,
+        "repository": repository,
+        "version": plugin["version"],
+    }
+    if plugin.get("skills"):
+        manifest["skills"] = "./skills/"
+    if plugin.get("agents"):
+        manifest["agents"] = "./agents/"
+    if plugin.get("hooks"):
+        # hooks/hooks.json holds Claude Code hooks, which Cursor would otherwise
+        # discover by default; its events and payloads differ, so ship none (#59).
+        manifest["hooks"] = {"hooks": {}, "version": 1}
+    mcp = plugin.get("mcp", [])
+    if mcp:
+        manifest["mcpServers"] = render_mcp_servers(name, mcp, "cursor")
+        variables = cursor_variables(name, mcp, user_config)
+        if variables:
+            manifest["variables"] = {"properties": variables, "required": [], "type": "object"}
+    return manifest
+
+
+def secret_env_options(
+    plugin_name: str, entries: list[object], user_config: dict[str, dict[str, object]]
+) -> dict[str, dict[str, object]]:
+    """Map each header environment variable to the userConfig option that documents it."""
+    options: dict[str, dict[str, object]] = {}
+    for entry in entries:
+        if not isinstance(entry, dict) or entry.get("kind") != "http" or not entry.get("headers"):
+            continue
+        headers = entry["headers"]
+        envs = env_headers(plugin_name, entry, headers)
+        keys = header_map(plugin_name, entry, "userConfigHeaders", headers)
+        for header, env in envs.items():
+            option = user_config.get(keys[header])
+            if option is None:
+                raise ValueError(
+                    f"{plugin_name}.mcp.{entry['name']}.userConfigHeaders.{header} names undeclared userConfig {keys[header]}"
+                )
+            options[env] = option
+    return options
+
+
+def cursor_variables(
+    plugin_name: str, entries: list[object], user_config: dict[str, dict[str, object]]
+) -> dict[str, object]:
+    return {
+        env: {"description": option["description"], "title": option["title"], "type": "string"}
+        for env, option in secret_env_options(plugin_name, entries, user_config).items()
+    }
+
+
+def render_gemini_extension(source: dict[str, object], plugins: list[dict[str, object]]) -> dict[str, object]:
+    """Render the repository-root gemini-extension.json that wraps every listed plugin's servers."""
+    config = source.get("gemini")
+    if not isinstance(config, dict):
+        raise ValueError("gemini must be an object")
+    name = require_string(config.get("name"), "gemini.name")
+    version = require_string(config.get("version"), "gemini.version")
+    if SEMVER.fullmatch(version) is None:
+        raise ValueError("gemini.version must use strict semver")
+    included = config.get("plugins")
+    if not isinstance(included, list) or not included:
+        raise ValueError("gemini.plugins must be a non-empty list of plugin names")
+    by_name = {plugin["name"]: plugin for plugin in plugins}
+    servers: dict[str, object] = {}
+    settings: dict[str, dict[str, object]] = {}
+    for plugin_name in included:
+        plugin = by_name.get(plugin_name)
+        if plugin is None:
+            raise ValueError(f"gemini.plugins names unknown plugin {plugin_name!r}")
+        mcp = plugin.get("mcp", [])
+        user_config = plugin.get("userConfig", {})
+        for server_name, server in render_mcp_servers(plugin_name, mcp, "gemini").items():
+            if server_name in servers:
+                raise ValueError(f"gemini: duplicate MCP server {server_name}")
+            servers[server_name] = server
+        settings.update(secret_env_options(plugin_name, mcp, user_config))
+    extension: dict[str, object] = {
+        "description": require_string(config.get("description"), "gemini.description"),
+        "mcpServers": servers,
+        "name": name,
+        "version": version,
+    }
+    if settings:
+        # Gemini CLI passes only declared variables to MCP servers and header expansion.
+        extension["settings"] = [
+            {
+                "description": option["description"],
+                "envVar": env,
+                "name": option["title"],
+                "sensitive": bool(option.get("sensitive", False)),
+            }
+            for env, option in settings.items()
+        ]
+    return extension
+
+
+def render_registry_server(source: dict[str, object], plugins: list[dict[str, object]]) -> dict[str, object]:
+    """Render server.json for the Official MCP Registry from the plugin's remote server entry."""
+    config = source.get("registry")
+    if not isinstance(config, dict):
+        raise ValueError("registry must be an object")
+    plugin_name = require_string(config.get("plugin"), "registry.plugin")
+    server_name = require_string(config.get("server"), "registry.server")
+    plugin = next((plugin for plugin in plugins if plugin["name"] == plugin_name), None)
+    if plugin is None:
+        raise ValueError(f"registry.plugin names unknown plugin {plugin_name!r}")
+    entry = next(
+        (
+            entry
+            for entry in plugin.get("mcp", [])
+            if isinstance(entry, dict) and entry.get("name") == server_name
+        ),
+        None,
+    )
+    if entry is None or entry.get("kind") != "http":
+        raise ValueError(f"registry.server must name an http MCP server of {plugin_name}")
+    description = require_string(config.get("description"), "registry.description")
+    if len(description) > 100:
+        raise ValueError("registry.description must be at most 100 characters")
+    user_config = plugin.get("userConfig", {})
+    keys = header_map(plugin_name, entry, "userConfigHeaders", entry.get("headers", {}))
+    remote: dict[str, object] = {"type": "streamable-http", "url": entry["url"]}
+    if keys:
+        remote["headers"] = [
+            {
+                "description": user_config[key]["description"],
+                "isRequired": bool(user_config[key].get("required", False)),
+                "isSecret": bool(user_config[key].get("sensitive", False)),
+                "name": header,
+            }
+            for header, key in keys.items()
+        ]
+    return {
+        "$schema": MCP_REGISTRY_SCHEMA,
+        "description": description,
+        "name": require_string(config.get("name"), "registry.name"),
+        "remotes": [remote],
+        "repository": {
+            "source": "github",
+            "url": require_string(config.get("repository"), "registry.repository"),
+        },
+        "title": require_string(config.get("title"), "registry.title"),
+        "version": require_string(config.get("version"), "registry.version"),
+    }
 
 
 def main() -> None:
@@ -402,11 +686,13 @@ def main() -> None:
     repository = require_string(source.get("repository"), "repository")
     license_name = require_string(source.get("license"), "license")
     owner = require_string(source.get("owner"), "owner")
+    marketplace_description = require_string(source.get("description"), "description")
     plugins = source.get("plugins")
     if not isinstance(plugins, list) or not plugins:
         raise ValueError("plugins must be a non-empty list")
 
     marketplace_plugins = []
+    cursor_marketplace_plugins = []
     names: set[str] = set()
     for plugin in plugins:
         if not isinstance(plugin, dict):
@@ -423,6 +709,7 @@ def main() -> None:
         assets = plugin.get("assets", [])
         mcp = plugin.get("mcp", [])
         interface = plugin.get("interface")
+        user_config = validate_user_config(name, plugin.get("userConfig", {}))
         if name in names:
             raise ValueError(f"duplicate plugin name: {name}")
         if not isinstance(keywords, list) or not all(isinstance(word, str) for word in keywords):
@@ -438,6 +725,7 @@ def main() -> None:
         names.add(name)
 
         root = ROOT / "plugins" / name
+        write_readme(root, name)
         for skill in skills:
             write_skill(root, skill)
         synchronize_generated_agents(root, agents)
@@ -465,15 +753,23 @@ def main() -> None:
         )
         write_json(
             root / ".claude-plugin" / "plugin.json",
-            {
-                "author": {"name": owner},
-                "description": description,
-                "keywords": keywords,
-                "license": license_name,
-                "name": name,
-                "repository": repository,
-                "version": version,
-            },
+            render_claude_manifest(
+                plugin=plugin,
+                user_config=user_config,
+                owner=owner,
+                repository=repository,
+                license_name=license_name,
+            ),
+        )
+        write_json(
+            root / ".cursor-plugin" / "plugin.json",
+            render_cursor_manifest(
+                plugin=plugin,
+                user_config=user_config,
+                owner=owner,
+                repository=repository,
+                license_name=license_name,
+            ),
         )
         write_json(
             root / ".codex-plugin" / "plugin.json",
@@ -494,6 +790,9 @@ def main() -> None:
         marketplace_plugins.append(
             {"description": description, "name": name, "source": f"./plugins/{name}"}
         )
+        cursor_marketplace_plugins.append(
+            {"description": description, "name": name, "source": f"plugins/{name}"}
+        )
         if mcp:
             write_json(
                 root / "mcp_config.json",
@@ -501,7 +800,7 @@ def main() -> None:
             )
             write_json(
                 root / ".mcp.json",
-                {"mcpServers": render_mcp_servers(name, mcp, "claude")},
+                {"mcpServers": render_mcp_servers(name, mcp, "claude", user_config)},
             )
         else:
             (root / "mcp_config.json").unlink(missing_ok=True)
@@ -509,8 +808,26 @@ def main() -> None:
 
     write_json(
         ROOT / ".claude-plugin" / "marketplace.json",
-        {"name": "compose-ag-plugin", "owner": {"name": owner}, "plugins": marketplace_plugins},
+        {
+            "metadata": {"description": marketplace_description},
+            "name": MARKETPLACE_NAME,
+            "owner": {"name": owner},
+            "plugins": marketplace_plugins,
+        },
     )
+    write_json(
+        ROOT / ".cursor-plugin" / "marketplace.json",
+        {
+            "metadata": {"description": marketplace_description},
+            "name": MARKETPLACE_NAME,
+            "owner": {"name": owner},
+            "plugins": cursor_marketplace_plugins,
+        },
+    )
+    # Gemini CLI reads gemini-extension.json only from the repository root, so the
+    # repository ships one extension that wraps the servers of the listed plugins.
+    write_json(ROOT / "gemini-extension.json", render_gemini_extension(source, plugins))
+    write_json(ROOT / "server.json", render_registry_server(source, plugins))
 
 
 if __name__ == "__main__":

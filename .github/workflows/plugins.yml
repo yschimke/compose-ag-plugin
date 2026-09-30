@@ -10,7 +10,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Generate manifests and check for drift
         run: python3 scripts/generate.py && git diff --exit-code
       - name: Validate JSON and plugin contracts
@@ -27,7 +27,7 @@ jobs:
           for plugin in plugins/*; do claude plugin validate --strict "$plugin"; done
           claude plugin validate --strict .
       - name: Check out Cursor plugin schemas
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: cursor/plugins
           path: .upstream/cursor-plugins

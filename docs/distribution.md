@@ -7,12 +7,12 @@ file named here is generated from [`src/plugins.json`](../src/plugins.json) by
 
 | Listing | Issue | Generated here | CI check | Still needs |
 | --- | --- | --- | --- | --- |
-| Claude plugin directory | [#53](https://github.com/yschimke/compose-ag-plugin/issues/53) | `plugins/*/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `plugins/*/README.md`, `plugins/*/LICENSE` | `claude plugin validate --strict` on both plugins and the marketplace | Portal **Validate**, submission, tracked branch or tag |
-| Official MCP Registry | [#55](https://github.com/yschimke/compose-ag-plugin/issues/55) | `server.json` | Upstream `server.schema.json` | First publish (below) |
-| Cursor Marketplace | [#59](https://github.com/yschimke/compose-ag-plugin/issues/59) | `plugins/*/.cursor-plugin/plugin.json`, `.cursor-plugin/marketplace.json` | Cursor's `plugin.schema.json` and `marketplace.schema.json` | Smoke test in Cursor, submission |
-| Gemini CLI extensions gallery | [#58](https://github.com/yschimke/compose-ag-plugin/issues/58) | `gemini-extension.json` | `gemini extensions validate` | Smoke test, `gemini-cli-extension` repository topic |
-| Claude Connectors Directory | [#54](https://github.com/yschimke/compose-ag-plugin/issues/54) | — | — | Tool titles and annotations live in compose-preview-server |
-| skills.sh | [#57](https://github.com/yschimke/compose-ag-plugin/issues/57) | — | — | The canonical skills live in yschimke/skills |
+| Claude plugin directory | [#53](https://github.com/yschimke/compose-ag-plugin/issues/53) | `plugins/*/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `plugins/*/README.md`, `plugins/*/LICENSE` | `claude plugin validate --strict` on both plugins and the marketplace | Portal **Validate**, submission, tracked branch or tag ([#80](https://github.com/yschimke/compose-ag-plugin/issues/80)) |
+| Official MCP Registry | [#55](https://github.com/yschimke/compose-ag-plugin/issues/55) | `server.json` | Upstream `server.schema.json` | Nothing: published, and republished for each server release (below) |
+| Cursor Marketplace | [#59](https://github.com/yschimke/compose-ag-plugin/issues/59) | `plugins/*/.cursor-plugin/plugin.json`, `.cursor-plugin/marketplace.json` | Cursor's `plugin.schema.json` and `marketplace.schema.json` | Smoke test ([#79](https://github.com/yschimke/compose-ag-plugin/issues/79)), submission ([#81](https://github.com/yschimke/compose-ag-plugin/issues/81)) |
+| Gemini CLI extensions gallery | [#58](https://github.com/yschimke/compose-ag-plugin/issues/58) | `gemini-extension.json` | `gemini extensions validate` | Smoke test with the local CLI ([#78](https://github.com/yschimke/compose-ag-plugin/issues/78)); the gallery crawls the `gemini-cli-extension` topic, which is set |
+| Claude Connectors Directory | [#54](https://github.com/yschimke/compose-ag-plugin/issues/54) | — | — | Tool titles and annotations and OAuth in compose-preview-server, then submission ([#83](https://github.com/yschimke/compose-ag-plugin/issues/83)) |
+| skills.sh | [#57](https://github.com/yschimke/compose-ag-plugin/issues/57) | — | — | The canonical skills live in yschimke/skills; indexing check ([#84](https://github.com/yschimke/compose-ag-plugin/issues/84)) |
 
 ## The Compose Preview token
 
@@ -26,7 +26,7 @@ entry and `envHeaders` mapping in `src/plugins.json`:
 | Codex | `env_http_headers` → `COMPOSE_PREVIEW_TOKEN` | Environment |
 | Antigravity | `${COMPOSE_PREVIEW_TOKEN:-}` | Environment |
 | Cursor | `${COMPOSE_PREVIEW_TOKEN}`, declared in `variables` | Plugin variables (unverified) |
-| Gemini CLI | `${COMPOSE_PREVIEW_TOKEN}`, declared in `settings` | `gemini extensions config` (unverified) |
+| Gemini CLI | `${COMPOSE_PREVIEW_TOKEN}`, declared in `settings` | Environment (checked); `gemini extensions config` (unverified) |
 
 Claude Code no longer reads `COMPOSE_PREVIEW_TOKEN` from the environment. The
 directory holds a plugin that forwards a credential from the user's environment
@@ -73,6 +73,11 @@ registry already has. It runs:
   `client_payload.version`, which that repository's release workflow can send;
 - by hand, with an optional version.
 
+The first run, started by hand on 2026-09-30, published version 3.88.0
+([run](https://github.com/yschimke/compose-ag-plugin/actions/runs/36775847035)).
+Whether the listing shows up at github.com/mcp and in the VS Code `@mcp` gallery
+still needs checking.
+
 ## Cursor
 
 Cursor reads `.cursor-plugin/marketplace.json` at the repository root and
@@ -91,4 +96,20 @@ that wraps the servers of both plugins: the local `compose-preview-mcp` and the
 hosted `compose-preview-catalog`. It carries no skills, hooks or agents; the
 repository root has none, and the canonical skills come from yschimke/skills.
 Install with `gemini extensions install https://github.com/yschimke/compose-ag-plugin`.
-Header expansion of the declared token setting is unverified.
+
+Checked on 2026-09-30 with Gemini CLI 0.62.0 on Linux, using the script in
+[#78](https://github.com/yschimke/compose-ag-plugin/issues/78):
+
+- `gemini extensions validate` passes, and so does install from a local clone.
+  Install asks the user to trust the folder even with `--consent`, and warns
+  about the missing token setting although it is optional.
+- With `COMPOSE_PREVIEW_TOKEN` set in the environment, the header reached a
+  local echo server with that value. With it unset, the header was empty and
+  the server still connected. Declaring the variable in `settings` is what lets
+  it through.
+- The hosted catalog connected with no token.
+
+Not yet checked, and asked for in #78: `compose-preview-mcp` with the CLI
+installed, a real render, a token set through `gemini extensions config`
+(stored in the system keychain), whether Antigravity loads the extension, and
+the gallery listing.

@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 
 from generate import (
+    ANTIGRAVITY_HOOK_MANIFEST,
     ANTIGRAVITY_SCHEMA,
     ASSET_SOURCE_ROOT,
     HOOK_MANIFESTS,
@@ -18,6 +19,7 @@ from generate import (
     MARKETPLACE_NAME,
     README_SOURCE_ROOT,
     SKILL_SOURCE_ROOT,
+    render_antigravity_hooks,
     render_claude_manifest,
     render_codex_manifest,
     render_cursor_manifest,
@@ -475,6 +477,13 @@ def main() -> None:
             if generated_asset.read_bytes() != shared_asset.read_bytes():
                 raise ValueError(f"{generated_asset}: generated copy differs from shared source")
         hooks = plugin.get("hooks", [])
+        antigravity_hooks = render_antigravity_hooks(name, hooks) if hooks else None
+        antigravity_hook_manifest = root / ANTIGRAVITY_HOOK_MANIFEST
+        if antigravity_hooks:
+            if read_json(antigravity_hook_manifest) != antigravity_hooks:
+                raise ValueError(f"{antigravity_hook_manifest} does not match the hook contract")
+        elif antigravity_hook_manifest.exists():
+            raise ValueError(f"{root} contains stale Antigravity hook configuration")
         if hooks:
             for harness, manifest_path in HOOK_MANIFESTS.items():
                 hook_manifest = root / manifest_path

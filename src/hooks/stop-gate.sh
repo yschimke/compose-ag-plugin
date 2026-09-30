@@ -8,7 +8,9 @@
 #
 # Loop guard: it never blocks when the harness says a Stop hook already kept
 # this turn going (stop_hook_active), and it allows the stop without checking
-# after two consecutive blocked turns in one session.
+# after two consecutive blocked turns in one session. Antigravity sends no
+# stop_hook_active and applies no cap of its own, so there the per-session
+# count, keyed by its conversationId, is the only guard.
 #
 # Every failure of the gate itself allows the stop: a missing CLI, git or
 # python3, a timeout, a non-zero exit it does not recognise, or output it
@@ -100,8 +102,20 @@ if grep -Eq '"stop_hook_active"[[:space:]]*:[[:space:]]*true' "$hook_input"; the
   exit 0
 fi
 
-session_id=$(sed -n 's/.*"session_id"[[:space:]]*:[[:space:]]*"\([A-Za-z0-9._:-]\{1,128\}\)".*/\1/p' "$hook_input" | head -n 1)
-[ -n "$session_id" ] || session_id=unknown-session
+# json_string_field <key>: the first plain string value of <key> in the input.
+json_string_field() {
+  sed -n 's/.*"'"$1"'"[[:space:]]*:[[:space:]]*"\([^"\\]*\)".*/\1/p' "$hook_input" | head -n 1
+}
+
+# Claude Code and Codex send session_id; Antigravity sends conversationId (and
+# exports ANTIGRAVITY_CONVERSATION_ID to hooks).
+session_id=$(json_string_field session_id)
+[ -n "$session_id" ] || session_id=$(json_string_field conversationId)
+[ -n "$session_id" ] || session_id=${ANTIGRAVITY_CONVERSATION_ID-}
+case "$session_id" in
+  ''|*[!A-Za-z0-9._:-]*) session_id=unknown-session ;;
+esac
+[ "${#session_id}" -le 128 ] || session_id=unknown-session
 session_key=$(printf '%s' "$session_id" | tr -c 'A-Za-z0-9._-' '_')
 state_root="${TMPDIR:-/tmp}/compose-preview-stop-gate-$(id -u 2>/dev/null || echo user)"
 state_file="$state_root/$session_key.blocks"
@@ -121,7 +135,12 @@ if [ "$consecutive_blocks" -ge "$max_consecutive_blocks" ]; then
 fi
 
 # Work from the directory the harness reports, when it is a plain path.
-hook_cwd=$(sed -n 's/.*"cwd"[[:space:]]*:[[:space:]]*"\([^"\\]*\)".*/\1/p' "$hook_input" | head -n 1)
+# Antigravity sends no cwd; it lists workspacePaths, and the first one is used.
+hook_cwd=$(json_string_field cwd)
+if [ -z "$hook_cwd" ]; then
+  hook_cwd=$(sed -n 's/.*"workspacePaths"[[:space:]]*:[[:space:]]*\[[[:space:]]*"\([^"\\]*\)".*/\1/p' "$hook_input" | head -n 1)
+  hook_cwd=${hook_cwd#file://}
+fi
 if [ -n "$hook_cwd" ] && [ -d "$hook_cwd" ]; then
   cd "$hook_cwd" 2>/dev/null || exit 0
 fi

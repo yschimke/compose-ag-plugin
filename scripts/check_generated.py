@@ -8,7 +8,12 @@ import subprocess
 import sys
 from pathlib import Path
 
-from generate import HOOK_MANIFESTS, hook_script
+from generate import (
+    ANTIGRAVITY_HOOK_MANIFEST,
+    HOOK_MANIFESTS,
+    hook_script,
+    render_antigravity_hooks,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -63,6 +68,8 @@ def generated_paths(source: object) -> tuple[list[Path], set[str]]:
             raise ValueError(f"{name}.hooks must be a list of objects")
         if hooks:
             paths.extend(plugin_root / manifest for manifest in HOOK_MANIFESTS.values())
+            if render_antigravity_hooks(name, hooks):
+                paths.append(plugin_root / ANTIGRAVITY_HOOK_MANIFEST)
         for hook in hooks:
             command = hook.get("command")
             if not isinstance(command, str):
@@ -88,6 +95,10 @@ def previous_hook_paths(source: object) -> list[Path]:
     paths: list[Path] = []
     for plugin in source["plugins"]:
         name = plugin["name"]
+        # A deleted Antigravity manifest is drift too.
+        antigravity_manifest = Path("plugins") / name / ANTIGRAVITY_HOOK_MANIFEST
+        if not git("cat-file", "-e", f"HEAD:{antigravity_manifest}").returncode:
+            paths.append(ROOT / antigravity_manifest)
         for manifest_path in HOOK_MANIFESTS.values():
             manifest = Path("plugins") / name / manifest_path
             previous = git("show", f"HEAD:{manifest}")

@@ -124,8 +124,12 @@ status_summary() {
   # Design ids and file names are restricted to [A-Za-z0-9._-], so this code cannot be forged
   # from inside another field.
   status_missing_home=$(grep -Eo '"code":"MISSING_HOME"' "$status_file" | wc -l | tr -d '[:space:]')
-  [ "$status_missing_home" -le "$status_unavailable" ] || return 1
-  status_unavailable=$((status_unavailable - status_missing_home))
+  # Server-homed designs come back as REMOTE_UNAVAILABLE whenever the local `serve` is not running,
+  # which is routine for people who only start it sometimes. They collapse into one short hint
+  # instead of a count that repeats every session.
+  status_remote_unavailable=$(grep -Eo '"code":"REMOTE_UNAVAILABLE"' "$status_file" | wc -l | tr -d '[:space:]')
+  [ $((status_missing_home + status_remote_unavailable)) -le "$status_unavailable" ] || return 1
+  status_unavailable=$((status_unavailable - status_missing_home - status_remote_unavailable))
 
   status_sentence=
   if [ "$status_comments" -gt 0 ]; then
@@ -136,6 +140,9 @@ status_summary() {
   fi
   if [ "$status_unavailable" -gt 0 ]; then
     status_sentence="${status_sentence:+$status_sentence; }design inventory unavailable for $status_unavailable workspace-linked $(plural "$status_unavailable" design designs)"
+  fi
+  if [ "$status_remote_unavailable" -gt 0 ]; then
+    status_sentence="${status_sentence:+$status_sentence; }design server not running"
   fi
   if [ -n "$status_sentence" ]; then
     printf '%s.\n' "$status_sentence"
@@ -178,7 +185,9 @@ else
   design_help_status=$?
 fi
 if [ "$design_help_status" -eq 124 ]; then
-  append_context "The design-status capability probe timed out."
+  # The first `design` call on a machine without a cached server distribution downloads one and
+  # outlasts the probe. That is not something to act on, and the next session finds it cached.
+  :
 elif [ "$design_help_status" -ne 0 ]; then
   # Older launchers predate the top-level `design` command. A successful root help that does not
   # advertise it is an unsupported capability, not a broken installation and not session context.
@@ -189,7 +198,7 @@ elif [ "$design_help_status" -ne 0 ]; then
     root_help_status=$?
   fi
   if [ "$root_help_status" -eq 124 ]; then
-    append_context "The design-command capability probe timed out."
+    :
   elif [ "$root_help_status" -ne 0 ] || grep -Eq '(^|[[:space:]])design([[:space:]]|$)' "$root_help_output"; then
     append_context "The design-status capability probe failed."
   fi

@@ -105,6 +105,18 @@ opencode
 
 The config passes it through the `X-Compose-Preview-Token` header. Do not put the token directly in `opencode.jsonc` or commit it. If a token-only deployment must never attempt OAuth, add `"oauth": false` to the `compose-preview-catalog` server entry.
 
+## Check the setup
+
+From a clone of this repository:
+
+```sh
+python3 scripts/opencode-check.py                                   # read-only, no model
+python3 scripts/opencode-check.py --run --project ~/path/to/app     # plus one timed render turn
+```
+
+It prints one line per check (`ok`, `FIX` or `info`). For fixes, see
+[Troubleshooting](troubleshooting.md).
+
 ## Verification record
 
 Checked on 2026-09-27 with `opencode-ai@1.18.32` (the npm `latest`, OpenCode v1), Skills CLI 1.7.0 and `compose-preview` 2.28.0. No model or provider was configured, and each check ran in an empty `HOME`.

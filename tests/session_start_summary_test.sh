@@ -75,7 +75,7 @@ status_json="$temporary_root/status.json"
 # Envelope shape as printed by compose-preview-server v3.75.0 `design status --json`.
 printf '%s\n' '{"schema":"compose-preview-design-status/v1","verdict":"unavailable","totals":{"workspaceDesigns":4,"serverLinked":3,"unsavedTemporaryCopies":1,"unacknowledgedComments":2,"unavailable":2},"designs":[{"designId":"a","file":"ui-builder/designs/a.json","state":"unsaved","unacknowledgedComments":2},{"designId":"b","file":"ui-builder/designs/b.json","state":"clean","unacknowledgedComments":0},{"designId":"c","file":"ui-builder/designs/c.json","state":"unavailable","code":"REMOTE_UNAVAILABLE"},{"designId":"d","file":"ui-builder/designs/d.json","state":"unavailable","code":"MISSING_HOME"}]}' >"$status_json"
 status_output="$(STATUS_JSON="$status_json" STATUS_ARGS="$status_args" CLAUDE_PROJECT_DIR="$temporary_root/project with spaces" PATH="$fake_bin:$PATH" "$script")"
-assert_equal "$(expected_output 'Compose Preview needs attention: 2 unacknowledged design comments; 1 unsaved temporary copy; design inventory unavailable for 1 workspace-linked design.')" "$status_output" 'actionable workspace design status'
+assert_equal "$(expected_output 'Compose Preview needs attention: 2 unacknowledged design comments; 1 unsaved temporary copy; design server not running.')" "$status_output" 'actionable workspace design status'
 assert_equal "design status --workspace $temporary_root/project with spaces --json --timeout 2" "$(cat "$status_args")" 'status workspace and bound'
 
 # Until designs record a home (compose-preview-server#1157) every repo-published design reports
@@ -87,6 +87,11 @@ assert_equal '' "$missing_home_output" 'designs without a recorded home are sile
 printf '%s\n' '{"schema":"compose-preview-design-status/v1","verdict":"unavailable","totals":{"workspaceDesigns":3,"serverLinked":2,"unsavedTemporaryCopies":0,"unacknowledgedComments":1,"unavailable":2},"designs":[{"designId":"a","file":"ui-builder/designs/a.json","state":"unavailable","code":"MISSING_HOME"},{"designId":"b","file":"ui-builder/designs/b.json","state":"unavailable","code":"AUTHORIZATION_REQUIRED"},{"designId":"c","file":"ui-builder/designs/c.json","state":"clean","unacknowledgedComments":1}]}' >"$status_json"
 mixed_home_output="$(STATUS_JSON="$status_json" STATUS_ARGS="$status_args" PATH="$fake_bin:$PATH" "$script")"
 assert_equal "$(expected_output 'Compose Preview needs attention: 1 unacknowledged design comment; design inventory unavailable for 1 workspace-linked design.')" "$mixed_home_output" 'missing homes are excluded from the unavailable count only'
+
+# Server-homed designs while the local server is down collapse into one hint, with no count.
+printf '%s\n' '{"schema":"compose-preview-design-status/v1","verdict":"unavailable","totals":{"workspaceDesigns":3,"serverLinked":3,"unsavedTemporaryCopies":0,"unacknowledgedComments":0,"unavailable":3},"designs":[{"designId":"a","file":"ui-builder/designs/a.json","state":"unavailable","code":"REMOTE_UNAVAILABLE"},{"designId":"b","file":"ui-builder/designs/b.json","state":"unavailable","code":"REMOTE_UNAVAILABLE"},{"designId":"c","file":"ui-builder/designs/c.json","state":"unavailable","code":"AUTHORIZATION_REQUIRED"}]}' >"$status_json"
+remote_output="$(STATUS_JSON="$status_json" STATUS_ARGS="$status_args" PATH="$fake_bin:$PATH" "$script")"
+assert_equal "$(expected_output 'Compose Preview needs attention: design inventory unavailable for 1 workspace-linked design; design server not running.')" "$remote_output" 'remote-unavailable designs collapse into one hint'
 
 # A clean workspace is a silent no-op.
 printf '%s\n' '{"schema":"compose-preview-design-status/v1","verdict":"ok","totals":{"workspaceDesigns":0,"serverLinked":0,"unsavedTemporaryCopies":0,"unacknowledgedComments":0,"unavailable":0},"designs":[]}' >"$status_json"
@@ -168,6 +173,16 @@ if ((elapsed < 2 || elapsed >= 8)); then
   printf 'FAIL: help timeout took %s seconds\n' "$elapsed" >&2
   exit 1
 fi
+
+# The first `design` call can download a server distribution and outlast the probe. That is silent.
+printf '%s\n' \
+  '#!/bin/sh' \
+  'if [ "$1 $2" = "mcp --help" ]; then exit 0; fi' \
+  'if [ "$1 $2" = "design --help" ]; then while :; do :; done; fi' \
+  'exit 0' >"$fake_cli"
+chmod +x "$fake_cli"
+hung_design_help_output="$(PATH="$fake_bin:$PATH" "$script")"
+assert_equal '' "$hung_design_help_output" 'design capability probe timeout is silent'
 
 # The workspace status call has the same hard process bound as the existing doctor call.
 printf '%s\n' \

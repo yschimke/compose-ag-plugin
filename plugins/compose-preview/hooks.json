@@ -1,0 +1,11 @@
+{
+  "compose-preview": {
+    "Stop": [
+      {
+        "command": "\"$HOME/.gemini/config/plugins/compose-preview/scripts/stop-gate.sh\" --harness=antigravity",
+        "type": "command"
+      }
+    ],
+    "enabled": true
+  }
+}

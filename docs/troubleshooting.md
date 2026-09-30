@@ -19,11 +19,13 @@ these. In OpenCode, run `python3 scripts/opencode-check.py`.
 
 ## Two `compose-preview` servers in Antigravity
 
-`compose-preview mcp install` also writes a global `compose-preview-mcp` entry
-to `~/.gemini/antigravity/mcp_config.json` (or `~/.gemini/config/mcp_config.json`)
-that duplicates the plugin's server. Delete any `compose-preview*` entry from
-`mcpServers` in that file and restart Antigravity. Tracked in
-yschimke/compose-ai-tools#5584.
+Older versions of `compose-preview mcp install` also wrote a global
+`compose-preview-mcp` entry to `~/.gemini/antigravity/mcp_config.json` (or
+`~/.gemini/config/mcp_config.json`) that duplicates the plugin's server. This
+was fixed in yschimke/compose-ai-tools#5641, so run `compose-preview update`
+first. An entry that an older CLI already wrote stays: delete any
+`compose-preview*` entry from `mcpServers` in that file and restart
+Antigravity.
 
 ## Stale `mcp serve` processes
 

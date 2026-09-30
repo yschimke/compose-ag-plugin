@@ -1,9 +1,16 @@
 {
+  "agents": "./agents/",
   "author": {
     "name": "Yuri Schimke"
   },
+  "category": "developer-tools",
   "description": "Iterate on local Compose previews with live rendering and accessibility checks.",
   "displayName": "Compose Preview",
+  "homepage": "https://github.com/yschimke/compose-ag-plugin/tree/main/plugins/compose-preview",
+  "hooks": {
+    "hooks": {},
+    "version": 1
+  },
   "keywords": [
     "compose",
     "preview",
@@ -11,7 +18,17 @@
     "android"
   ],
   "license": "Apache-2.0",
+  "mcpServers": {
+    "compose-preview-mcp": {
+      "args": [
+        "mcp",
+        "serve"
+      ],
+      "command": "compose-preview"
+    }
+  },
   "name": "compose-preview",
   "repository": "https://github.com/yschimke/compose-ag-plugin",
+  "skills": "./skills/",
   "version": "0.2.0"
 }

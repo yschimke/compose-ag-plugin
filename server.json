@@ -1,0 +1,25 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "description": "Browse, inspect and render Jetpack Compose Material 3 and Wear component catalogs.",
+  "name": "io.github.yschimke/compose-preview",
+  "remotes": [
+    {
+      "headers": [
+        {
+          "description": "Optional access token for the hosted preview.coo.ee service. Leave it blank to use the service's interactive access grant.",
+          "isRequired": false,
+          "isSecret": true,
+          "name": "X-Compose-Preview-Token"
+        }
+      ],
+      "type": "streamable-http",
+      "url": "https://preview.coo.ee/mcp"
+    }
+  ],
+  "repository": {
+    "source": "github",
+    "url": "https://github.com/yschimke/compose-preview-server"
+  },
+  "title": "Compose Preview Catalogs",
+  "version": "3.88.0"
+}

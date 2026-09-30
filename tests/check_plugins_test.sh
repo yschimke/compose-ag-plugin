@@ -23,13 +23,43 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-expected = "${COMPOSE_PREVIEW_TOKEN:-}"
-for relative in ("plugins/compose-catalogs/.mcp.json", "plugins/compose-catalogs/mcp_config.json"):
+# Claude Code takes the token from a sensitive userConfig option, never the environment (#53).
+for relative, key, expected in (
+    ("plugins/compose-catalogs/.mcp.json", "mcpServers", "${user_config.compose_preview_token}"),
+    ("plugins/compose-catalogs/mcp_config.json", "mcpServers", "${COMPOSE_PREVIEW_TOKEN:-}"),
+    ("plugins/compose-catalogs/.cursor-plugin/plugin.json", "mcpServers", "${COMPOSE_PREVIEW_TOKEN}"),
+    ("gemini-extension.json", "mcpServers", "${COMPOSE_PREVIEW_TOKEN}"),
+):
     data = json.loads((root / relative).read_text(encoding="utf-8"))
-    actual = data["mcpServers"]["compose-preview-catalog"]["headers"]["X-Compose-Preview-Token"]
+    actual = data[key]["compose-preview-catalog"]["headers"]["X-Compose-Preview-Token"]
     if actual != expected:
         raise SystemExit(f"{relative}: expected {expected!r}, got {actual!r}")
+claude = json.loads((root / "plugins/compose-catalogs/.claude-plugin/plugin.json").read_text(encoding="utf-8"))
+if claude["userConfig"]["compose_preview_token"].get("sensitive") is not True:
+    raise SystemExit(f"Claude userConfig token must be sensitive: {claude!r}")
+gemini = json.loads((root / "gemini-extension.json").read_text(encoding="utf-8"))
+if [setting["envVar"] for setting in gemini["settings"]] != ["COMPOSE_PREVIEW_TOKEN"]:
+    raise SystemExit(f"Gemini must declare the token variable: {gemini!r}")
 ' "$fixture"
+
+cp "$fixture/src/plugins.json" "$fixture/src/plugins.json.valid-claude-headers"
+python3 -c '
+import json
+import sys
+from pathlib import Path
+
+source = Path(sys.argv[1])
+data = json.loads(source.read_text(encoding="utf-8"))
+catalog = next(plugin for plugin in data["plugins"] if plugin["name"] == "compose-catalogs")
+catalog["mcp"][0].pop("userConfigHeaders")
+source.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+' "$fixture/src/plugins.json"
+if python3 "$fixture/scripts/generate.py" >"$fixture/missing-claude-header.out" 2>"$fixture/missing-claude-header.err"; then
+  printf '%s\n' 'FAIL: remote headers require a Claude userConfig mapping' >&2
+  exit 1
+fi
+grep -q 'userConfigHeaders must cover the same headers as headers' "$fixture/missing-claude-header.err"
+mv "$fixture/src/plugins.json.valid-claude-headers" "$fixture/src/plugins.json"
 
 python3 -c '
 import json
@@ -57,14 +87,14 @@ from pathlib import Path
 source = Path(sys.argv[1])
 data = json.loads(source.read_text(encoding="utf-8"))
 catalog = next(plugin for plugin in data["plugins"] if plugin["name"] == "compose-catalogs")
-catalog["mcp"][0].pop("codexEnvHeaders")
+catalog["mcp"][0].pop("envHeaders")
 source.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 ' "$fixture/src/plugins.json"
 if python3 "$fixture/scripts/generate.py" >"$fixture/missing-codex-header.out" 2>"$fixture/missing-codex-header.err"; then
   printf '%s\n' 'FAIL: remote headers require a Codex environment mapping' >&2
   exit 1
 fi
-grep -q 'codexEnvHeaders must cover the same headers as headers' "$fixture/missing-codex-header.err"
+grep -q 'envHeaders must cover the same headers as headers' "$fixture/missing-codex-header.err"
 mv "$fixture/src/plugins.json.valid-codex-headers" "$fixture/src/plugins.json"
 python3 "$fixture/scripts/generate.py"
 

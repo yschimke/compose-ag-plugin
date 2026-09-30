@@ -21,11 +21,35 @@ jobs:
         uses: DavidAnson/markdownlint-cli2-action@v20
         with:
           globs: "**/*.md"
-      - name: Validate with Claude Code when available
-        continue-on-error: true
+      - name: Validate with Claude Code
         run: |
           npm install --global @anthropic-ai/claude-code
-          for plugin in plugins/*; do claude plugin validate "$plugin"; done
+          for plugin in plugins/*; do claude plugin validate --strict "$plugin"; done
+          claude plugin validate --strict .
+      - name: Check out Cursor plugin schemas
+        uses: actions/checkout@v4
+        with:
+          repository: cursor/plugins
+          path: .upstream/cursor-plugins
+          sparse-checkout: schemas
+      - name: Validate Cursor manifests and server.json against upstream schemas
+        run: |
+          npm install --no-save --prefix "$RUNNER_TEMP/ajv" ajv-cli@5 ajv-formats@3
+          ajv() {
+            "$RUNNER_TEMP/ajv/node_modules/.bin/ajv" validate --spec=draft7 --strict=false \
+              -c "$RUNNER_TEMP/ajv/node_modules/ajv-formats" "$@"
+          }
+          schemas=.upstream/cursor-plugins/schemas
+          ajv -s "$schemas/marketplace.schema.json" -d .cursor-plugin/marketplace.json
+          for plugin in plugins/*; do ajv -s "$schemas/plugin.schema.json" -d "$plugin/.cursor-plugin/plugin.json"; done
+          schema_url="$(python3 -c 'import json; print(json.load(open("server.json"))["$schema"])')"
+          curl -fsSL "$schema_url" -o "$RUNNER_TEMP/server.schema.json"
+          ajv -s "$RUNNER_TEMP/server.schema.json" -d server.json
+          rm -rf .upstream
+      - name: Validate with Gemini CLI
+        run: |
+          npm install --no-save --prefix "$RUNNER_TEMP/gemini" @google/gemini-cli@0.62.0
+          "$RUNNER_TEMP/gemini/node_modules/.bin/gemini" extensions validate "$PWD"
       - name: Validate with Codex
         run: |
           npm install --global @openai/codex

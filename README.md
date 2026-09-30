@@ -54,7 +54,8 @@ plugins do not install the canonical skills.
 ```
 
 Verify: restart, then `/mcp` lists `plugin:compose-preview:compose-preview-mcp`
-as connected.
+as connected. Enabling `compose-catalogs` asks for an optional Compose Preview
+token; Claude Code does not read `COMPOSE_PREVIEW_TOKEN` from the environment.
 
 ### Codex
 
@@ -102,8 +103,9 @@ npx skills update        # skills installed with npx
 `compose-catalogs` connects agents to remote discovery and rendering of Compose
 Material 3 and Wear components, plus semantic UI-builder authoring and Kotlin
 export. It has no local toolchain prerequisite because it connects to the
-hosted preview MCP service. Access uses `COMPOSE_PREVIEW_TOKEN` or the service's
-interactive grant flow.
+hosted preview MCP service. Access uses an optional token (`COMPOSE_PREVIEW_TOKEN`,
+or the plugin's token setting in Claude Code) or the service's interactive grant
+flow.
 
 `compose-preview` supplies the local `compose-preview mcp serve` connection for
 iterative Compose rendering and accessibility checks. It requires Java 17,
@@ -144,7 +146,10 @@ the text fallback.
 Every plugin follows the [agent rules](docs/agent-rules.md): the agent sees what the user sees, edits through typed tools with schemas, edits a design at its one canonical home, and keeps discussion there.
 
 The generated manifests make the same plugin directories usable by every
-harness. Edit [`src/plugins.json`](src/plugins.json) and run
+harness. The generator also writes each plugin's `README.md` and `LICENSE`, the
+Cursor manifests, the root `gemini-extension.json`, and the MCP Registry
+`server.json`; see [Distribution](docs/distribution.md) for the listings they
+serve. Edit [`src/plugins.json`](src/plugins.json) and run
 `python3 scripts/generate.py`; never edit a manifest directly.
 
 The [agent rule evals](evals/agent-rules.md) and the other cross-harness

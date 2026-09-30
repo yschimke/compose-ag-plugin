@@ -14,10 +14,17 @@ from generate import (
     ASSET_SOURCE_ROOT,
     HOOK_MANIFESTS,
     HOOK_SOURCE_ROOT,
+    LICENSE_SOURCE,
+    MARKETPLACE_NAME,
+    README_SOURCE_ROOT,
     SKILL_SOURCE_ROOT,
+    render_claude_manifest,
     render_codex_manifest,
+    render_cursor_manifest,
+    render_gemini_extension,
     render_hooks,
     render_mcp_servers,
+    render_registry_server,
 )
 
 
@@ -33,6 +40,8 @@ SCHEMA_ASSERTIONS = {
     "required",
     "type",
 }
+# The Claude plugin directory blocks a plugin whose README has fewer words outside code blocks.
+README_MIN_WORDS = 40
 JSON_SCHEMA_TYPES = {"array", "boolean", "integer", "null", "number", "object", "string"}
 ECMASCRIPT_PORTABLE_ESCAPES = frozenset("dDwWbfnrtv\\.^$|?*+()[]{}-/")
 
@@ -339,6 +348,32 @@ def validate_skill(path: Path) -> None:
         raise ValueError(f"{path}: description must be 1 to 1024 characters")
 
 
+def readme_words(path: Path) -> int:
+    """Count README words outside fenced code blocks, as the plugin directory does."""
+    words = 0
+    in_fence = False
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if not in_fence:
+            words += len(line.split())
+    return words
+
+
+def validate_plugin_folder_docs(root: Path, name: str) -> None:
+    readme = root / "README.md"
+    if not readme.is_file():
+        raise ValueError(f"{readme}: missing plugin README")
+    if readme.read_bytes() != (README_SOURCE_ROOT / f"{name}.md").read_bytes():
+        raise ValueError(f"{readme}: generated copy differs from src/readmes/{name}.md")
+    if readme_words(readme) < README_MIN_WORDS:
+        raise ValueError(f"{readme}: needs at least {README_MIN_WORDS} words outside code blocks")
+    license_file = root / "LICENSE"
+    if not license_file.is_file() or license_file.read_bytes() != LICENSE_SOURCE.read_bytes():
+        raise ValueError(f"{license_file}: must be a copy of the repository LICENSE")
+
+
 def main() -> None:
     source = read_json(ROOT / "src" / "plugins.json")
     if not isinstance(source, dict):
@@ -367,6 +402,8 @@ def main() -> None:
         antigravity = read_json(root / "plugin.json")
         claude = read_json(root / ".claude-plugin" / "plugin.json")
         codex = read_json(root / ".codex-plugin" / "plugin.json")
+        cursor = read_json(root / ".cursor-plugin" / "plugin.json")
+        validate_plugin_folder_docs(root, name)
         validate_manifest_schema(antigravity, "antigravity-plugin.schema.json", root / "plugin.json")
         validate_manifest_schema(
             claude, "claude-plugin.schema.json", root / ".claude-plugin" / "plugin.json"
@@ -390,6 +427,17 @@ def main() -> None:
             raise ValueError(f"{root}/.claude-plugin/plugin.json has invalid package metadata")
         if claude.get("keywords") != plugin.get("keywords", []):
             raise ValueError(f"{root}/.claude-plugin/plugin.json has invalid keywords")
+        manifest_inputs = {
+            "plugin": plugin,
+            "user_config": plugin.get("userConfig", {}),
+            "owner": source["owner"],
+            "repository": source["repository"],
+            "license_name": source["license"],
+        }
+        if claude != render_claude_manifest(**manifest_inputs):
+            raise ValueError(f"{root}/.claude-plugin/plugin.json does not match the Claude contract")
+        if cursor != render_cursor_manifest(**manifest_inputs):
+            raise ValueError(f"{root}/.cursor-plugin/plugin.json does not match the Cursor contract")
         expected_codex = render_codex_manifest(
             name=name,
             version=plugin["version"],
@@ -450,8 +498,19 @@ def main() -> None:
                 "mcpServers": render_mcp_servers(name, mcp, "antigravity")
             }:
                 raise ValueError(f"{root}/mcp_config.json does not match the MCP contract")
-            if claude_mcp != {"mcpServers": render_mcp_servers(name, mcp, "claude")}:
+            if claude_mcp != {
+                "mcpServers": render_mcp_servers(name, mcp, "claude", plugin.get("userConfig", {}))
+            }:
                 raise ValueError(f"{root}/.mcp.json does not match the MCP contract")
+            claude_headers = [
+                value
+                for server in claude_mcp["mcpServers"].values()
+                for value in server.get("headers", {}).values()
+            ]
+            if any("${" in value.replace("${user_config.", "") for value in claude_headers):
+                raise ValueError(
+                    f"{root}/.mcp.json must take credentials from userConfig, not the user's environment"
+                )
         elif (root / "mcp_config.json").exists() or (root / ".mcp.json").exists():
             raise ValueError(f"{root} contains stale MCP configuration")
         expected_marketplace.append(
@@ -460,11 +519,26 @@ def main() -> None:
 
     marketplace = read_json(ROOT / ".claude-plugin" / "marketplace.json")
     if marketplace != {
-        "name": "compose-ag-plugin",
+        "metadata": {"description": source["description"]},
+        "name": MARKETPLACE_NAME,
         "owner": {"name": source["owner"]},
         "plugins": expected_marketplace,
     }:
         raise ValueError(".claude-plugin/marketplace.json does not match the marketplace contract")
+    cursor_marketplace = read_json(ROOT / ".cursor-plugin" / "marketplace.json")
+    if cursor_marketplace != {
+        "metadata": {"description": source["description"]},
+        "name": MARKETPLACE_NAME,
+        "owner": {"name": source["owner"]},
+        "plugins": [
+            {**entry, "source": entry["source"].removeprefix("./")} for entry in expected_marketplace
+        ],
+    }:
+        raise ValueError(".cursor-plugin/marketplace.json does not match the marketplace contract")
+    if read_json(ROOT / "gemini-extension.json") != render_gemini_extension(source, plugins):
+        raise ValueError("gemini-extension.json does not match the Gemini CLI contract")
+    if read_json(ROOT / "server.json") != render_registry_server(source, plugins):
+        raise ValueError("server.json does not match the MCP Registry contract")
 
 
 if __name__ == "__main__":

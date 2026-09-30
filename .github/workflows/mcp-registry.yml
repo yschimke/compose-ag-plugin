@@ -1,0 +1,84 @@
+name: Publish to MCP Registry
+
+# Lists the hosted compose-catalogs server (server.json, generated from
+# src/plugins.json) in the Official MCP Registry once per compose-preview-server
+# release (#55). A release in that repository can trigger this workflow with a
+# repository_dispatch; the daily run catches any release that did not.
+
+on:
+  schedule:
+    - cron: "23 6 * * *"
+  repository_dispatch:
+    types: [compose-preview-server-release]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: compose-preview-server release to publish, such as 3.88.0. Defaults to the latest release tag.
+        required: false
+
+concurrency:
+  group: mcp-registry
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # mcp-publisher login github-oidc
+    env:
+      MCP_PUBLISHER_VERSION: v1.8.1
+      SERVER_REPOSITORY: https://github.com/yschimke/compose-preview-server
+      REGISTRY: https://registry.modelcontextprotocol.io
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resolve the server release
+        id: release
+        env:
+          REQUESTED: ${{ inputs.version || github.event.client_payload.version }}
+        run: |
+          version="${REQUESTED#v}"
+          if [ -z "$version" ]; then
+            version="$(git ls-remote --tags --refs "$SERVER_REPOSITORY" 'v*' \
+              | sed 's|.*refs/tags/v||' \
+              | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' \
+              | sort -V | tail -n 1)"
+          fi
+          if ! printf '%s\n' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::not a release version: '$version'"
+            exit 1
+          fi
+          git ls-remote --exit-code --tags "$SERVER_REPOSITORY" "refs/tags/v$version" >/dev/null
+          name="$(jq -r .name server.json)"
+          encoded="$(jq -rn --arg name "$name" '$name | @uri')"
+          status="$(curl -sS -o /dev/null -w '%{http_code}' "$REGISTRY/v0.1/servers/$encoded/versions/$version")"
+          case "$status" in
+            200) echo "$name $version is already published"; publish=false ;;
+            404) publish=true ;;
+            *) echo "::error::registry lookup returned HTTP $status"; exit 1 ;;
+          esac
+          {
+            echo "version=$version"
+            echo "publish=$publish"
+          } >>"$GITHUB_OUTPUT"
+      - name: Set the server.json version
+        if: steps.release.outputs.publish == 'true'
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          jq --arg version "$VERSION" '.version = $version' server.json >"$RUNNER_TEMP/server.json"
+          mv "$RUNNER_TEMP/server.json" server.json
+          cat server.json
+      - name: Install mcp-publisher
+        if: steps.release.outputs.publish == 'true'
+        run: |
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/download/$MCP_PUBLISHER_VERSION/mcp-publisher_linux_amd64.tar.gz" \
+            | tar -xz -C "$RUNNER_TEMP" mcp-publisher
+      - name: Publish
+        if: steps.release.outputs.publish == 'true'
+        run: |
+          "$RUNNER_TEMP/mcp-publisher" login github-oidc
+          "$RUNNER_TEMP/mcp-publisher" publish server.json

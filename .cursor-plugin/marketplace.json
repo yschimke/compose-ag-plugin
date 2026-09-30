@@ -10,12 +10,12 @@
     {
       "description": "Discover Compose components, inspect properties, and render catalog variants.",
       "name": "compose-catalogs",
-      "source": "./plugins/compose-catalogs"
+      "source": "plugins/compose-catalogs"
     },
     {
       "description": "Iterate on local Compose previews with live rendering and accessibility checks.",
       "name": "compose-preview",
-      "source": "./plugins/compose-preview"
+      "source": "plugins/compose-preview"
     }
   ]
 }

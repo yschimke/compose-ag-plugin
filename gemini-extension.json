@@ -1,0 +1,28 @@
+{
+  "description": "Render Compose @Preview functions locally and browse hosted Material 3 and Wear component catalogs.",
+  "mcpServers": {
+    "compose-preview-catalog": {
+      "headers": {
+        "X-Compose-Preview-Token": "${COMPOSE_PREVIEW_TOKEN}"
+      },
+      "httpUrl": "https://preview.coo.ee/mcp"
+    },
+    "compose-preview-mcp": {
+      "args": [
+        "mcp",
+        "serve"
+      ],
+      "command": "compose-preview"
+    }
+  },
+  "name": "compose-preview",
+  "settings": [
+    {
+      "description": "Optional access token for the hosted preview.coo.ee service. Leave it blank to use the service's interactive access grant.",
+      "envVar": "COMPOSE_PREVIEW_TOKEN",
+      "name": "Compose Preview token",
+      "sensitive": true
+    }
+  ],
+  "version": "0.2.0"
+}

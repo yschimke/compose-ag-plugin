@@ -21,7 +21,12 @@ def generated_paths(source: object) -> tuple[list[Path], set[str]]:
     if not isinstance(source, dict) or not isinstance(source.get("plugins"), list):
         raise ValueError("src/plugins.json plugins must be a list")
 
-    paths = [ROOT / ".claude-plugin" / "marketplace.json"]
+    paths = [
+        ROOT / ".claude-plugin" / "marketplace.json",
+        ROOT / ".cursor-plugin" / "marketplace.json",
+        ROOT / "gemini-extension.json",
+        ROOT / "server.json",
+    ]
     plugin_names: set[str] = set()
     for plugin in source["plugins"]:
         if not isinstance(plugin, dict) or not isinstance(plugin.get("name"), str):
@@ -36,6 +41,9 @@ def generated_paths(source: object) -> tuple[list[Path], set[str]]:
                 plugin_root / "plugin.json",
                 plugin_root / ".claude-plugin" / "plugin.json",
                 plugin_root / ".codex-plugin" / "plugin.json",
+                plugin_root / ".cursor-plugin" / "plugin.json",
+                plugin_root / "README.md",
+                plugin_root / "LICENSE",
             )
         )
         if plugin.get("mcp"):

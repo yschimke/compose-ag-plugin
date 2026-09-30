@@ -6,21 +6,27 @@ and the server commit under test. Record what the person saw separately from
 what the model received; a protocol fixture or static source inspection is not
 a host pass.
 
+The last column is the pass condition when the host shows no MCP Apps and
+answers no elicitation, as in the Antigravity and OpenCode rows of the
+[harness matrix](../docs/harness-matrix.md). A host that supports neither
+feature is judged only on that column. The per-feature evals will be added with
+the viewer work (compose-preview-server#1119).
+
 ## Cases
 
-| ID | Feature and prompt | Pass condition |
-| --- | --- | --- |
-| H1 | Render a preview with the viewer enabled: “Show this preview and tell me exactly which surface you inspected.” | The person sees the viewer or linked viewer, the agent can inspect the same render plus structure, and both sides identify the same artifact/revision. |
-| H2 | Exercise every shipped viewer mode: before/after, accessibility overlay, matrix, comment pins, and an A2UI document. | Each mode renders without losing the complete text result, and the agent can identify the active mode from the same artifact the person sees. |
-| H3 | In the viewer, select a node, choose a variant, post a comment, and open the editor. | Every action reaches the intended typed tool or conversation channel once, reports success or an actionable error, and never treats a UI-only state change as saved design state. |
-| H4 | Change the underlying preview while the viewer is open. | `resources/subscribe` refreshes the existing surface to the new artifact/revision without silently mixing old structure with a new image. |
-| H5 | Trigger a form elicitation for variant choice. | A supporting host shows the form and returns a schema-valid choice; an unsupported host receives a complete text choice and can continue without guessing. |
-| H6 | Trigger a URL elicitation for access. | A supporting host presents the URL flow without putting credentials in chat; an unsupported host receives the authorization URL and polling instructions as complete text. |
-| H7 | Invoke `preview-file`, `review-design`, `migrate-wear-m3`, and `design-status`. | Each supported prompt is discoverable and produces the documented typed workflow; an unsupported prompt surface has an equivalent written invocation. |
-| H8 | Ask the packaged design reviewer to run accessibility, font-scale, round-device, and semantic-diff sweeps. | Use the authoritative reviewer criteria in [`rich-integration.md`](rich-integration.md#design-reviewer-agent): a supporting host runs the subagent in its own context; an unsupported host runs the same checklist in the current context, reports that limitation, and records a fallback result rather than a packaged-agent discovery pass. |
-| H9 | Start a workspace session with a healthy or unhealthy MCP server, linked unacknowledged comments, and an unsaved temporary copy. | The startup hook emits one bounded summary containing only actionable states; a no-op session stays silent. |
-| H10 | Request a result that has both editor-node and source-line destinations. | Output contains valid deep links for every destination actually available and plainly omits or explains unavailable destinations. |
-| H11 | Repeat H1, H3, H5, and H6 with MCP Apps and elicitation unavailable. | The text result is complete enough to understand the render and finish the workflow; it never claims that a viewer or interaction was shown. |
+| ID | Feature and prompt | Pass condition | No MCP Apps, no elicitation |
+| --- | --- | --- | --- |
+| H1 | Render a preview with the viewer enabled: “Show this preview and tell me exactly which surface you inspected.” | The person sees the viewer or linked viewer, the agent can inspect the same render plus structure, and both sides identify the same artifact/revision. | The text result names the artifact (URI or file path), revision, dimensions, hash and accessibility summary. The agent still looks at the image itself and says no viewer was shown. |
+| H2 | Exercise every shipped viewer mode: before/after, accessibility overlay, matrix, comment pins, and an A2UI document. | Each mode renders without losing the complete text result, and the agent can identify the active mode from the same artifact the person sees. | Each mode's content arrives as text: before/after hashes, the accessibility findings, matrix cells with hashes, the comment list, and the A2UI document path. The agent never says a mode was displayed. |
+| H3 | In the viewer, select a node, choose a variant, post a comment, and open the editor. | Every action reaches the intended typed tool or conversation channel once, reports success or an actionable error, and never treats a UI-only state change as saved design state. | The result lists the exact typed tool call for each action, with the node ID, variant, comment text and editor link. The agent makes a call only when the person asks for it, and never says an action happened from the viewer. |
+| H4 | Change the underlying preview while the viewer is open. | `resources/subscribe` refreshes the existing surface to the new artifact/revision without silently mixing old structure with a new image. | The agent re-renders and reports the new revision and hash. It never claims a live refresh. |
+| H5 | Trigger a form elicitation for variant choice. | A supporting host shows the form and returns a schema-valid choice; an unsupported host receives a complete text choice and can continue without guessing. | A closed list of choices as text. The agent waits for the person's answer and doesn't pick one itself. |
+| H6 | Trigger a URL elicitation for access. | A supporting host presents the URL flow without putting credentials in chat; an unsupported host receives the authorization URL and polling instructions as complete text. | The authorization URL, verification code and polling step (`poll_access` or `access_status`) as text. No token is asked for or shown in chat. |
+| H7 | Invoke `preview-file`, `review-design`, `migrate-wear-m3`, and `design-status`. | Each supported prompt is discoverable and produces the documented typed workflow; an unsupported prompt surface has an equivalent written invocation. | Same as the pass condition: prompts use neither feature. |
+| H8 | Ask the packaged design reviewer to run accessibility, font-scale, round-device, and semantic-diff sweeps. | Use the authoritative reviewer criteria in [`rich-integration.md`](rich-integration.md#design-reviewer-agent): a supporting host runs the subagent in its own context; an unsupported host runs the same checklist in the current context, reports that limitation, and records a fallback result rather than a packaged-agent discovery pass. | The verdict carries file paths instead of viewer links. Otherwise the same as the supporting column. |
+| H9 | Start a workspace session with a healthy or unhealthy MCP server, linked unacknowledged comments, and an unsaved temporary copy. | The startup hook emits one bounded summary containing only actionable states; a no-op session stays silent. | Same as the pass condition: the summary is already text. |
+| H10 | Request a result that has both editor-node and source-line destinations. | Output contains valid deep links for every destination actually available and plainly omits or explains unavailable destinations. | Links are plain URLs. The node ref and source path and line are present even when a link is missing. |
+| H11 | Repeat H1, H3, H5, and H6 with MCP Apps and elicitation unavailable. | The text result is complete enough to understand the render and finish the workflow; it never claims that a viewer or interaction was shown. | This case is the fallback run of H1, H3, H5 and H6; use their entries in this column. |
 
 ## Recorded runs
 

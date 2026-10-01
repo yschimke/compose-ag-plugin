@@ -20,6 +20,12 @@ design; `ui_builder_render_design_matrix` for every device size as one picture; 
 (`waitSeconds: 0` to poll) for a person's approve/reject; `ui_builder_set_implementation` and
 `ui_builder_implementation_status` to tie the design to its PR. Read each reply's `summary` first.
 
+To explore alternatives, branch once per idea from the same revision (`ui_builder_branch_design`), edit
+each branch, then call `ui_builder_compare_branches` once and show its one contact sheet (link the image)
+with the numbered list. Ask with `ui_builder_pick_branch`; if it returns `ask-in-chat`, post the list and
+the sheet link and wait for the person's number. Never pick for them. Then `ui_builder_merge_branch` with
+`dryRun: true`, read the report, and merge; the other branches are archived for you.
+
 Pick the server by what is being rendered: the person's own `@Preview`s come from the local
 `compose-preview-mcp` server; library components come from `compose-preview-catalog`. R3 and R4
 apply to UI Builder designs, not to plain preview renders. Keep a simple render short: in Antigravity,

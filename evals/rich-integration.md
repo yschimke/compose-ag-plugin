@@ -65,8 +65,10 @@ This PR delivers only the bounded doctor-readiness slice; issue #18 remains
 open for workspace-linked comment acknowledgements and temporary-copy
 inventory. Until those contracts exist, the hook must not infer either fact or
 inject a constant placeholder line. A healthy CLI, or a current CLI that does
-not advertise `mcp doctor`, is a silent no-op. A missing CLI, timed-out probe,
-or failed doctor emits one concise actionable line without including either
+not advertise `mcp doctor`, is a silent no-op. So is a probe that outlasts its
+bound: a slow JVM start is not a broken installation, and reporting it made
+agents skip renders that would have worked (#86). A missing CLI, a failed probe
+or a failed doctor emits one concise actionable line without including either
 command's output.
 
 ## Deep links

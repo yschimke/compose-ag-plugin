@@ -14,6 +14,12 @@ rules that must remain consistent across Antigravity, Claude Code, and Codex.
 - **R3 — Keep one canonical home:** read and preserve the design's recorded home, edit there in small batches, announce and reconcile temporary copies, and get approval before moving the home.
 - **R4 — Keep discussion at the home:** use server comments for server-homed designs and the linked PR or issue for repo-homed designs, then report unacknowledged comments before finishing.
 
+UI Builder loop, one call each where the server advertises them: `ui_builder_check_design` (schema,
+catalog and accessibility findings by node; pass `operations` to dry-run an edit) before showing a
+design; `ui_builder_render_design_matrix` for every device size as one picture; `ui_builder_await_decision`
+(`waitSeconds: 0` to poll) for a person's approve/reject; `ui_builder_set_implementation` and
+`ui_builder_implementation_status` to tie the design to its PR. Read each reply's `summary` first.
+
 Pick the server by what is being rendered: the person's own `@Preview`s come from the local
 `compose-preview-mcp` server; library components come from `compose-preview-catalog`. R3 and R4
 apply to UI Builder designs, not to plain preview renders. Keep a simple render short: in Antigravity,

@@ -47,7 +47,9 @@ the **MCP server and the CLI**, with a published schema.
 - **Edits:** they go through validated operations (`ui_builder_apply`) that return the new revision
   and a way to view the result (R1).
 - **Validation** is a tool of its own. Checking a document against its schema, its catalog pin and
-  the export gate must be possible without saving.
+  the export gate must be possible without saving (`ui_builder_validate`), and so must checking it
+  for accessibility before a person sees it (`ui_builder_check_design`, which also dry-runs a batch
+  of `operations`).
 - **Hand-editing a design's JSON is a last resort.** When it happens, the agent validates before
   saving and re-renders afterwards (R1).
 
@@ -84,10 +86,14 @@ Behaviour:
 
 - **A server-homed design's discussion is its server comments.** At the start of work the agent
   reads them (`ui_builder_list_comments`). It replies, acknowledges and resolves there, and uses
-  `ui_builder_await_comments` to wait for a person.
+  `ui_builder_await_comments` to wait for a person. A person's approve or reject of a revision is
+  recorded at the home too; the agent waits for it with `ui_builder_await_decision` rather than
+  asking in chat.
 - **A repo-homed design's discussion is the pull request or issue linked from it.**
 - **Don't split the conversation.** Don't restate or continue a design discussion in a pull request,
-  an issue or chat. Link to it instead (`ui_builder_set_links`).
+  an issue or chat. Link to it instead (`ui_builder_set_links`). The pull request implementing a
+  design is recorded with `ui_builder_set_implementation`, and the code side reads what it needs
+  with `ui_builder_implementation_status`.
 - **Before finishing,** the agent checks the home for unread or unacknowledged comments and reports
   them.
 

@@ -106,9 +106,9 @@ paste it in by hand. See [OpenCode](opencode.md#let-the-cli-write-the-local-serv
 
 ## Codex hooks are marked untrusted
 
-Codex registers the plugin's SessionStart and Stop hooks as `untrusted` until
-you approve them. Approve them when Codex asks, or from `/plugins`. The Stop
-gate stays off unless `COMPOSE_PREVIEW_GATE=1` is set.
+Codex registers the plugin's SessionStart, PostToolUse and Stop hooks as
+`untrusted` until you approve them. Approve them when Codex asks, or from
+`/plugins`. The Stop gate stays off unless `COMPOSE_PREVIEW_GATE=1` is set.
 
 ## "Semantics unavailable" or pixel-only checks
 

@@ -18,6 +18,15 @@ curl -fsSL https://raw.githubusercontent.com/yschimke/skills/main/scripts/instal
 compose-preview --version   # open a new terminal first if this is not found
 ```
 
+Then prepare each Compose project once, from its root folder. Without this the
+first render fails with "project not prepared … run `compose-preview mcp
+install` once":
+
+```sh
+cd path/to/your/project
+compose-preview mcp install
+```
+
 `compose-catalogs` (hosted Material 3 and Wear catalogs, UI Builder) needs no
 local toolchain. Then pick your harness. In every harness, open your Compose
 project and try: **"render the `ListScreenPreview`"** (use one of your own

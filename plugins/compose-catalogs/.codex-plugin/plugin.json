@@ -35,5 +35,5 @@
   "name": "compose-catalogs",
   "repository": "https://github.com/yschimke/compose-ag-plugin",
   "skills": "./skills/",
-  "version": "0.2.0"
+  "version": "0.3.0"
 }

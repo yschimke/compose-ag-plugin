@@ -6,7 +6,7 @@
   "plugins": [
     {
       "name": "compose-catalogs",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "description": "Discover Compose components, inspect properties, and render catalog variants.",
       "keywords": [
         "compose",
@@ -57,7 +57,7 @@
     },
     {
       "name": "compose-preview",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "description": "Iterate on local Compose previews with live rendering and accessibility checks.",
       "keywords": [
         "compose",
@@ -125,7 +125,7 @@
   ],
   "gemini": {
     "name": "compose-preview",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "description": "Render Compose @Preview functions locally and browse hosted Material 3 and Wear component catalogs.",
     "plugins": [
       "compose-preview",

@@ -13,6 +13,7 @@ done < <(find . -name '*.json' -not -path './.git/*' -print0)
 
 python3 scripts/validate_manifests.py
 python3 tests/validate_manifests_test.py
+python3 tests/onboarding_skill_test.py
 tests/harness_test.sh
 tests/session_start_summary_test.sh
 tests/compose_edit_reminder_test.sh

@@ -73,6 +73,7 @@ def render_codex_manifest(
     mcp: list[object],
     interface: object,
     hooks: list[object] | None = None,
+    onboarding_skill: object = None,
     owner: str,
     repository: str,
     license_name: str,
@@ -122,7 +123,22 @@ def render_codex_manifest(
         manifest["mcpServers"] = render_mcp_servers(name, mcp, "codex")
     if hooks:
         manifest["hooks"] = f"./{HOOK_MANIFESTS['codex']}"
+    if onboarding_skill is not None:
+        manifest["extensions"] = {
+            "com.openai": {"onboardingSkill": onboarding_skill_path(name, onboarding_skill, skills)}
+        }
     return manifest
+
+
+def onboarding_skill_path(plugin_name: str, skill: object, skills: list[str]) -> str:
+    """The OpenAI plugin-onboarding skill: run by ChatGPT/Codex right after install.
+
+    It must be one of the plugin's own packaged skills; other harnesses ignore the key.
+    """
+    name = require_string(skill, f"{plugin_name}.onboardingSkill")
+    if name not in skills:
+        raise ValueError(f"{plugin_name}.onboardingSkill {name!r} must be one of the plugin's skills")
+    return f"./skills/{name}/SKILL.md"
 
 
 def write_skill(plugin_root: Path, skill: str) -> None:
@@ -782,6 +798,7 @@ def main() -> None:
                 mcp=mcp,
                 interface=interface,
                 hooks=hooks,
+                onboarding_skill=plugin.get("onboardingSkill"),
                 owner=owner,
                 repository=repository,
                 license_name=license_name,

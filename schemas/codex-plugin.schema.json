@@ -99,6 +99,22 @@
     },
     "hooks": {
       "const": "./hooks/codex-hooks.json"
+    },
+    "extensions": {
+      "type": "object",
+      "properties": {
+        "com.openai": {
+          "type": "object",
+          "properties": {
+            "onboardingSkill": {
+              "type": "string",
+              "pattern": "^\\./skills/[a-z0-9][a-z0-9-]*/SKILL\\.md$"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false

@@ -26,6 +26,11 @@ apply to UI Builder designs, not to plain preview renders. Keep a simple render 
 follow `antigravity-viewer-card` (`render_preview preview=<Name>`, look at the PNG, a few bullets); elsewhere, one
 render call and a short reply.
 
+When a `.uid` design is open in the editor panel (ChatGPT/Codex desktop `design_open`, focused canvas by
+default), the panel is for pointing at nodes, comments and one-property quick edits. Show device previews in
+the chat instead: after a design change, render them (`render_matrix`, or the design's devices) and reply
+with the images, rather than asking the person to switch the panel to the full editor.
+
 In a chat surface (Claude in Slack, Teams), the person sees only text and attachments. Each render from
 the hosted catalog carries a signed https PNG (an `Image: <url>` line, `imageUrl`, `contactSheet.url`)
 that is valid for 10 minutes: attach or link that, and never describe an image from memory. To offer

@@ -14,6 +14,7 @@ verified. Setup: [README quick start](../README.md#quick-start); fixes:
 | Claude Code (2.1.283) | ✅ GitHub marketplace | ✅ image reaches the model; `inline=false` + Read planned | Print mode only; no MCP Apps in CLI/IDE | ✅ SessionStart, PostToolUse, Stop (cap 9) | Form advertised; URL mode … | [#40](https://github.com/yschimke/compose-ag-plugin/issues/40): URL elicitation, plugin directory |
 | Codex (0.157.1) | ✅ GitHub marketplace | Transport ✅ (fixture); product render … | … (Desktop renders MCP Apps, untested) | Registered, `untrusted` until approved; behaviour … | … | [#41](https://github.com/yschimke/compose-ag-plugin/issues/41): column gaps, no `design-reviewer`, MCP Apps |
 | OpenCode (1.18.32) | ✅ skills via npx; server via `mcp install --opencode` | … | None (no MCP Apps) | None | None | [#42](https://github.com/yschimke/compose-ag-plugin/issues/42): v2 and a real render unverified |
+| Claude in Slack (Claude Tag) | … hosted `/mcp` as a connection (no local stdio server) | … signed https image link, attached or linked | None documented (text and attachments only) | None (plugins and skills via access bundle …) | Not documented; a thread reply is the answer | [#92](https://github.com/yschimke/compose-ag-plugin/issues/92): every cell, see [Chat surfaces](#chat-surfaces) |
 
 ## Fixture baseline
 
@@ -53,6 +54,35 @@ not.
 | Q19: `prompts/list` and `prompts/get` | ✅ Listed in `agy` 1.2.12; invocation not run | ✅ Claude Code 2.1.283 | Not run in interactive UI | Not run | Both MCP servers initialized, but the noninteractive probe did not exercise prompt discovery and has no slash-command picker; this is not a product-level negative result. Claude Code listed `/mcp__plugin_p1_alpha__spike-prompt` and the beta equivalent as slash commands after `prompts/list`; invoking one in `-p` sent `prompts/get` with `path: Example.kt`. [Claude Code evidence](evidence/2026-09-27-claude-code.md). Antigravity: prompts were listed as slash commands `mcp:p1_alpha:spike-prompt` and `mcp:p2_beta:spike-prompt`. [Antigravity evidence](evidence/2026-09-27-antigravity.md). |
 | Q20: Plugin `agents/` reviewer discovery | ✅ `agy` 1.2.12 | ✅ Claude Code 2.1.283 | Blocked in Codex exec 0.151.0 | Not run | One session exposed no invocable `spike-reviewer`; in another, the prompt supplied the name and the attempted spawn failed. Neither run established packaged-agent discovery. [Evidence](evidence/2026-09-26-codex-rich-harness.md). Claude Code listed `p1:spike-reviewer` as an Agent type; spawning it returned the exact fixture verdict. [Claude Code evidence](evidence/2026-09-27-claude-code.md). Antigravity: "Use the spike-reviewer agent from p1" ran a subagent that returned the exact fixture verdict. [Antigravity evidence](evidence/2026-09-27-antigravity.md). |
 | Q21: SessionStart hook marker | ❌ No SessionStart-equivalent event in `agy` 1.2.12 | ✅ Claude Code 2.1.283 | ✅ Codex exec 0.151.0 | n/a | Logs prove both plugin hooks ran with plugin-specific roots; a later run's model repeating their shared marker proves at least one output reached context. Both Stop observers also ran once. [Evidence](evidence/2026-09-26-codex-rich-harness.md). Claude Code: both SessionStart hooks ran with source `startup`; the model quoted `SessionStart:startup hook success: SPIKE-SESSION-START`. [Claude Code evidence](evidence/2026-09-27-claude-code.md). Antigravity: only Stop and post-tool-use hook events were logged. [Antigravity evidence](evidence/2026-09-27-antigravity.md). |
+
+## Chat surfaces
+
+Chat agents (Claude in Slack, also known as Claude Tag, and the ChatGPT Slack app) reach only the
+hosted `/mcp`, and show a person text and attachments: no MCP Apps, viewer, editor, buttons or
+elicitation, according to the Claude Tag docs summarised in
+[compose-preview-server#1254](https://github.com/yschimke/compose-preview-server/issues/1254#issuecomment-5928444723).
+The server side shipped in compose-preview-server
+[#1258](https://github.com/yschimke/compose-preview-server/pull/1258) and
+[#1264](https://github.com/yschimke/compose-preview-server/pull/1264): every hosted result that shows
+a picture carries a signed https PNG link (an `Image: <url>` text line, `imageUrl`, and
+`contactSheet.url` for a matrix); `ui_builder_get_links` reports `threadKind` and `slackThread`; and an
+opt-in webhook posts comments, forks, decisions and implementation changes to a channel. Nothing below
+has been observed yet; each cell stays "Not run" until it has been, under the rule at the top of this
+page. The scripted checks (`chat_surfaces_smoke.py`) and the manual steps (B1–B9) are in
+[compose-preview-server#1262](https://github.com/yschimke/compose-preview-server/issues/1262); those
+checks need a deployment newer than 3.89.0.
+
+| Question | Claude in Slack | ChatGPT Slack app | #1262 step |
+| --- | --- | --- | --- |
+| C1: Hosted `/mcp` as a connection (OAuth connector or Bearer) | Not run | Not run | B1 |
+| C2: A signed https image from a tool result is attached or linked in the thread | Not run | Not run | B2, Part A |
+| C3: MCP `ImageContent` from a tool reaches the model | Not run | Not run | B3 |
+| C4: Pick by reply from a numbered contact sheet (`catalog_render_matrix`) | Not run | Not run | B4, B5 |
+| C5: The agent recognises the design's Slack thread (`slackThread`) | Not run | Not run | B6 |
+| C6: Comment summary stays at the home (R4) | Not run | Not run | B7 |
+| C7: Plugins and skills from this repository load, and what they change | Not run | n/a | B8 |
+| C8: PR-subscription follow-up | Not run | n/a | B9 |
+| C9: Webhook notifications in a channel (rate limit, private designs) | Not run (operator check) | n/a | Operator check |
 
 ## Additional observations
 

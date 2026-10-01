@@ -16,7 +16,8 @@ image plus structure, without asking the person to describe it.
 | Surface | How the agent sees it | Gap |
 | --- | --- | --- |
 | Visual Editor (UI Builder canvas) | Document renders: `ui_builder_export_document`, export PNG/SVG | No view of the editor *as the person sees it*: viewport, selection, reference overlay, comment pins. [compose-preview-server#1114](https://github.com/yschimke/compose-preview-server/issues/1114) |
-| `@Preview` renders | `render_preview` (local MCP or remote catalog) | Returns inline base64 only; a file path is [compose-preview-server#1109](https://github.com/yschimke/compose-preview-server/issues/1109) |
+| `@Preview` renders | `render_preview` (local MCP or remote catalog) | The hosted catalog also returns a signed https PNG link ([compose-preview-server#1258](https://github.com/yschimke/compose-preview-server/pull/1258)); the local server returns inline base64 only, and a file path is [compose-preview-server#1109](https://github.com/yschimke/compose-preview-server/issues/1109) |
+| Chat surfaces (Claude in Slack, Teams) | The https image link in each hosted result (`Image: <url>`, `imageUrl`, `contactSheet.url`), attached or linked | Live behaviour unverified: [#92](https://github.com/yschimke/compose-ag-plugin/issues/92), [compose-preview-server#1262](https://github.com/yschimke/compose-preview-server/issues/1262) |
 | Source code | File read; `ui_builder_export` (`compose`) for a design's code | — |
 | Native render | `ui_builder_render_native` (when configured); local previews render natively through the daemon | Not available on every deployment; the agent must say when it is missing |
 
@@ -30,8 +31,8 @@ Behaviour:
 - The agent never fakes a render. It doesn't hand-build an HTML, CSS or SVG mock of a preview,
   or an interactive imitation of one, and show it as the UI. Only output from the render tools
   counts. When rendering fails, the agent reports the failure instead of substituting a mock.
-- What the agent looked at can be shown to the person. In Antigravity this is the preview card, and
-  elsewhere a file path.
+- What the agent looked at can be shown to the person. In Antigravity this is the preview card; in a
+  chat surface, the https image link or an attachment made from it; elsewhere, a file path.
 
 ## R2: Typed tools with schemas, not raw JSON
 

@@ -118,9 +118,10 @@ flow.
 
 `compose-preview` supplies the local `compose-preview mcp serve` connection for
 iterative Compose rendering and accessibility checks. It requires Java 17,
-Gradle, and the `compose-preview` CLI on the workstation. It also ships an
-opt-in [Stop gate](#compose-preview-stop-gate). The rendering workflow itself
-comes from the canonical `compose-preview` skill in `yschimke/skills`.
+Gradle, and the `compose-preview` CLI on the workstation. It also ships a
+[post-edit render reminder](#compose-edit-reminder) and an opt-in
+[Stop gate](#compose-preview-stop-gate). The rendering workflow itself comes
+from the canonical `compose-preview` skill in `yschimke/skills`.
 
 Both wiring plugins include the same generated `harness-notes` micro-skill. It
 summarizes R1–R4 for the active harness and points back to the full contract; it
@@ -165,6 +166,21 @@ serve. Edit [`src/plugins.json`](src/plugins.json) and run
 The [agent rule evals](evals/agent-rules.md) and the other cross-harness
 prompts that verify the upstream skills together with this wiring live in
 [`evals/`](evals/README.md).
+
+## Compose edit reminder
+
+After the agent edits a `*.kt` file that declares a `@Composable` or `@Preview`,
+the `compose-preview` plugin's PostToolUse hook adds one line of context: render
+an affected preview with `render_preview` and look at it before calling the
+change done (agent rule R1). Skills load only when the model picks them, and in
+the Claude Code eval run on #64 agents edited Compose UI without rendering even
+with the skill offered (#86). A hook is always seen.
+
+It reminds once per file per session, never blocks, and stays silent when the
+edit touched no Compose file or when anything about the hook itself fails. It
+runs in Claude Code (`Edit`, `Write`, `MultiEdit`) and Codex (`apply_patch`).
+Antigravity gets only Stop hooks for now: its post-edit tool names differ and
+its context output for that event has not been verified.
 
 ## Compose Preview Stop gate
 

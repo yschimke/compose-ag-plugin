@@ -110,6 +110,12 @@
           "timeout": 10
         },
         {
+          "event": "PostToolUse",
+          "command": "scripts/compose-edit-reminder.sh",
+          "matcher": "Edit|Write|MultiEdit|apply_patch",
+          "timeout": 5
+        },
+        {
           "event": "Stop",
           "command": "scripts/stop-gate.sh",
           "timeout": 360

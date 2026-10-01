@@ -3,6 +3,11 @@
     "name": "Yuri Schimke"
   },
   "description": "Discover Compose components, inspect properties, and render catalog variants.",
+  "extensions": {
+    "com.openai": {
+      "onboardingSkill": "./skills/compose-catalogs-setup/SKILL.md"
+    }
+  },
   "interface": {
     "capabilities": [
       "Interactive"

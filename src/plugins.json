@@ -52,8 +52,10 @@
         }
       },
       "skills": [
-        "harness-notes"
-      ]
+        "harness-notes",
+        "compose-catalogs-setup"
+      ],
+      "onboardingSkill": "compose-catalogs-setup"
     },
     {
       "name": "compose-preview",
@@ -91,8 +93,10 @@
       ],
       "skills": [
         "harness-notes",
-        "antigravity-viewer-card"
+        "antigravity-viewer-card",
+        "compose-preview-setup"
       ],
+      "onboardingSkill": "compose-preview-setup",
       "agents": [
         "design-reviewer"
       ],

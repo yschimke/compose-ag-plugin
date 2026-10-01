@@ -3,6 +3,11 @@
     "name": "Yuri Schimke"
   },
   "description": "Iterate on local Compose previews with live rendering and accessibility checks.",
+  "extensions": {
+    "com.openai": {
+      "onboardingSkill": "./skills/compose-preview-setup/SKILL.md"
+    }
+  },
   "hooks": "./hooks/codex-hooks.json",
   "interface": {
     "capabilities": [

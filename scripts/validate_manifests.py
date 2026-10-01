@@ -449,6 +449,7 @@ def main() -> None:
             mcp=plugin.get("mcp", []),
             interface=plugin.get("interface"),
             hooks=plugin.get("hooks", []),
+            onboarding_skill=plugin.get("onboardingSkill"),
             owner=source["owner"],
             repository=source["repository"],
             license_name=source["license"],

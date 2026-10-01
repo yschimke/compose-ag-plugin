@@ -1,0 +1,34 @@
+---
+name: compose-preview-setup
+description: Run right after the compose-preview plugin is installed, or when a render fails because the CLI is missing or the project is "not prepared". Checks the compose-preview CLI, prepares the current Gradle project once, and renders one preview so the person sees it working.
+---
+
+# Set up Compose Preview
+
+This is the plugin's onboarding skill. Keep it short: a few commands, then one render. Report
+each step in one line. Do not read docs or grep the source first.
+
+1. **CLI.** Run `compose-preview --version`.
+   - If it is missing, tell the person and offer the installer. Run it only once they agree:
+     `curl -fsSL https://raw.githubusercontent.com/yschimke/skills/main/scripts/install.sh | bash -s -- --cli-only`
+     Then rerun `compose-preview --version`. If it is still not found, say a new terminal or
+     restart of the app is needed, and stop here.
+   - It needs Java 17 or newer. If the version check reports a Java error, say so and stop.
+2. **Project.** Only if the workspace root has `settings.gradle.kts`, `settings.gradle` or
+   `gradlew`; otherwise say there is no Gradle project open and stop after step 1.
+   - Run `compose-preview mcp doctor --json` and read `verdict`.
+   - If the verdict is not `ok`, prepare the project once:
+     `compose-preview mcp install --no-claude --no-codex --no-antigravity --no-opencode --no-plugin-hint`
+     The flags matter: this plugin already provides the MCP server, so `mcp install` must only
+     prepare the project, never register a second global server.
+   - "SDK location not found" means `ANDROID_HOME` or `sdk.dir` in `local.properties` is
+     missing. Say which, and stop.
+3. **First render.** Call `list_previews` once, then `render_preview` for one preview (prefer
+   one whose name ends in `Preview` near the app's main screen). Look at the image and describe
+   it in one or two lines. A failed render is reported as failed, with its error text.
+4. **Close** with one line on what to do next: ask for any preview by name ("render the
+   `ListScreenPreview`"); in ChatGPT/Codex desktop the Previews tab and `@`-mentions of
+   previews are available when the host shows them.
+
+Never edit build files by hand, never run `./gradlew clean`, and never hand-build a mock of a
+render.

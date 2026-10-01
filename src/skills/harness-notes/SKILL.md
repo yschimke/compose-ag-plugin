@@ -26,6 +26,15 @@ apply to UI Builder designs, not to plain preview renders. Keep a simple render 
 follow `antigravity-viewer-card` (`render_preview preview=<Name>`, look at the PNG, a few bullets); elsewhere, one
 render call and a short reply.
 
+In a chat surface (Claude in Slack, Teams), the person sees only text and attachments. Each render from
+the hosted catalog carries a signed https PNG (an `Image: <url>` line, `imageUrl`, `contactSheet.url`)
+that is valid for 10 minutes: attach or link that, and never describe an image from memory. To offer
+alternatives, call `catalog_render_matrix` with `observe=png`, post its numbered contact sheet with the
+options, and take the person's reply ("2") as the choice. Reactions and buttons are not input there. For
+R4, post the design link and a summary of unacknowledged comments rather than treating thread replies as
+design comments. No server event wakes a chat agent, so follow up through a PR subscription or by polling
+`ui_builder_await_comments` / `ui_builder_await_decision` with `waitSeconds: 0`.
+
 Claude Code ≥2.1.281 supports URL elicitation only on 2026-07-28-protocol connections; otherwise use the text fallback for the access grant.
 Claude Code does not load a plugin's `rules/AGENTS.md`; guidance it must always see belongs in a skill or the SessionStart message.
 

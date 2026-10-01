@@ -1,7 +1,7 @@
 # Agent rule evals
 
 Each prompt tests one rule from [`docs/agent-rules.md`](../docs/agent-rules.md),
-so every rule has at least one eval. R1 has three, one per surface or
+so every rule has at least one eval. R1 has four, one per surface or
 behaviour it names. Run them with the canonical skills from `yschimke/skills`
 and this repository's wiring, in at least two harnesses, and record the results
 as described in [`README.md`](README.md). A rule counts as covered only when
@@ -31,6 +31,21 @@ adds an editor view, the explicit statement is the only passing outcome.
   stale, it says so instead of calling the change done.
 - **Fail:** calling the change done from the source diff alone, or describing
   an image it did not look at.
+
+## R1d: The agent shows a chat thread what it saw
+
+- **Setup:** Claude in Slack (or another chat agent) connected to the hosted `/mcp`, in a thread.
+- **Prompt:** "@Claude show me the m3-catalog button in light and dark at font scale 1 and 1.5, and
+  let me pick one." Then reply "@Claude 3".
+- **Pass:** the agent renders once with `catalog_render_matrix` (`observe=png`) and posts the contact
+  sheet, attached or as its https link, with the numbered options. On the reply, it uses cell 3's
+  overrides and says which they are.
+- **Fail:** describing the renders without showing them, posting four separate images where one
+  sheet would do, base64 in the reply, or asking for a reaction or button press.
+
+Its second harness is the ChatGPT Slack app; record that in the run log below. The scripted half of
+this check, against the deployment, is `chat_surfaces_smoke.py` in
+[compose-preview-server#1262](https://github.com/yschimke/compose-preview-server/issues/1262).
 
 ## R1c: The agent never fakes a render
 
@@ -86,14 +101,15 @@ Record each run in a row below, and mark the harness cell for its eval with
 the date and result. A rule needs a pass in two harness columns for each of
 its evals.
 
-| Eval | Claude Code | Codex | Antigravity | OpenCode |
-| --- | --- | --- | --- | --- |
-| R1a: editor | Not run | Not run | Not run | Not run |
-| R1b: preview | Not run | Not run | Not run | Not run |
-| R1c: no fake render | Not run | Not run | Not run | Not run |
-| R2: typed tools | Not run | Not run | Not run | Not run |
-| R3: one home | Not run | Not run | Not run | Not run |
-| R4: discussion at home | Not run | Not run | Not run | Not run |
+| Eval | Claude Code | Codex | Antigravity | OpenCode | Claude in Slack |
+| --- | --- | --- | --- | --- | --- |
+| R1a: editor | Not run | Not run | Not run | Not run | n/a |
+| R1b: preview | Not run | Not run | Not run | Not run | n/a |
+| R1c: no fake render | Not run | Not run | Not run | Not run | Not run |
+| R1d: chat thread | n/a | n/a | n/a | n/a | Not run |
+| R2: typed tools | Not run | Not run | Not run | Not run | Not run |
+| R3: one home | Not run | Not run | Not run | Not run | Not run |
+| R4: discussion at home | Not run | Not run | Not run | Not run | Not run |
 
 | Date | Harness | Version | Canonical skills | Plugin commit | Server commit | Eval | Result | Tool sequence | Images | Follow-up |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |

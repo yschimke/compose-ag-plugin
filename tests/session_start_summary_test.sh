@@ -168,7 +168,7 @@ chmod +x "$fake_cli"
 started_at=$(date +%s)
 hung_help_output="$(PATH="$fake_bin:$PATH" "$script")"
 elapsed=$(($(date +%s) - started_at))
-assert_equal "$(expected_output 'Compose Preview needs attention: The MCP capability probe timed out.')" "$hung_help_output" 'hung help guidance'
+assert_equal '' "$hung_help_output" 'help probe timeout is silent'
 if ((elapsed < 2 || elapsed >= 8)); then
   printf 'FAIL: help timeout took %s seconds\n' "$elapsed" >&2
   exit 1
@@ -184,7 +184,8 @@ chmod +x "$fake_cli"
 hung_design_help_output="$(PATH="$fake_bin:$PATH" "$script")"
 assert_equal '' "$hung_design_help_output" 'design capability probe timeout is silent'
 
-# The workspace status call has the same hard process bound as the existing doctor call.
+# The workspace status call has the same hard process bound as the existing doctor call, and its
+# timeout is silent too.
 printf '%s\n' \
   '#!/bin/sh' \
   'if [ "$1 $2" = "mcp --help" ]; then exit 0; fi' \
@@ -195,19 +196,20 @@ chmod +x "$fake_cli"
 started_at=$(date +%s)
 hung_status_output="$(PATH="$fake_bin:$PATH" "$script")"
 elapsed=$(($(date +%s) - started_at))
-assert_equal "$(expected_output 'Compose Preview needs attention: Workspace design status timed out.')" "$hung_status_output" 'hung status guidance'
+assert_equal '' "$hung_status_output" 'status timeout is silent'
 if ((elapsed < 2 || elapsed >= 8)); then
   printf 'FAIL: status timeout took %s seconds\n' "$elapsed" >&2
   exit 1
 fi
 
 # Several individually bounded slow probes must still leave time for the hook to emit context
-# before the manifest's 10-second deadline.
+# before the manifest's 10-second deadline. Doctor fails, so there is context to emit; the
+# status probe runs out of budget, which is silent.
 printf '%s\n' \
   '#!/bin/sh' \
   'sleep 2' \
   'if [ "$1 $2" = "mcp --help" ]; then echo doctor; exit 0; fi' \
-  'if [ "$1 $2" = "mcp doctor" ]; then exit 0; fi' \
+  'if [ "$1 $2" = "mcp doctor" ]; then exit 1; fi' \
   'if [ "$1 $2" = "design --help" ]; then echo status; exit 0; fi' \
   'if [ "$1 $2" = "design status" ]; then echo "{\"schema\":\"compose-preview-design-status/v1\",\"totals\":{\"unsavedTemporaryCopies\":0,\"unacknowledgedComments\":1,\"unavailable\":0}}"; exit 0; fi' \
   'exit 0' >"$fake_cli"
@@ -215,7 +217,7 @@ chmod +x "$fake_cli"
 started_at=$(date +%s)
 cumulative_output="$(PATH="$fake_bin:$PATH" "$script")"
 elapsed=$(($(date +%s) - started_at))
-assert_equal "$(expected_output 'Compose Preview needs attention: Workspace design status timed out.')" "$cumulative_output" 'cumulative hook deadline guidance'
+assert_equal "$(expected_output 'Compose Preview needs attention: MCP doctor failed.')" "$cumulative_output" 'cumulative hook deadline guidance'
 if ((elapsed < 6 || elapsed >= 10)); then
   printf 'FAIL: cumulative hook deadline took %s seconds\n' "$elapsed" >&2
   exit 1
@@ -231,13 +233,14 @@ chmod +x "$fake_cli"
 started_at=$(date +%s)
 stubborn_help_output="$(PATH="$fake_bin:$PATH" "$script")"
 elapsed=$(($(date +%s) - started_at))
-assert_equal "$(expected_output 'Compose Preview needs attention: The MCP capability probe timed out.')" "$stubborn_help_output" 'SIGTERM-ignoring help guidance'
+assert_equal '' "$stubborn_help_output" 'SIGTERM-ignoring help probe is killed silently'
 if ((elapsed < 2 || elapsed >= 8)); then
   printf 'FAIL: SIGTERM-ignoring help timeout took %s seconds\n' "$elapsed" >&2
   exit 1
 fi
 
-# Doctor has its own bound rather than relying only on the outer hook timeout.
+# Doctor has its own bound rather than relying only on the outer hook timeout. A slow doctor is
+# not a broken installation, so its timeout is silent (#86).
 printf '%s\n' \
   '#!/bin/sh' \
   'if [ "$1 $2" = "mcp --help" ]; then echo doctor; exit 0; fi' \
@@ -247,7 +250,7 @@ chmod +x "$fake_cli"
 started_at=$(date +%s)
 hung_doctor_output="$(PATH="$fake_bin:$PATH" "$script")"
 elapsed=$(($(date +%s) - started_at))
-assert_equal "$(expected_output 'Compose Preview needs attention: MCP doctor timed out.')" "$hung_doctor_output" 'hung doctor guidance'
+assert_equal '' "$hung_doctor_output" 'doctor timeout is silent'
 if ((elapsed < 2 || elapsed >= 8)); then
   printf 'FAIL: doctor timeout took %s seconds\n' "$elapsed" >&2
   exit 1

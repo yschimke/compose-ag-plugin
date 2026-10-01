@@ -17,6 +17,33 @@ these. In OpenCode, run `python3 scripts/opencode-check.py`.
   curl -fsSL https://raw.githubusercontent.com/yschimke/skills/main/scripts/install.sh | bash -s -- --cli-only
   ```
 
+## `render_preview: project not prepared`
+
+The project's Gradle build hasn't been set up for rendering yet. The full
+message ends with "the build does not apply the Compose Preview plugin and no
+compose-preview init script was found; run `compose-preview mcp install` once".
+From the project's root folder:
+
+```sh
+compose-preview mcp install
+```
+
+If that fails with "SDK location not found", set `ANDROID_HOME`, or put
+`sdk.dir=/path/to/android-sdk` in the project's `local.properties`, and run it
+again.
+
+## Two `compose-preview` servers in Claude Code
+
+`compose-preview mcp install` can also register a global `compose-preview-mcp`
+server beside the plugin's own. CLI 2.28.4 did this when `CLAUDE_CONFIG_DIR` was
+set, and it suggested installing the plugin although it was installed (#87). If
+`claude mcp list` shows both `compose-preview-mcp` and
+`plugin:compose-preview:compose-preview-mcp`, remove the global one:
+
+```sh
+claude mcp remove compose-preview-mcp --scope user
+```
+
 ## Two `compose-preview` servers in Antigravity
 
 Older versions of `compose-preview mcp install` also wrote a global

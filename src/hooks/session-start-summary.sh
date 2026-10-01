@@ -161,7 +161,11 @@ else
   help_status=$?
 fi
 if [ "$help_status" -eq 124 ]; then
-  append_context "The MCP capability probe timed out."
+  # A probe that outlasts its bound says nothing about the installation: the JVM CLI can take
+  # over 3 seconds while the harness is starting its MCP servers. Reporting it told agents the
+  # render tools might be broken when they worked, and they skipped rendering (#86). Only
+  # failures that someone can act on reach the session context.
+  :
 elif [ "$help_status" -ne 0 ]; then
   append_context "The MCP capability probe failed."
 elif grep -Eq '(^|[[:space:]])doctor([[:space:]]|$)' "$help_output"; then
@@ -172,7 +176,7 @@ elif grep -Eq '(^|[[:space:]])doctor([[:space:]]|$)' "$help_output"; then
     doctor_status=$?
   fi
   if [ "$doctor_status" -eq 124 ]; then
-    append_context "MCP doctor timed out."
+    :
   elif [ "$doctor_status" -ne 0 ]; then
     append_context "MCP doctor failed."
   fi
@@ -212,7 +216,7 @@ elif grep -Eq '(^|[[:space:]])status([[:space:]]|$)' "$design_help_output"; then
     status_status=$?
   fi
   if [ "$status_status" -eq 124 ]; then
-    append_context "Workspace design status timed out."
+    :
   elif [ "$status_status" -ne 0 ]; then
     append_context "Workspace design status failed."
   elif [ -s "$status_output" ]; then

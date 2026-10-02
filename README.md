@@ -89,6 +89,12 @@ compose-preview mcp install --opencode
 python3 scripts/opencode-check.py   # from a clone of this repository
 ```
 
+The first `mcp install` resolves the project through Gradle and can take several
+minutes, so don't run it under a two-minute command timeout. If your OpenCode
+config is `opencode.jsonc` or has comments, `mcp install` prints a snippet
+instead of editing it: merge that snippet by hand (the check prints it too).
+OpenCode 1.18 and later (the npm `latest`) and v2 both read it.
+
 See [OpenCode](docs/opencode.md) for the catalog server and authentication.
 
 ## Updating

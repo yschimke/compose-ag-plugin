@@ -4,7 +4,7 @@ OpenCode does not use this repository's plugin manifests or marketplace.
 Configure its MCP servers directly and install the canonical skills from
 `yschimke/skills`.
 
-This guide uses the current OpenCode v2 configuration shape: server definitions live under `mcp.servers`, and `disabled` (rather than `enabled`) controls whether a configured server connects. See the [OpenCode MCP documentation](https://opencode.ai/v2/docs/mcp-servers) for the current contract.
+This guide uses the current OpenCode v2 configuration shape: server definitions live under `mcp.servers`, and `disabled` (rather than `enabled`) controls whether a configured server connects. OpenCode 1.18 (the npm `latest`) also reads this shape, so `scripts/opencode-check.py` accepts 1.18 and later. See the [OpenCode MCP documentation](https://opencode.ai/v2/docs/mcp-servers) for the current contract.
 
 ## MCP servers
 
@@ -44,7 +44,7 @@ compose-preview mcp install --opencode                  # user scope: ~/.config/
 compose-preview mcp install --opencode --scope project  # project scope: ./opencode.json
 ```
 
-It upserts `mcp.servers.compose-preview-mcp` with `--project=<absolute project path>` and keeps every other key. It never rewrites a `.jsonc` file or a file with comments. For those it prints the snippet and the file to merge it into by hand. Plain `compose-preview mcp install` also selects OpenCode automatically when `opencode` is on `PATH`, `~/.config/opencode/` exists, or `OPENCODE=1` is set. It does not add the remote catalog server; add that entry from the block above.
+It upserts `mcp.servers.compose-preview-mcp` with `--project=<absolute project path>` and keeps every other key. It never rewrites a `.jsonc` file or a file with comments. For those it prints the snippet and the file to merge it into by hand; `scripts/opencode-check.py` prints the same snippet. The first run resolves the project through Gradle and can take several minutes, so give an agent shell a 10-minute timeout. Plain `compose-preview mcp install` also selects OpenCode automatically when `opencode` is on `PATH`, `~/.config/opencode/` exists, or `OPENCODE=1` is set. It does not add the remote catalog server; add that entry from the block above.
 
 Check the connections after restarting OpenCode:
 
@@ -127,5 +127,7 @@ Checked on 2026-09-27 with `opencode-ai@1.18.32` (the npm `latest`, OpenCode v1)
 | Local server config | `opencode mcp list` with the `mcp.servers.compose-preview-mcp` entry that `mcp install --opencode` writes, pointed at a stub stdio MCP server | Parsed and `connected`. OpenCode 1.18.32 also accepts the v1 `mcp.<name>` shape. |
 | Remote catalog config | `opencode mcp list` with the `compose-preview-catalog` entry above and no token | `connected`. |
 | Catalog OAuth discovery | `opencode mcp debug compose-preview-catalog` | Server `compose-preview-catalog` 3.77.0 answered `200 OK`, auth status `not authenticated`. The interactive `opencode mcp auth` browser flow was not exercised. |
+
+A [2026-10-02 smoke run](https://github.com/yschimke/compose-ag-plugin/issues/77#issuecomment-5950589884) on OpenCode 1.18.32 with `compose-preview` 2.32.0 stopped at registration: the user config was `opencode.jsonc`, so `mcp install --opencode` printed the snippet, and the check then flagged v1 as unsupported. The check now accepts 1.18 and prints the snippet.
 
 Not verified: OpenCode v2 (its installer host was unreachable from the test environment), a real `compose-preview mcp serve` session against a Gradle project, and tool calls through either server.

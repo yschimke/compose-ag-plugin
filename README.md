@@ -50,8 +50,8 @@ same `compose-preview` name. A local checkout still works
 `python3 compose-ag-plugin/scripts/antigravity-check.py` from a clone verifies
 the install.
 
-Install skills from `yschimke/skills` (its root `plugin.json`; this route is
-still being verified), not with `npx skills add … --agent antigravity`:
+Install skills from `yschimke/skills` (its root `plugin.json`, so the bare
+repository URL), not with `npx skills add … --agent antigravity`:
 Antigravity 1.2.12 does not load `~/.agents/skills` (issue #6 Q14). The wiring
 plugins do not install the canonical skills.
 

@@ -76,6 +76,30 @@ Cloning plugin from https://github.com/yschimke/compose-ag-plugin.git...
 `importedAt` the time of the install, and components `skills` and
 `mcpServers`.
 
+In a new session, "show me the Material 3 Button catalog" reached the hosted
+catalog through `compose-catalogs`: it rendered the filled `Button` and the
+other core button types from `m3-samples`, listed the remaining families, and
+described the `m3-catalog` matrix. It took about 2 minutes (the tool calls were
+not recorded), and the small catalog PNGs were drawn stretched to the table
+width.
+
+```text
+$ agy plugin uninstall yschimke-skills
+Uninstalled plugin "yschimke-skills"
+$ agy plugin install https://github.com/yschimke/skills
+Cloning plugin from https://github.com/yschimke/skills.git...
+  [ok]    yschimke-skills
+          ✔ skills      : 8 processed
+          - agents      : skipped (not found)
+          - commands    : skipped (not found)
+          - mcpServers  : skipped (not found)
+          - hooks       : skipped (not found)
+```
+
+`yschimke/skills` keeps its Antigravity `plugin.json` at the repository root,
+so the bare repository URL is the right target. `agy plugin list` showed
+`yschimke-skills` with `"source": "antigravity"` and components `skills`.
+
 ## Installing over an existing plugin
 
 After the subdirectory install of `compose-preview` above, `agy plugin list`
@@ -87,6 +111,5 @@ existing plugin replaces its files.
 
 ## Not yet run
 
-- `yschimke/skills` from a URL.
 - `plugin@marketplace` with `link`, and `import claude`.
 - A render in a new session after the URL install.

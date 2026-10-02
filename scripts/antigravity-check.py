@@ -155,10 +155,11 @@ def check_cli() -> None:
         return
     server = init.get("serverInfo", {})
     report("info", f"mcp serve: {server.get('name')} {server.get('version')}")
-    has_inline = "inline" in schema.get("properties", {})
-    report("ok" if has_inline else "FIX",
-           "render_preview accepts inline=false" if has_inline
-           else "render_preview has no inline parameter; cards fall back (update the CLI)")
+    properties = schema.get("properties", {})
+    missing = [name for name in ("preview", "project") if name not in properties]
+    report("FIX" if missing else "ok",
+           f"render_preview has no {', '.join(missing)} parameter; the one-call render needs it (update the CLI)"
+           if missing else "render_preview accepts preview= and project=")
     report("ok" if init.get("instructions") else "info",
            "initialize instructions: " + ("present" if init.get("instructions") else "none (compose-preview-server#1163)"))
 
@@ -190,8 +191,9 @@ def main() -> None:
     check_cli()
     check_config()
     print("\nManual, in a new Antigravity session (#39 Verify):")
-    print("  1. Ask: render <one of your previews>")
-    print("  2. Expect: render_preview inline=false, the card helper, a look at the PNG, then the card + bullets.")
+    print("  1. Open your Compose project and ask: render <one of your previews, e.g. ListScreenPreview>")
+    print("  2. Expect: one render_preview call with preview= and project=, a look at the PNG,")
+    print("     then the server's embed card + bullets. A first call may return pending once (cold Gradle build).")
     print("  3. Note tool calls and wall time; share the transcript if it takes more than 3 calls or 30 s.")
     sys.exit(1 if "FIX" in results else 0)
 

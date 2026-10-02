@@ -9,11 +9,19 @@ description: Show a render of the person's own Compose previews in Antigravity â
 Only if it fails do you look anything up.
 
 1. Call `render_preview` on the **local** `compose-preview-mcp` server with
-   `preview` set to the function name the person used, for example
-   `preview: "ListScreenPreview"`. Nothing else is needed first: the server
-   registers the workspace, finds the preview and writes the card.
+   `preview` set to the preview function name and `project` set to the
+   absolute path of the open workspace, for example
+   `preview: "ListScreenPreview", project: "/Users/me/workspace/MyApp"`.
+   Always pass `project`: Antigravity starts the server in the plugin folder,
+   so it can't find the workspace on its own. If the person names a screen
+   rather than a preview (`ListScreen`), use `ListScreenPreview`. Nothing else
+   is needed first: the server finds the preview and writes the card.
    Never use the `compose-preview-catalog` server for project previews: it
    only holds library catalogs.
+   - If the result is `pending`, call `render_preview` again with the same
+     arguments; the first render of a session waits for a Gradle build.
+   - If the error names a `Closest` match that is clearly the preview the
+     person meant, call once more with that name.
 2. Look at the PNG at `pngPath` with the file viewer, so you see what the
    person sees (R1).
 3. Reply with the `embed` line from the result, 2â€“4 bullets describing what

@@ -68,14 +68,21 @@ ps -axo pid=,command= | grep 'compose-preview.*mcp serve'
 
 The card came from an old plugin that expected an MCP Apps bridge, which
 Antigravity does not have. Antigravity copies plugins at install time, so
-`git pull` alone does not update them. From the folder that holds both clones:
+reinstall to pick up `main`:
 
 ```sh
-git -C skills pull && git -C compose-ag-plugin pull
-agy plugin install ./skills
-agy plugin install ./compose-ag-plugin/plugins/compose-preview
-agy plugin install ./compose-ag-plugin/plugins/compose-catalogs   # if installed
+agy plugin install https://github.com/yschimke/skills
+agy plugin install https://github.com/yschimke/compose-ag-plugin/tree/main/plugins/compose-preview
+agy plugin install https://github.com/yschimke/compose-ag-plugin/tree/main/plugins/compose-catalogs   # if installed
 ```
+
+## Antigravity `compose-preview` has no skills or hooks
+
+`agy plugin install https://github.com/yschimke/compose-ag-plugin` (the bare
+repository URL) reads the root `gemini-extension.json` and installs only its two
+MCP servers, listed in `agy plugin list` with `"source": "gemini-cli"`. Uninstall
+it, then install the plugin folder with the `/tree/main/plugins/compose-preview`
+URL above.
 
 ## The render does not show my edit
 

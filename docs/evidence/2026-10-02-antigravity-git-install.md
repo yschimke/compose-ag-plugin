@@ -1,0 +1,66 @@
+# Antigravity git install evidence
+
+The repository owner ran these commands by hand on 2026-10-02 and reported the
+output; nothing here was inferred from documentation.
+
+## Environment
+
+- Host: macOS
+- Antigravity: `agy` CLI 1.2.12 (the version recorded on 2026-09-27; not
+  re-checked)
+- Plugin repository commit: `main` at the time of the run (not recorded)
+
+## `agy plugin` help
+
+`agy plugin install --help` and `-h` are taken as the install target
+("install target must be a directory"). `agy plugin help` lists:
+
+```text
+list                   List imported plugins
+import [source]        Import plugins from gemini or claude
+install <target>       Install a plugin (supports plugin@marketplace)
+uninstall <name>       Uninstall a plugin
+enable <name>          Enable a plugin
+disable <name>         Disable a plugin
+validate [path]        Validate a plugin
+link <mp> <target>     Generate link to a marketplace
+```
+
+## Bare repository URL
+
+```text
+$ agy plugin install https://github.com/yschimke/compose-ag-plugin
+Cloning plugin from https://github.com/yschimke/compose-ag-plugin.git...
+  [ok]    compose-preview
+          - skills      : skipped (not found)
+          - agents      : skipped (not found)
+          - commands    : skipped (not found)
+          ✔ mcpServers  : 2 processed
+          - hooks       : skipped (not found)
+```
+
+`agy plugin list` then showed a second `compose-preview` entry with
+`"source": "gemini-cli"` and only `mcpServers`, next to the existing
+`"source": "antigravity"` entries. `agy` read the root `gemini-extension.json`
+(the catalog and local servers), not a plugin folder.
+
+## Subdirectory URL
+
+```text
+$ agy plugin install https://github.com/yschimke/compose-ag-plugin/tree/main/plugins/compose-preview
+Cloning plugin from https://github.com/yschimke/compose-ag-plugin.git...
+  [ok]    compose-preview
+          ✔ skills      : 3 processed
+          ✔ agents      : 1 processed
+          - commands    : skipped (not found)
+          ✔ mcpServers  : 1 processed
+          ✔ hooks       : 1 processed
+```
+
+The full plugin installed from GitHub without a local checkout.
+
+## Not yet run
+
+- `compose-catalogs` and `yschimke/skills` from a URL.
+- `plugin@marketplace` with `link`, and `import claude`.
+- A render in a new session after the URL install.

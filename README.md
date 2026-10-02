@@ -35,20 +35,23 @@ preview function names).
 ### Antigravity
 
 ```sh
-# From one parent folder (e.g. ~/workspace), so both clones sit side by side.
-git clone https://github.com/yschimke/skills
-git clone https://github.com/yschimke/compose-ag-plugin
-agy plugin install ./skills
-agy plugin install ./compose-ag-plugin/plugins/compose-preview
+agy plugin install https://github.com/yschimke/skills
+agy plugin install https://github.com/yschimke/compose-ag-plugin/tree/main/plugins/compose-preview
 agy plugin enable compose-preview
 # Optional: hosted Material 3 / Wear catalogs and UI Builder.
-agy plugin install ./compose-ag-plugin/plugins/compose-catalogs
-# Verify
-python3 compose-ag-plugin/scripts/antigravity-check.py
+agy plugin install https://github.com/yschimke/compose-ag-plugin/tree/main/plugins/compose-catalogs
 ```
 
-Install skills from the `yschimke/skills` clone (its root `plugin.json`; this
-route is still being verified), not with `npx skills add … --agent antigravity`:
+Use the `/tree/main/plugins/<name>` URL: `agy` clones the repository and
+installs that folder. The bare repository URL installs only the two MCP servers
+from the root `gemini-extension.json` (no skills, agents or hooks) under the
+same `compose-preview` name. A local checkout still works
+(`agy plugin install ./compose-ag-plugin/plugins/compose-preview`), and
+`python3 compose-ag-plugin/scripts/antigravity-check.py` from a clone verifies
+the install.
+
+Install skills from `yschimke/skills` (its root `plugin.json`; this route is
+still being verified), not with `npx skills add … --agent antigravity`:
 Antigravity 1.2.12 does not load `~/.agents/skills` (issue #6 Q14). The wiring
 plugins do not install the canonical skills.
 
@@ -106,9 +109,8 @@ npx skills update        # skills installed with npx
 
 - Claude Code and Codex: update the marketplaces and plugins from `/plugin`
   or `/plugins`.
-- Antigravity copies plugins at install time. From the same parent folder, run
-  `git -C skills pull && git -C compose-ag-plugin pull`, then run the
-  `agy plugin install` lines again.
+- Antigravity copies plugins at install time. Run the `agy plugin install`
+  lines again to pick up `main`.
 - If renders look out of date after an update, clear the server cache
   (`rm -rf ~/.cache/composeai/preview-mcp`) and restart the harness. This is
   needed until yschimke/compose-ai-tools#5602 ships.
@@ -245,7 +247,7 @@ scripts/check-plugins.sh
 
 Other scripts:
 
-- `python3 scripts/antigravity-check.py`: plugin copies, card helper, CLI
+- `python3 scripts/antigravity-check.py`: plugin copies, MCP-only `gemini-cli` imports, card helper, CLI
   `preview=`/`project=` support, duplicate global MCP entries, stale servers.
 - `python3 scripts/opencode-check.py [--run --project …]`: skills, MCP config,
   `opencode mcp list`, and optionally one timed model turn.

@@ -23,6 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 HOME = Path.home()
 INSTALLED = HOME / ".gemini" / "config" / "plugins"
 PLUGINS = ("compose-catalogs", "compose-preview")
+REPO_URL = "https://github.com/yschimke/compose-ag-plugin/tree/main/plugins"
 results = []
 
 
@@ -58,11 +59,11 @@ def check_plugins() -> None:
     for name in PLUGINS:
         installed = INSTALLED / name
         if not installed.is_dir():
-            report("FIX", f"{name}: not installed (agy plugin install {ROOT / 'plugins' / name})")
+            report("FIX", f"{name}: not installed (agy plugin install {REPO_URL}/{name})")
             continue
         stale = differing_files(ROOT / "plugins" / name, installed)
         if stale:
-            report("FIX", f"{name}: differs from this checkout ({', '.join(stale[:3])}…); reinstall with agy plugin install {ROOT / 'plugins' / name}")
+            report("FIX", f"{name}: differs from this checkout ({', '.join(stale[:3])}…); reinstall with agy plugin install {REPO_URL}/{name}")
         else:
             report("ok", f"{name}: installed copy matches this checkout")
     helper = INSTALLED / "compose-preview" / "assets" / "compose-preview-card.py"
@@ -71,7 +72,20 @@ def check_plugins() -> None:
     if hooks.is_file():
         report("ok", f"Stop gate hooks.json: {hooks} (runs only with COMPOSE_PREVIEW_GATE=1)")
     else:
-        report("FIX", f"Stop gate hooks.json missing: reinstall with agy plugin install {ROOT / 'plugins' / 'compose-preview'}")
+        report("FIX", f"Stop gate hooks.json missing: reinstall with agy plugin install {REPO_URL}/compose-preview")
+
+
+def check_imports() -> None:
+    """The bare repository URL imports gemini-extension.json: MCP servers only (#39)."""
+    listing = run(["agy", "plugin", "list"]) if shutil.which("agy") else ""
+    try:
+        imports = json.loads(listing[listing.index("{"):]).get("imports", [])
+    except (ValueError, AttributeError):
+        return
+    for entry in imports:
+        if entry.get("name") in PLUGINS and entry.get("source") == "gemini-cli":
+            report("FIX", f"{entry['name']}: a gemini-cli import (MCP servers only) from the bare repository URL; "
+                          f"agy plugin uninstall {entry['name']}, then agy plugin install {REPO_URL}/{entry['name']}")
 
 
 def check_helper() -> None:
@@ -187,6 +201,7 @@ def main() -> None:
     print(f"Antigravity check (#39), checkout {ROOT}")
     check_agy()
     check_plugins()
+    check_imports()
     check_helper()
     check_cli()
     check_config()

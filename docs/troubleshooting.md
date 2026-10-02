@@ -71,8 +71,8 @@ Antigravity does not have. Antigravity copies plugins at install time, so
 uninstall and reinstall to pick up `main`:
 
 ```sh
-agy plugin uninstall compose-preview   # and compose-catalogs; repeat until agy plugin list no longer shows it
-agy plugin install https://github.com/yschimke/skills
+agy plugin uninstall compose-preview   # and compose-skills, compose-catalogs; repeat until agy plugin list no longer shows it
+agy plugin install https://github.com/yschimke/skills/tree/main/plugins/compose-skills
 agy plugin install https://github.com/yschimke/compose-ag-plugin/tree/main/plugins/compose-preview
 agy plugin install https://github.com/yschimke/compose-ag-plugin/tree/main/plugins/compose-catalogs   # if installed
 ```

@@ -35,7 +35,7 @@ preview function names).
 ### Antigravity
 
 ```sh
-agy plugin install https://github.com/yschimke/skills
+agy plugin install https://github.com/yschimke/skills/tree/main/plugins/compose-skills
 agy plugin install https://github.com/yschimke/compose-ag-plugin/tree/main/plugins/compose-preview
 agy plugin enable compose-preview
 # Optional: hosted Material 3 / Wear catalogs and UI Builder.
@@ -50,16 +50,20 @@ same `compose-preview` name. A local checkout still works
 `python3 compose-ag-plugin/scripts/antigravity-check.py` from a clone verifies
 the install.
 
-Install skills from `yschimke/skills` (its root `plugin.json`, so the bare
-repository URL), not with `npx skills add … --agent antigravity`:
-Antigravity 1.2.12 does not load `~/.agents/skills` (issue #6 Q14). The wiring
-plugins do not install the canonical skills.
+Install skills from `yschimke/skills` as plugins, not with
+`npx skills add … --agent antigravity`: Antigravity 1.2.12 does not load
+`~/.agents/skills` (issue #6 Q14). `compose-skills` is the default pair
+(`compose-preview`, `compose-ui-builder`); add `compose-review-skills` or
+`compose-design-skills` from the same `/tree/main/plugins/<name>` path when
+you need them. The bare `yschimke/skills` URL installs all eight as
+`yschimke-skills`; don't keep it next to a bundle. The wiring plugins do not
+install the canonical skills.
 
 ### Claude Code
 
 ```text
 /plugin marketplace add yschimke/skills
-/plugin install yschimke-skills@yschimke-skills
+/plugin install compose-skills@yschimke-skills
 /plugin marketplace add yschimke/compose-ag-plugin
 /plugin install compose-preview@compose-ag-plugin
 /plugin install compose-catalogs@compose-ag-plugin
@@ -74,7 +78,7 @@ token; Claude Code does not read `COMPOSE_PREVIEW_TOKEN` from the environment.
 ```sh
 codex plugin marketplace add yschimke/skills
 codex plugin marketplace add yschimke/compose-ag-plugin
-# Then enable yschimke-skills, compose-preview and compose-catalogs from /plugins.
+# Then enable compose-skills, compose-preview and compose-catalogs from /plugins.
 ```
 
 Verify: `codex mcp list` shows `compose-preview-mcp` and

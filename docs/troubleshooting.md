@@ -68,7 +68,13 @@ ps -axo pid=,command= | grep 'compose-preview.*mcp serve'
 
 The card came from an old plugin that expected an MCP Apps bridge, which
 Antigravity does not have. Antigravity copies plugins at install time, so
-uninstall and reinstall to pick up `main`:
+uninstall and reinstall to pick up `main`. One command does all of it:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/yschimke/compose-ag-plugin/main/scripts/antigravity-install.py | python3 - --catalogs
+```
+
+By hand:
 
 ```sh
 agy plugin uninstall compose-preview   # and compose-skills, compose-catalogs; repeat until agy plugin list no longer shows it
@@ -83,7 +89,7 @@ agy plugin install https://github.com/yschimke/compose-ag-plugin/tree/main/plugi
 repository URL) reads the root `gemini-extension.json` and installs only its two
 MCP servers, listed in `agy plugin list` with `"source": "gemini-cli"`. Uninstall
 it, then install the plugin folder with the `/tree/main/plugins/compose-preview`
-URL above.
+URL above; `scripts/antigravity-install.py` does both.
 
 ## The render does not show my edit
 

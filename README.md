@@ -42,6 +42,15 @@ agy plugin enable compose-preview
 agy plugin install https://github.com/yschimke/compose-ag-plugin/tree/main/plugins/compose-catalogs
 ```
 
+Or run the same steps in one go; it also updates an existing install
+(uninstalling first, including a stale MCP-only `compose-preview`) and stops
+old `compose-preview mcp serve` processes. Drop `--catalogs` to skip the
+catalogs; add `--dry-run` to print the commands only:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/yschimke/compose-ag-plugin/main/scripts/antigravity-install.py | python3 - --catalogs
+```
+
 Use the `/tree/main/plugins/<name>` URL: `agy` clones the repository and
 installs that folder. The bare repository URL installs only the two MCP servers
 from the root `gemini-extension.json` (no skills, agents or hooks) under the
@@ -113,9 +122,10 @@ npx skills update        # skills installed with npx
 
 - Claude Code and Codex: update the marketplaces and plugins from `/plugin`
   or `/plugins`.
-- Antigravity copies plugins at install time. To pick up `main`, run
-  `agy plugin uninstall <name>`, then the `agy plugin install` line again: an
-  install over an existing plugin kept its old record in `agy plugin list`.
+- Antigravity copies plugins at install time, and an install over an
+  existing plugin kept its old record in `agy plugin list`. To pick up `main`,
+  run `scripts/antigravity-install.py` again (`curl -fsSL https://raw.githubusercontent.com/yschimke/compose-ag-plugin/main/scripts/antigravity-install.py | python3 - --catalogs`), or
+  `agy plugin uninstall <name>` and then its `agy plugin install` line.
 - If renders look out of date after an update, clear the server cache
   (`rm -rf ~/.cache/composeai/preview-mcp`) and restart the harness. This is
   needed until yschimke/compose-ai-tools#5602 ships.
@@ -252,6 +262,8 @@ scripts/check-plugins.sh
 
 Other scripts:
 
+- `python3 scripts/antigravity-install.py [--catalogs] [--dry-run]`: install or
+  update the Antigravity plugins from GitHub, clearing stale entries first.
 - `python3 scripts/antigravity-check.py`: plugin copies, MCP-only `gemini-cli` imports, card helper, CLI
   `preview=`/`project=` support, duplicate global MCP entries, stale servers.
 - `python3 scripts/opencode-check.py [--run --project …]`: skills, MCP config,

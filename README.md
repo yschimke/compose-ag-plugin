@@ -50,8 +50,8 @@ same `compose-preview` name. A local checkout still works
 `python3 compose-ag-plugin/scripts/antigravity-check.py` from a clone verifies
 the install.
 
-Install skills from `yschimke/skills` (its root `plugin.json`; this route is
-still being verified), not with `npx skills add … --agent antigravity`:
+Install skills from `yschimke/skills` (its root `plugin.json`, so the bare
+repository URL), not with `npx skills add … --agent antigravity`:
 Antigravity 1.2.12 does not load `~/.agents/skills` (issue #6 Q14). The wiring
 plugins do not install the canonical skills.
 
@@ -109,8 +109,9 @@ npx skills update        # skills installed with npx
 
 - Claude Code and Codex: update the marketplaces and plugins from `/plugin`
   or `/plugins`.
-- Antigravity copies plugins at install time. Run the `agy plugin install`
-  lines again to pick up `main`.
+- Antigravity copies plugins at install time. To pick up `main`, run
+  `agy plugin uninstall <name>`, then the `agy plugin install` line again: an
+  install over an existing plugin kept its old record in `agy plugin list`.
 - If renders look out of date after an update, clear the server cache
   (`rm -rf ~/.cache/composeai/preview-mcp`) and restart the harness. This is
   needed until yschimke/compose-ai-tools#5602 ships.

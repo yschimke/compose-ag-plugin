@@ -68,9 +68,10 @@ ps -axo pid=,command= | grep 'compose-preview.*mcp serve'
 
 The card came from an old plugin that expected an MCP Apps bridge, which
 Antigravity does not have. Antigravity copies plugins at install time, so
-reinstall to pick up `main`:
+uninstall and reinstall to pick up `main`:
 
 ```sh
+agy plugin uninstall compose-preview   # and compose-catalogs; repeat until agy plugin list no longer shows it
 agy plugin install https://github.com/yschimke/skills
 agy plugin install https://github.com/yschimke/compose-ag-plugin/tree/main/plugins/compose-preview
 agy plugin install https://github.com/yschimke/compose-ag-plugin/tree/main/plugins/compose-catalogs   # if installed

@@ -133,6 +133,24 @@ Codex registers the plugin's SessionStart, PostToolUse and Stop hooks as
 `untrusted` until you approve them. Approve them when Codex asks, or from
 `/plugins`. The Stop gate stays off unless `COMPOSE_PREVIEW_GATE=1` is set.
 
+## Codex lists no `compose-preview-catalog`
+
+`codex mcp list` shows `compose-preview-mcp` but not `compose-preview-catalog`
+when only the `compose-preview` plugin is enabled, or when the
+`compose-preview-mcp` entry is one you registered by hand rather than the
+plugin's. Run `codex plugin list` and check that
+`compose-catalogs@compose-ag-plugin` is `installed, enabled`; if not, enable it
+from `/plugins` and start a new session. Seen in the
+[2026-10-02 Codex smoke run](https://github.com/yschimke/compose-ag-plugin/issues/76#issuecomment-5950380878).
+
+## "no project registered" in Codex Desktop
+
+Codex Desktop starts each chat in its own worktree of whichever repository you
+opened, so the server's working directory is often not the Gradle build. The
+error lists what it tried and ends with `Candidate builds: <path>`. Pass that
+path as `project` on the first `render_preview`; later calls in the session
+reuse it. Opening the Gradle build's folder in Codex avoids the extra call.
+
 ## "Semantics unavailable" or pixel-only checks
 
 The agent reports that `compose/semantics` is not available on the local

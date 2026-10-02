@@ -100,6 +100,20 @@ Cloning plugin from https://github.com/yschimke/skills.git...
 so the bare repository URL is the right target. `agy plugin list` showed
 `yschimke-skills` with `"source": "antigravity"` and components `skills`.
 
+After yschimke/skills#121 split the skills into generated bundles, the default
+pair installed on its own:
+
+```text
+$ agy plugin install https://github.com/yschimke/skills/tree/main/plugins/compose-skills
+Cloning plugin from https://github.com/yschimke/skills.git...
+  [ok]    compose-skills
+          ✔ skills      : 2 processed
+          - agents      : skipped (not found)
+          - commands    : skipped (not found)
+          - mcpServers  : skipped (not found)
+          - hooks       : skipped (not found)
+```
+
 ## Installing over an existing plugin
 
 After the subdirectory install of `compose-preview` above, `agy plugin list`

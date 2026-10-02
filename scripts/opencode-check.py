@@ -33,9 +33,14 @@ def report(status: str, message: str) -> None:
 
 
 def run(opencode: str, args: list, timeout: int = 60, cwd=None) -> tuple:
+    env = None
+    if cwd:
+        # OpenCode takes its workspace (and the MCP roots it sends) from $PWD, not the process
+        # cwd; without this the server sees the folder this script was started from (#77).
+        env = {**os.environ, "PWD": str(cwd)}
     try:
         done = subprocess.run([opencode, *args], capture_output=True, text=True,
-                              timeout=timeout, cwd=cwd)
+                              timeout=timeout, cwd=cwd, env=env)
         return done.returncode, done.stdout + done.stderr
     except subprocess.TimeoutExpired as error:
         return 124, f"timed out after {timeout}s\n{error.stdout or ''}"
@@ -181,6 +186,24 @@ def check_mcp_list(opencode: str, project) -> None:
             report("FIX", f"{server}: {line.strip()[:100]} (log {log})")
 
 
+def tool_calls(out: str) -> list:
+    """Tool calls from `opencode run --format json`, one per callID, in order, final state."""
+    calls = {}
+    for line in out.splitlines():
+        try:
+            part = json.loads(line).get("part", {})
+        except (ValueError, AttributeError):
+            continue
+        if not isinstance(part, dict) or part.get("type") != "tool":
+            continue
+        state = part.get("state") or {}
+        error = state.get("error") or (state.get("output") if state.get("status") == "error" else None)
+        calls[part.get("callID") or len(calls)] = {
+            "tool": part.get("tool"), "status": state.get("status"), "input": state.get("input"),
+            "error": " ".join(str(error).split())[:400] if error else None}
+    return list(calls.values())
+
+
 def model_turn(opencode: str, project: str, preview: str) -> None:
     prompt = (f"render the {preview} preview with the compose-preview-mcp render_preview tool "
               "(inline=false), then reply with 2 bullets and the pngPath")
@@ -190,12 +213,16 @@ def model_turn(opencode: str, project: str, preview: str) -> None:
         code, out = run(opencode, ["run", prompt], timeout=600, cwd=project)
     elapsed = time.time() - start
     log = save("run", out)
-    tools = re.findall(r'"tool"\s*:\s*"([^"]+)"', out)
+    calls = tool_calls(out)
+    tools = [call["tool"] for call in calls] or re.findall(r'"tool"\s*:\s*"([^"]+)"', out)
     rendered = "render_preview" in out and re.search(r"\.png", out) is not None
     report("ok" if rendered else "FIX",
            f"model turn: {elapsed:.0f}s, exit {code}, render {'seen' if rendered else 'NOT seen'}; log {log}")
     if tools:
         report("info", f"tool calls ({len(tools)}): {', '.join(tools[:12])}")
+    for call in calls:
+        if call["status"] == "error":
+            report("FIX", f"{call['tool']} {json.dumps(call['input'])} failed: {call['error']}")
     budget = elapsed <= 30 and (not tools or len(tools) <= 3)
     report("ok" if budget else "info", "token budget (≤3 calls, ≤30 s, #39): " + ("met" if budget else "missed"))
 

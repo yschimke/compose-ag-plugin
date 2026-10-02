@@ -198,9 +198,11 @@ def tool_calls(out: str) -> list:
             continue
         state = part.get("state") or {}
         error = state.get("error") or (state.get("output") if state.get("status") == "error" else None)
+        times = state.get("time") or {}
+        took = (times["end"] - times["start"]) / 1000 if {"start", "end"} <= times.keys() else None
         calls[part.get("callID") or len(calls)] = {
             "tool": part.get("tool"), "status": state.get("status"), "input": state.get("input"),
-            "error": " ".join(str(error).split())[:400] if error else None}
+            "seconds": took, "error": " ".join(str(error).split())[:400] if error else None}
     return list(calls.values())
 
 
@@ -220,6 +222,11 @@ def model_turn(opencode: str, project: str, preview: str) -> None:
            f"model turn: {elapsed:.0f}s, exit {code}, render {'seen' if rendered else 'NOT seen'}; log {log}")
     if tools:
         report("info", f"tool calls ({len(tools)}): {', '.join(tools[:12])}")
+    in_tools = sum(call["seconds"] or 0 for call in calls)
+    if in_tools:
+        # Splits a missed budget between the render itself and the model's own turns.
+        timed = ", ".join(f"{call['tool']} {call['seconds']:.1f}s" for call in calls if call["seconds"] is not None)
+        report("info", f"time in tools {in_tools:.1f}s ({timed}); model and startup {elapsed - in_tools:.1f}s")
     for call in calls:
         if call["status"] == "error":
             report("FIX", f"{call['tool']} {json.dumps(call['input'])} failed: {call['error']}")

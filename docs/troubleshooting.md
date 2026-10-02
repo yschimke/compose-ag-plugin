@@ -103,6 +103,29 @@ the plugin (reinstall in Antigravity), and start a new session.
 `compose-preview mcp install --opencode` never rewrites a `.jsonc` file or a
 file with comments. It prints the snippet and the file it belongs in instead;
 paste it in by hand. See [OpenCode](opencode.md#let-the-cli-write-the-local-server).
+`python3 scripts/opencode-check.py` prints the same snippet when it finds a
+JSONC config without `compose-preview-mcp`. Re-running `mcp install` does not
+help.
+
+## `compose-preview: command not found` after reinstalling the skills
+
+Older CLI installs lived inside the `compose-preview` skill folder, so
+`npx skills add … compose-preview` removes them along with the old skill. Run
+the installed skill's bootstrap once to put the CLI back on `PATH`:
+
+```sh
+bash ~/.agents/skills/compose-preview/scripts/compose-preview --version
+```
+
+It installs into `~/.local/share/compose-preview`, which skill reinstalls leave
+alone.
+
+## `mcp install` times out
+
+The first `compose-preview mcp install` bootstraps the descriptor and resolves
+the project through Gradle, which can take several minutes on a cold machine.
+An agent shell with a 120 s limit cancels it (`Interrupted — cancelling Gradle
+build...`). Run it in a terminal, or give the command a 10-minute timeout.
 
 ## Codex hooks are marked untrusted
 

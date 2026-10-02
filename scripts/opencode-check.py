@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check an OpenCode (v2) setup for the compose-preview skills and MCP servers (#42).
+"""Check an OpenCode (v1.18+ or v2) setup for the compose-preview skills and MCP servers (#42).
 
   python3 scripts/opencode-check.py                 # read-only checks, no model
   python3 scripts/opencode-check.py --run --project ~/path/to/app [--preview ListScreenPreview]
@@ -23,6 +23,7 @@ HOME = Path.home()
 LOGS = Path(os.environ.get("TMPDIR", "/tmp")) / "opencode-check"
 SKILLS = ("compose-preview", "compose-ui-builder")
 SERVERS = ("compose-preview-mcp", "compose-preview-catalog")
+MIN_V1 = (1, 18)
 results = []
 
 
@@ -53,10 +54,14 @@ def check_version(opencode: str) -> None:
     _, out = run(opencode, ["--version"])
     match = re.search(r"(\d+)\.(\d+)\.(\d+)", out)
     version = match.group(0) if match else out.strip()[:40]
-    if match and int(match.group(1)) >= 2:
+    major, minor = (int(match.group(1)), int(match.group(2))) if match else (0, 0)
+    if major >= 2:
         report("ok", f"opencode {version} ({opencode})")
+    elif (major, minor) >= MIN_V1:
+        # 1.18.32 (npm `latest`) parses the v2 `mcp.servers` shape that `mcp install` writes.
+        report("ok", f"opencode {version} ({opencode}); v1 accepts the mcp.servers config")
     else:
-        report("FIX", f"opencode {version or 'unknown'}: this check targets v2 "
+        report("FIX", f"opencode {version or 'unknown'}: needs 1.18 or later "
                       "(install/upgrade per https://opencode.ai/docs)")
 
 
@@ -95,10 +100,37 @@ def check_config(project) -> None:
     report("info", "config: " + ", ".join(str(f) for f in files))
     for server in SERVERS:
         found = f'"{server}"' in text
-        report("ok" if found else ("FIX" if server == "compose-preview-mcp" else "info"),
-               f"{server} configured" if found else
-               f"{server} not in config" + (" (compose-preview mcp install --opencode)"
-                                            if server == "compose-preview-mcp" else " (optional: hosted catalog)"))
+        if found:
+            report("ok", f"{server} configured")
+        elif server != "compose-preview-mcp":
+            report("info", f"{server} not in config (optional: hosted catalog)")
+        else:
+            jsonc = next((f for f in files if not is_strict_json(f)), None)
+            if jsonc:
+                # `mcp install --opencode` refuses to rewrite JSONC, so re-running it can't fix this.
+                report("FIX", f"{server} not in config; {jsonc} is JSONC, which "
+                              "`compose-preview mcp install --opencode` will not rewrite. "
+                              "Merge this into it by hand:")
+                print(local_server_snippet())
+            else:
+                report("FIX", f"{server} not in config (compose-preview mcp install --opencode)")
+
+
+def is_strict_json(path: Path) -> bool:
+    if path.suffix == ".jsonc":
+        return False
+    try:
+        json.loads(path.read_text(errors="replace"))
+        return True
+    except ValueError:
+        return False
+
+
+def local_server_snippet() -> str:
+    launcher = shutil.which("compose-preview") or "compose-preview"
+    entry = {"servers": {"compose-preview-mcp": {
+        "type": "local", "command": [launcher, "mcp", "serve"], "codemode": False}}}
+    return "\n".join("     " + line for line in json.dumps({"mcp": entry}, indent=2).splitlines())
 
 
 def check_mcp_list(opencode: str, project) -> None:
@@ -147,7 +179,7 @@ def main() -> None:
 
     print("OpenCode check (#42)")
     if not args.opencode:
-        report("FIX", "opencode not on PATH (install v2: https://opencode.ai/docs)")
+        report("FIX", "opencode not on PATH (install: https://opencode.ai/docs)")
         sys.exit(1)
     check_version(args.opencode)
     report("ok" if shutil.which("compose-preview") else "FIX",

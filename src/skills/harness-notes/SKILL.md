@@ -32,6 +32,16 @@ apply to UI Builder designs, not to plain preview renders. Keep a simple render 
 follow `antigravity-viewer-card` (`render_preview preview=<Name>`, look at the PNG, a few bullets); elsewhere, one
 render call and a short reply.
 
+**Startup.** The first local render in a session prepares the project: a Gradle bootstrap the first
+time a build is seen (minutes when cold), then the render daemon (about 15–20 s), so a first
+`render_preview` can come back `pending` or take far longer than the next one. When the result is
+`pending`, call `render_preview` again with the same arguments; don't treat it as a failure or switch
+to Gradle. Say once that the first render is slow because the project is starting. When a task will
+need a render later but doesn't start with one (you are reading or editing Compose UI first), call
+`register_project` with the workspace path as soon as you know: it returns at once and prepares the
+project in the background while you work. Skip it when the first request is itself a render, because
+`render_preview` does the same preparation and the extra call only adds a turn.
+
 When a `.uid` design is open in the editor panel (ChatGPT/Codex desktop `design_open`, focused canvas by
 default), the panel is for pointing at nodes, comments and one-property quick edits. Show device previews in
 the chat instead: after a design change, render them (`render_matrix`, or the design's devices) and reply

@@ -11,3 +11,11 @@ This repository owns the Antigravity, Claude Code, and Codex plugin packaging fo
 - Open or update a PR automatically after a completed coding change. Never auto-merge.
 - After opening or updating a PR, subscribe to its GitHub notification thread and verify that the subscription is active where the harness supports it; otherwise say so in the PR. Before pushing and before finishing, check every PR this agent opened or actively drives for unresolved human and Codex review comments.
 - Never hand-edit generated manifests. Edit `src/plugins.json`, run `python3 scripts/generate.py`, and commit the resulting manifest files together.
+
+## Cursor Cloud specific instructions
+
+There is no service to start and no package install. Python 3.10 or newer from the base image is enough; the scripts use the standard library.
+
+Before sending a change, run `scripts/check-plugins.sh` and `tests/check_plugins_test.sh`. Exercise the spike fixture with `python3 spike/prepare.py` and then `python3 spike/run-protocol-smoke.py`.
+
+GitHub Actions also lints Markdown and validates plugins with the Claude Code, Gemini, and Codex CLIs, plus Ajv against the cursor/plugins schemas. Those tools are not required for the local gate.

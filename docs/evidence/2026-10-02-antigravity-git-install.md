@@ -59,8 +59,34 @@ Cloning plugin from https://github.com/yschimke/compose-ag-plugin.git...
 
 The full plugin installed from GitHub without a local checkout.
 
+```text
+$ agy plugin uninstall compose-catalogs
+Uninstalled plugin "compose-catalogs"
+$ agy plugin install https://github.com/yschimke/compose-ag-plugin/tree/main/plugins/compose-catalogs
+Cloning plugin from https://github.com/yschimke/compose-ag-plugin.git...
+  [ok]    compose-catalogs
+          ✔ skills      : 2 processed
+          - agents      : skipped (not found)
+          - commands    : skipped (not found)
+          ✔ mcpServers  : 1 processed
+          - hooks       : skipped (not found)
+```
+
+`agy plugin list` then showed `compose-catalogs` with `"source": "antigravity"`,
+`importedAt` the time of the install, and components `skills` and
+`mcpServers`.
+
+## Installing over an existing plugin
+
+After the subdirectory install of `compose-preview` above, `agy plugin list`
+still showed its earlier record: `importedAt` 2026-09-27 and components
+`skills`, `agents`, `mcpServers` (no `hooks`), next to the `gemini-cli` entry
+from the bare URL. `compose-catalogs`, uninstalled first, got a fresh record.
+Uninstall before reinstalling until it is known whether an install over an
+existing plugin replaces its files.
+
 ## Not yet run
 
-- `compose-catalogs` and `yschimke/skills` from a URL.
+- `yschimke/skills` from a URL.
 - `plugin@marketplace` with `link`, and `import claude`.
 - A render in a new session after the URL install.

@@ -114,6 +114,38 @@ def check_config(project) -> None:
                 print(local_server_snippet())
             else:
                 report("FIX", f"{server} not in config (compose-preview mcp install --opencode)")
+    check_png_permission(files)
+
+
+# render_preview's PNGs live in a temporary directory outside the project (#105).
+PNG_DIR_RULE = "*/compose-preview-mcp-*"
+
+
+def check_png_permission(files: list) -> None:
+    for path in files:
+        try:
+            config = json.loads(path.read_text(errors="replace"))
+        except ValueError:
+            if PNG_DIR_RULE in path.read_text(errors="replace"):
+                report("ok", f"external_directory allows {PNG_DIR_RULE} ({path})")
+                return
+            continue
+        permission = config.get("permission") if isinstance(config, dict) else None
+        if permission == "allow":
+            report("ok", f"permission allows everything ({path})")
+            return
+        rules = permission.get("external_directory") if isinstance(permission, dict) else None
+        if rules == "allow" or (isinstance(rules, dict) and rules.get(PNG_DIR_RULE) == "allow"):
+            report("ok", f"external_directory allows {PNG_DIR_RULE} ({path})")
+            return
+    report("FIX", "OpenCode will ask before reading rendered PNGs, and `opencode run` rejects "
+                  "the ask. Merge this into your config:")
+    print(png_permission_snippet())
+
+
+def png_permission_snippet() -> str:
+    entry = {"permission": {"external_directory": {PNG_DIR_RULE: "allow"}}}
+    return "\n".join("     " + line for line in json.dumps(entry, indent=2).splitlines())
 
 
 def is_strict_json(path: Path) -> bool:

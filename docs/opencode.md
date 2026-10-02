@@ -52,6 +52,31 @@ Check the connections after restarting OpenCode:
 opencode mcp list
 ```
 
+### Let OpenCode read rendered PNGs
+
+`render_preview` writes each PNG to its own temporary directory, such as
+`/private/var/folders/…/T/compose-preview-mcp-943320557216657247/<sha>.png`.
+That is outside the project, so OpenCode's `external_directory` permission
+asks before the agent can read it, and a non-interactive `opencode run`
+rejects the ask (`The user rejected permission to use this specific tool
+call.`). Allow just those directories:
+
+```jsonc
+{
+  "permission": {
+    "external_directory": {
+      "*/compose-preview-mcp-*": "allow"
+    }
+  }
+}
+```
+
+OpenCode's `*` matches any characters, including `/`, so the rule covers the
+server's temporary directories wherever the platform puts them, and nothing
+else outside the project. Reads there are then allowed by the default `read`
+rule. Without it an interactive session can still answer the prompt; an eval
+or scripted run cannot ([#105](https://github.com/yschimke/compose-ag-plugin/issues/105)).
+
 ## Skills
 
 Install the canonical Compose skills through the Skills CLI:

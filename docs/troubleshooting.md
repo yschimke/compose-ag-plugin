@@ -127,6 +127,16 @@ the project through Gradle, which can take several minutes on a cold machine.
 An agent shell with a 120 s limit cancels it (`Interrupted — cancelling Gradle
 build...`). Run it in a terminal, or give the command a 10-minute timeout.
 
+## OpenCode rejects reading the rendered PNG
+
+`render_preview` succeeds, but reading its `pngPath` fails with `The user
+rejected permission to use this specific tool call.` in `opencode run`, or
+asks for `external_directory` access in the TUI. The PNG is in the server's
+temporary directory, outside the project. Allow those directories in your
+OpenCode config, as in [OpenCode → Let OpenCode read rendered
+PNGs](opencode.md#let-opencode-read-rendered-pngs); `scripts/opencode-check.py`
+prints the snippet when it is missing.
+
 ## Codex hooks are marked untrusted
 
 Codex registers the plugin's SessionStart, PostToolUse and Stop hooks as

@@ -240,7 +240,7 @@ scripts/check-plugins.sh
 Other scripts:
 
 - `python3 scripts/antigravity-check.py`: plugin copies, card helper, CLI
-  `inline=false` support, duplicate global MCP entries, stale servers.
+  `preview=`/`project=` support, duplicate global MCP entries, stale servers.
 - `python3 scripts/opencode-check.py [--run --project …]`: skills, MCP config,
   `opencode mcp list`, and optionally one timed model turn.
 - `python3 scripts/edit-render-bench.py --help`: time the edit → notify →

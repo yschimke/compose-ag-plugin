@@ -33,6 +33,9 @@ Only if it fails do you look anything up.
    Image: <widthPx> × <heightPx>; hash <sha256>
    ```
 
+   Under it, add `[Open full size](file://<pngPath>)` so the person can see
+   the PNG at its real size; the card fits it into a small frame.
+
    If the result lists `otherMatches`, name them in one line.
 
 **After editing a preview's source**, call `render_preview` with the same

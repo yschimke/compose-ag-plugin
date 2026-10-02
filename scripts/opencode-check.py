@@ -33,9 +33,14 @@ def report(status: str, message: str) -> None:
 
 
 def run(opencode: str, args: list, timeout: int = 60, cwd=None) -> tuple:
+    env = None
+    if cwd:
+        # OpenCode takes its workspace (and the MCP roots it sends) from $PWD, not the process
+        # cwd; without this the server sees the folder this script was started from (#77).
+        env = {**os.environ, "PWD": str(cwd)}
     try:
         done = subprocess.run([opencode, *args], capture_output=True, text=True,
-                              timeout=timeout, cwd=cwd)
+                              timeout=timeout, cwd=cwd, env=env)
         return done.returncode, done.stdout + done.stderr
     except subprocess.TimeoutExpired as error:
         return 124, f"timed out after {timeout}s\n{error.stdout or ''}"

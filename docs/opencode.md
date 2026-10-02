@@ -136,10 +136,15 @@ From a clone of this repository:
 
 ```sh
 python3 scripts/opencode-check.py                                   # read-only, no model
-python3 scripts/opencode-check.py --run --project ~/path/to/app     # plus one timed render turn
+python3 scripts/opencode-check.py --run --project ~/path/to/app     # plus a cold and a warm render turn
 ```
 
-It prints one line per check (`ok`, `FIX` or `info`). For fixes, see
+It prints one line per check (`ok`, `FIX` or `info`). Each plain `opencode run` starts its own
+`compose-preview mcp serve`, so every such turn renders cold. `--run` therefore starts one
+`opencode serve` in the project and attaches both turns to it: turn 1 is the cold render (T1 in
+[`evals/token-budget.md`](../evals/token-budget.md), time recorded only) and turn 2, in a new session
+against the same warm server, is held to the 30 s T2 budget. Each turn splits its time between the
+render and OpenCode's own startup and model calls. For fixes, see
 [Troubleshooting](troubleshooting.md).
 
 ## Verification record

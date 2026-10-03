@@ -292,12 +292,25 @@ def model_turns(opencode: str, project: str, preview: str) -> None:
                                       "turn 2 (warm, T2)" if server else "turn 2 (cold again)", attach)
     finally:
         stop_server(server)
-    report("ok" if len(cold_tools) <= 3 else "info",
-           f"T1 budget (≤3 calls; time recorded, not judged): {len(cold_tools)} calls, {cold:.0f}s")
+    cold_misses = budget_misses(cold_tools)
+    report("info" if cold_misses else "ok",
+           f"T1 budget (render first, ≤3 calls; time recorded, not judged): "
+           f"{'missed: ' + '; '.join(cold_misses) if cold_misses else 'met'} ({len(cold_tools)} calls, {cold:.0f}s)")
     if server:
-        met = warm <= 30 and len(warm_tools) <= 3
-        report("ok" if met else "info",
-               f"T2 budget (≤3 calls, ≤30 s, #39): {'met' if met else 'missed'} ({len(warm_tools)} calls, {warm:.0f}s)")
+        warm_misses = budget_misses(warm_tools) + ([f"{warm:.0f}s > 30 s"] if warm > 30 else [])
+        report("info" if warm_misses else "ok",
+               f"T2 budget (render first, ≤3 calls, ≤30 s, #39): "
+               f"{'missed: ' + '; '.join(warm_misses) if warm_misses else 'met'} ({len(warm_tools)} calls, {warm:.0f}s)")
+
+
+def budget_misses(tools: list) -> list:
+    """The call rules evals/token-budget.md holds T1 and T2 to: the render first, and 3 or fewer calls."""
+    misses = []
+    if tools and not tools[0].endswith("render_preview"):
+        misses.append(f"first call was {tools[0]}, not render_preview")
+    if len(tools) > 3:
+        misses.append(f"{len(tools)} calls > 3")
+    return misses
 
 
 def main() -> None:

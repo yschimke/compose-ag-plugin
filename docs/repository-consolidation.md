@@ -48,7 +48,8 @@ The genuinely shared surface is small: the wire shapes, the MCP tools, and the s
 | `compose-preview` (offline engine) | contracts, daemon, rc-players, compose-ai-tools, xr, contrib | One version line and one release. The layer rule stays, enforced by classpath checks such as `checkHttpServerFloor` instead of by repository boundaries. |
 | `compose-preview-studio` | compose-preview-server, compose-ui-builder, compose-preview-client | Removes the seam-break process and the duplicated docs. It deploys preview.coo.ee and still builds the desktop and IntelliJ apps. |
 | `compose-design-bridges` | design-parity, the one copy of `design-artifacts`, design-map | One home for exporting renders to design tools: Figma (which Codex's design plugins also use), Claude Design through `/design-sync`, and Stitch. |
-| `compose-agents` | this repository and yschimke/skills | Skill text and the per-harness wiring in one place, with one marketplace for Claude Code and Codex. |
+| `yschimke/skills` | unchanged, widened | Generic skills that work in any agent host: what to do and which tools to call. It grows beyond the preview toolchain into a wider set of Compose and Android UI skills. |
+| this repository (to be renamed) | compose-ag-plugin | The harness-specific integrations for previews and the UI builder: per-harness manifests, MCP wiring, hooks, agents, setup and harness-notes skills, and the one marketplace for Claude Code and Codex. |
 | `compose-catalogs` | the m3, wear-m3, remote-m3, glimmer and a2ui catalogs | Catalogs we write ourselves, one per `catalogs/<id>/`, with one output repository. |
 | `compose-preview-imports` | unchanged | It builds third-party code, so it stays isolated. |
 | `compose-preview-vscode` | unchanged | TypeScript, released to its own marketplace. |
@@ -59,9 +60,10 @@ The genuinely shared surface is small: the wire shapes, the MCP tools, and the s
 1. **One marketplace.** This repository's marketplace lists the skill bundles from yschimke/skills
    as `git-subdir` entries ([harness matrix Q22](harness-matrix.md)). Done here; the content is
    not moved yet.
-2. **Merge yschimke/skills into this repository** and rename it `compose-agents`.
-   `npx skills add` and the installer URLs need a redirect or a mirror, so this needs changes to
-   yschimke/skills.
+2. **Draw the line between the two agent repositories.** yschimke/skills stays separate as the
+   generic skills, with no host names, install paths, hooks or MCP client config. Harness-specific
+   reference material moves here, and this repository gets a name that says what it holds. See
+   [The two agent repositories](#the-two-agent-repositories).
 3. **Move `design-artifacts`, design-map and design-parity into `compose-design-bridges`.** The
    engine and studio then consume a release of it.
 4. **Create `repo-infra`.**
@@ -69,3 +71,31 @@ The genuinely shared surface is small: the wire shapes, the MCP tools, and the s
 6. **Fold the builder back into studio**, with a subtree merge so history is kept.
 7. **Build the engine monorepo.** It is the largest step and the most debatable, because it gives
    up per-layer repositories for one version line. Steps 1–6 bring most of the benefit without it.
+
+## The two agent repositories
+
+A file belongs in yschimke/skills when it would read the same in any agent host. It belongs here
+when it names a host, or configures, installs or works around one.
+
+| Content | Home |
+| --- | --- |
+| Workflows: render, review, author a design, export to a design tool | yschimke/skills |
+| MCP tool and CLI reference: tool names, arguments, results, errors | yschimke/skills |
+| Product rules (R1–R4) as they apply to the work | yschimke/skills, stated once and cited here |
+| Per-harness manifests, marketplace, MCP client config, hooks, packaged agents | this repository |
+| Installing into a host, host detection, host quirks and fallbacks | this repository (`*-setup`, `harness-notes`) |
+| Cloud sandboxes of a particular host, and CI agent sessions such as `claude.yml` | this repository |
+
+Today these sit on the wrong side, in yschimke/skills, and should move here, each leaving a short
+pointer behind:
+
+- `skills/compose-preview/references/agent-cloud.md` and `claude-cloud.md`: cloud sandboxes per
+  host.
+- The host-install and host-detection parts of `skills/compose-preview/references/mcp.md` and
+  `setup.md`: `mcp install --antigravity` and `--codex`, and the `~/.claude/plugins/…` paths.
+- `skills/compose-preview-review/references/ci-agent-sessions.md`: `claude.yml` sessions.
+
+The skill bundles under yschimke/skills' `plugins/` stay where they are. This repository's
+marketplace and Antigravity's install-by-URL both point at them, so they are distribution output,
+not harness wiring. yschimke/skills' own marketplace remains for existing installs; new installs
+use this repository's.

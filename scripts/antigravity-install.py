@@ -20,7 +20,7 @@ import subprocess
 import sys
 
 SKILLS = "https://github.com/yschimke/skills/tree/main/plugins"
-PLUGINS = "https://github.com/yschimke/compose-ag-plugin/tree/main/plugins"
+PLUGINS = "https://github.com/yschimke/compose-agent-plugins/tree/main/plugins"
 # name -> install URL, in install order.
 TARGETS = {
     "compose-skills": f"{SKILLS}/compose-skills",

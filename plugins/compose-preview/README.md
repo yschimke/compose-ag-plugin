@@ -6,7 +6,7 @@ command-line tool, which renders previews from your own Gradle project on your
 machine.
 
 This folder is generated from
-[`yschimke/compose-ag-plugin`](https://github.com/yschimke/compose-ag-plugin);
+[`yschimke/compose-agent-plugins`](https://github.com/yschimke/compose-agent-plugins);
 see that repository's README for install steps in each harness.
 
 ## Requirements

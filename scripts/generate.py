@@ -29,7 +29,7 @@ ANTIGRAVITY_HOOK_EVENTS = ("Stop",)
 ANTIGRAVITY_PLUGIN_ROOT = "$HOME/.gemini/config/plugins"
 ANTIGRAVITY_SCHEMA = "https://antigravity.google/schemas/v1/plugin.json"
 MCP_REGISTRY_SCHEMA = "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json"
-MARKETPLACE_NAME = "compose-ag-plugin"
+MARKETPLACE_NAME = "compose-agent-plugins"
 # Claude Code userConfig options are strict objects; reject anything else here.
 USER_CONFIG_FIELDS = {"type", "title", "description", "sensitive", "required", "default"}
 USER_CONFIG_KEY = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")

@@ -71,7 +71,7 @@ Antigravity does not have. Antigravity copies plugins at install time, so
 uninstall and reinstall to pick up `main`. One command does all of it:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/yschimke/compose-ag-plugin/main/scripts/antigravity-install.py | python3 - --catalogs
+curl -fsSL https://raw.githubusercontent.com/yschimke/compose-agent-plugins/main/scripts/antigravity-install.py | python3 - --catalogs
 ```
 
 By hand:
@@ -79,13 +79,13 @@ By hand:
 ```sh
 agy plugin uninstall compose-preview   # and compose-skills, compose-catalogs; repeat until agy plugin list no longer shows it
 agy plugin install https://github.com/yschimke/skills/tree/main/plugins/compose-skills
-agy plugin install https://github.com/yschimke/compose-ag-plugin/tree/main/plugins/compose-preview
-agy plugin install https://github.com/yschimke/compose-ag-plugin/tree/main/plugins/compose-catalogs   # if installed
+agy plugin install https://github.com/yschimke/compose-agent-plugins/tree/main/plugins/compose-preview
+agy plugin install https://github.com/yschimke/compose-agent-plugins/tree/main/plugins/compose-catalogs   # if installed
 ```
 
 ## Antigravity `compose-preview` has no skills or hooks
 
-`agy plugin install https://github.com/yschimke/compose-ag-plugin` (the bare
+`agy plugin install https://github.com/yschimke/compose-agent-plugins` (the bare
 repository URL) reads the root `gemini-extension.json` and installs only its two
 MCP servers, listed in `agy plugin list` with `"source": "gemini-cli"`. Uninstall
 it, then install the plugin folder with the `/tree/main/plugins/compose-preview`
@@ -163,9 +163,9 @@ Codex registers the plugin's SessionStart, PostToolUse and Stop hooks as
 when only the `compose-preview` plugin is enabled, or when the
 `compose-preview-mcp` entry is one you registered by hand rather than the
 plugin's. Run `codex plugin list` and check that
-`compose-catalogs@compose-ag-plugin` is `installed, enabled`; if not, enable it
+`compose-catalogs@compose-agent-plugins` is `installed, enabled`; if not, enable it
 from `/plugins` and start a new session. Seen in the
-[2026-10-02 Codex smoke run](https://github.com/yschimke/compose-ag-plugin/issues/76#issuecomment-5950380878).
+[2026-10-02 Codex smoke run](https://github.com/yschimke/compose-agent-plugins/issues/76#issuecomment-5950380878).
 
 ## "no project registered" in Codex Desktop
 

@@ -79,14 +79,14 @@ def main() -> None:
         installs = [c for c in calls if c.startswith("install ")]
         assert installs == [
             "install https://github.com/yschimke/skills/tree/main/plugins/compose-skills",
-            "install https://github.com/yschimke/compose-ag-plugin/tree/main/plugins/compose-preview",
-            "install https://github.com/yschimke/compose-ag-plugin/tree/main/plugins/compose-catalogs",
+            "install https://github.com/yschimke/compose-agent-plugins/tree/main/plugins/compose-preview",
+            "install https://github.com/yschimke/compose-agent-plugins/tree/main/plugins/compose-catalogs",
         ], installs
 
         result, after, calls = run(tmp, "--dry-run")
         assert result.returncode == 0, result.stdout + result.stderr
         assert after == BEFORE and calls == [], calls
-        assert "$ agy plugin install https://github.com/yschimke/compose-ag-plugin/tree/main/plugins/compose-preview" in result.stdout
+        assert "$ agy plugin install https://github.com/yschimke/compose-agent-plugins/tree/main/plugins/compose-preview" in result.stdout
     print("antigravity install tests passed")
 
 

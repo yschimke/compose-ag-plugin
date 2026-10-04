@@ -36,10 +36,10 @@ preview function names).
 
 ```sh
 agy plugin install https://github.com/yschimke/skills/tree/main/plugins/compose-skills
-agy plugin install https://github.com/yschimke/compose-ag-plugin/tree/main/plugins/compose-preview
+agy plugin install https://github.com/yschimke/compose-agent-plugins/tree/main/plugins/compose-preview
 agy plugin enable compose-preview
 # Optional: hosted Material 3 / Wear catalogs and UI Builder.
-agy plugin install https://github.com/yschimke/compose-ag-plugin/tree/main/plugins/compose-catalogs
+agy plugin install https://github.com/yschimke/compose-agent-plugins/tree/main/plugins/compose-catalogs
 ```
 
 Or run the same steps in one go; it also updates an existing install
@@ -48,15 +48,15 @@ old `compose-preview mcp serve` processes. Drop `--catalogs` to skip the
 catalogs; add `--dry-run` to print the commands only:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/yschimke/compose-ag-plugin/main/scripts/antigravity-install.py | python3 - --catalogs
+curl -fsSL https://raw.githubusercontent.com/yschimke/compose-agent-plugins/main/scripts/antigravity-install.py | python3 - --catalogs
 ```
 
 Use the `/tree/main/plugins/<name>` URL: `agy` clones the repository and
 installs that folder. The bare repository URL installs only the two MCP servers
 from the root `gemini-extension.json` (no skills, agents or hooks) under the
 same `compose-preview` name. A local checkout still works
-(`agy plugin install ./compose-ag-plugin/plugins/compose-preview`), and
-`python3 compose-ag-plugin/scripts/antigravity-check.py` from a clone verifies
+(`agy plugin install ./compose-agent-plugins/plugins/compose-preview`), and
+`python3 compose-agent-plugins/scripts/antigravity-check.py` from a clone verifies
 the install.
 
 Install skills from `yschimke/skills` as plugins, not with
@@ -68,13 +68,28 @@ you need them. The bare `yschimke/skills` URL installs all eight as
 `yschimke-skills`; don't keep it next to a bundle. The wiring plugins do not
 install the canonical skills.
 
+### Moving from `compose-ag-plugin`
+
+This repository and its marketplace were called `compose-ag-plugin`. GitHub redirects the old URLs,
+but the marketplace name changed, so an existing Claude Code or Codex install keeps the old name
+until you add the marketplace again:
+
+```text
+/plugin marketplace remove compose-ag-plugin
+/plugin marketplace add yschimke/compose-agent-plugins
+```
+
+In Codex, `codex plugin marketplace remove compose-ag-plugin`, then add
+`yschimke/compose-agent-plugins`. Then reinstall the plugins below under `@compose-agent-plugins`.
+Antigravity installs by URL, so reinstall from the new URLs to pick up later changes.
+
 ### Claude Code
 
 ```text
-/plugin marketplace add yschimke/compose-ag-plugin
-/plugin install compose-skills@compose-ag-plugin
-/plugin install compose-preview@compose-ag-plugin
-/plugin install compose-catalogs@compose-ag-plugin
+/plugin marketplace add yschimke/compose-agent-plugins
+/plugin install compose-skills@compose-agent-plugins
+/plugin install compose-preview@compose-agent-plugins
+/plugin install compose-catalogs@compose-agent-plugins
 ```
 
 This one marketplace also lists the canonical skill bundles, which it installs straight from
@@ -89,7 +104,7 @@ token; Claude Code does not read `COMPOSE_PREVIEW_TOKEN` from the environment.
 ### Codex
 
 ```sh
-codex plugin marketplace add yschimke/compose-ag-plugin
+codex plugin marketplace add yschimke/compose-agent-plugins
 # Then enable compose-skills, compose-preview and compose-catalogs from /plugins.
 ```
 
@@ -130,7 +145,7 @@ npx skills update        # skills installed with npx
   or `/plugins`.
 - Antigravity copies plugins at install time, and an install over an
   existing plugin kept its old record in `agy plugin list`. To pick up `main`,
-  run `scripts/antigravity-install.py` again (`curl -fsSL https://raw.githubusercontent.com/yschimke/compose-ag-plugin/main/scripts/antigravity-install.py | python3 - --catalogs`), or
+  run `scripts/antigravity-install.py` again (`curl -fsSL https://raw.githubusercontent.com/yschimke/compose-agent-plugins/main/scripts/antigravity-install.py | python3 - --catalogs`), or
   `agy plugin uninstall <name>` and then its `agy plugin install` line.
 - If renders look out of date after an update, clear the server cache
   (`rm -rf ~/.cache/composeai/preview-mcp`) and restart the harness. This is

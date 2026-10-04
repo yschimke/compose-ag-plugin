@@ -12,6 +12,6 @@
   ],
   "license": "Apache-2.0",
   "name": "compose-preview",
-  "repository": "https://github.com/yschimke/compose-ag-plugin",
+  "repository": "https://github.com/yschimke/compose-agent-plugins",
   "version": "0.3.0"
 }

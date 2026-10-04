@@ -38,7 +38,7 @@
     }
   },
   "name": "compose-catalogs",
-  "repository": "https://github.com/yschimke/compose-ag-plugin",
+  "repository": "https://github.com/yschimke/compose-agent-plugins",
   "skills": "./skills/",
   "version": "0.3.0"
 }

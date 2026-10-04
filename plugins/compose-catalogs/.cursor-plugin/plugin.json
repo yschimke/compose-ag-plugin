@@ -5,7 +5,7 @@
   "category": "developer-tools",
   "description": "Discover Compose components, inspect properties, and render catalog variants.",
   "displayName": "Compose Catalogs",
-  "homepage": "https://github.com/yschimke/compose-ag-plugin/tree/main/plugins/compose-catalogs",
+  "homepage": "https://github.com/yschimke/compose-agent-plugins/tree/main/plugins/compose-catalogs",
   "keywords": [
     "compose",
     "catalog",
@@ -23,7 +23,7 @@
     }
   },
   "name": "compose-catalogs",
-  "repository": "https://github.com/yschimke/compose-ag-plugin",
+  "repository": "https://github.com/yschimke/compose-agent-plugins",
   "skills": "./skills/",
   "variables": {
     "properties": {

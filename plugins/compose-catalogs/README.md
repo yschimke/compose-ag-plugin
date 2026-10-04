@@ -6,7 +6,7 @@ MCP service, which serves the Material 3 and Wear OS component catalogs and the
 UI Builder design tools. It needs no local toolchain.
 
 This folder is generated from
-[`yschimke/compose-ag-plugin`](https://github.com/yschimke/compose-ag-plugin);
+[`yschimke/compose-agent-plugins`](https://github.com/yschimke/compose-agent-plugins);
 see that repository's README for install steps in each harness.
 
 ## What it contains
@@ -14,7 +14,7 @@ see that repository's README for install steps in each harness.
 - An MCP server entry, `compose-preview-catalog`, for the remote server at
   `https://preview.coo.ee/mcp` (Streamable HTTP).
 - The `harness-notes` skill, which summarizes the
-  [agent rules](https://github.com/yschimke/compose-ag-plugin/blob/main/docs/agent-rules.md)
+  [agent rules](https://github.com/yschimke/compose-agent-plugins/blob/main/docs/agent-rules.md)
   for the active harness.
 - No agents. The read-only `design-reviewer` agent ships in `compose-preview`
   and uses this plugin's tools when both are installed.

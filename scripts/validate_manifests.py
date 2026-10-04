@@ -23,6 +23,7 @@ from generate import (
     render_claude_manifest,
     render_codex_manifest,
     render_cursor_manifest,
+    render_external_marketplace_entries,
     render_gemini_extension,
     render_hooks,
     render_mcp_servers,
@@ -532,7 +533,8 @@ def main() -> None:
         "metadata": {"description": source["description"]},
         "name": MARKETPLACE_NAME,
         "owner": {"name": source["owner"]},
-        "plugins": expected_marketplace,
+        "plugins": expected_marketplace
+        + render_external_marketplace_entries(source, {plugin["name"] for plugin in plugins}),
     }:
         raise ValueError(".claude-plugin/marketplace.json does not match the marketplace contract")
     cursor_marketplace = read_json(ROOT / ".cursor-plugin" / "marketplace.json")

@@ -127,6 +127,26 @@
       ]
     }
   ],
+  "externalPlugins": [
+    {
+      "name": "compose-skills",
+      "description": "Render Compose @Preview functions and author designs over MCP (the default skills).",
+      "url": "https://github.com/yschimke/skills.git",
+      "path": "plugins/compose-skills"
+    },
+    {
+      "name": "compose-review-skills",
+      "description": "Review Compose UI pull requests, set up preview CI, and check design parity.",
+      "url": "https://github.com/yschimke/skills.git",
+      "path": "plugins/compose-review-skills"
+    },
+    {
+      "name": "compose-design-skills",
+      "description": "Export Compose renders to design tools: design boards, sticker-sheet catalogs, and Figma import.",
+      "url": "https://github.com/yschimke/skills.git",
+      "path": "plugins/compose-design-skills"
+    }
+  ],
   "gemini": {
     "name": "compose-preview",
     "version": "0.3.0",

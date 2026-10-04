@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This repository owns the Antigravity, Claude Code, and Codex plugin packaging for Compose tooling. Read `README.md` first. The product rules every plugin, skill and tool must follow are in [`docs/agent-rules.md`](docs/agent-rules.md); a change that breaks one is a bug.
+This repository owns the harness-specific integrations for Compose previews and the UI builder: per-harness plugin manifests, MCP wiring, hooks, agents and the setup and harness-notes skills. Generic, host-neutral skills live in [yschimke/skills](https://github.com/yschimke/skills); the line between the two is in [`docs/repository-consolidation.md`](docs/repository-consolidation.md#the-two-agent-repositories). Read `README.md` first. The product rules every plugin, skill and tool must follow are in [`docs/agent-rules.md`](docs/agent-rules.md); a change that breaks one is a bug.
 
 ## Enforced rules
 

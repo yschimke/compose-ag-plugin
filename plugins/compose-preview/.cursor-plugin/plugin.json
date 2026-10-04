@@ -6,7 +6,7 @@
   "category": "developer-tools",
   "description": "Iterate on local Compose previews with live rendering and accessibility checks.",
   "displayName": "Compose Preview",
-  "homepage": "https://github.com/yschimke/compose-ag-plugin/tree/main/plugins/compose-preview",
+  "homepage": "https://github.com/yschimke/compose-agent-plugins/tree/main/plugins/compose-preview",
   "hooks": {
     "hooks": {},
     "version": 1
@@ -28,7 +28,7 @@
     }
   },
   "name": "compose-preview",
-  "repository": "https://github.com/yschimke/compose-ag-plugin",
+  "repository": "https://github.com/yschimke/compose-agent-plugins",
   "skills": "./skills/",
   "version": "0.3.0"
 }

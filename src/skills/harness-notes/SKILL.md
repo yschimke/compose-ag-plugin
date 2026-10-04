@@ -1,6 +1,6 @@
 ---
 name: harness-notes
-description: Use whenever you change Compose UI code (composables, @Preview functions, themes) or render Compose previews, catalog components or UI Builder designs. Carries the mandatory cross-harness agent rules for compose-ag-plugin's tools, alongside the canonical yschimke/skills workflows.
+description: Use whenever you change Compose UI code (composables, @Preview functions, themes) or render Compose previews, catalog components or UI Builder designs. Carries the mandatory cross-harness agent rules for compose-agent-plugins's tools, alongside the canonical yschimke/skills workflows.
 ---
 
 # Harness notes
@@ -60,4 +60,4 @@ Claude Code ≥2.1.281 supports URL elicitation only on 2026-07-28-protocol conn
 Claude Code does not load a plugin's `rules/AGENTS.md`; guidance it must always see belongs in a skill or the SessionStart message.
 
 The full, authoritative contract and current tooling gaps are in
-[`docs/agent-rules.md`](https://github.com/yschimke/compose-ag-plugin/blob/main/docs/agent-rules.md).
+[`docs/agent-rules.md`](https://github.com/yschimke/compose-agent-plugins/blob/main/docs/agent-rules.md).

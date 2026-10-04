@@ -1,5 +1,5 @@
 {
-  "repository": "https://github.com/yschimke/compose-ag-plugin",
+  "repository": "https://github.com/yschimke/compose-agent-plugins",
   "license": "Apache-2.0",
   "owner": "Yuri Schimke",
   "description": "Compose @Preview rendering, accessibility checks and remote component catalogs.",

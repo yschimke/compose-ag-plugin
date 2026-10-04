@@ -9,7 +9,7 @@ second Antigravity card.
 ## In Antigravity: the card helper
 
 Antigravity renders `<agent-embed>` cards as `iframe srcdoc`, so the viewer
-never sees a URL fragment (compose-ag-plugin#6 Q9). Since v3.77.0 the viewer also
+never sees a URL fragment (compose-agent-plugins#6 Q9). Since v3.77.0 the viewer also
 reads the same envelope from an inline
 `<script type="application/json" id="compose-preview-result">` block anywhere in
 the document. `compose-preview-card.py`, next to the viewer, writes that file:

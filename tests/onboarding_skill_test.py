@@ -33,7 +33,7 @@ def manifest(**overrides: object) -> dict[str, object]:
             "defaultPrompt": ["Render a preview."],
         },
         "owner": "Yuri Schimke",
-        "repository": "https://github.com/yschimke/compose-ag-plugin",
+        "repository": "https://github.com/yschimke/compose-agent-plugins",
         "license_name": "Apache-2.0",
     }
     inputs.update(overrides)

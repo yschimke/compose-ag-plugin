@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 HOME = Path.home()
 INSTALLED = HOME / ".gemini" / "config" / "plugins"
 PLUGINS = ("compose-catalogs", "compose-preview")
-REPO_URL = "https://github.com/yschimke/compose-ag-plugin/tree/main/plugins"
+REPO_URL = "https://github.com/yschimke/compose-agent-plugins/tree/main/plugins"
 results = []
 
 

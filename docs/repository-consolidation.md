@@ -49,7 +49,7 @@ The genuinely shared surface is small: the wire shapes, the MCP tools, and the s
 | `compose-preview-studio` | compose-preview-server, compose-ui-builder, compose-preview-client | Removes the seam-break process and the duplicated docs. It deploys preview.coo.ee and still builds the desktop and IntelliJ apps. |
 | `compose-design-bridges` | design-parity, the one copy of `design-artifacts`, design-map | One home for exporting renders to design tools: Figma (which Codex's design plugins also use), Claude Design through `/design-sync`, and Stitch. |
 | `yschimke/skills` | unchanged, widened | Generic skills that work in any agent host: what to do and which tools to call. It grows beyond the preview toolchain into a wider set of Compose and Android UI skills. |
-| this repository (to be renamed) | compose-ag-plugin | The harness-specific integrations for previews and the UI builder: per-harness manifests, MCP wiring, hooks, agents, setup and harness-notes skills, and the one marketplace for Claude Code and Codex. |
+| this repository (to be renamed) | compose-agent-plugins | The harness-specific integrations for previews and the UI builder: per-harness manifests, MCP wiring, hooks, agents, setup and harness-notes skills, and the one marketplace for Claude Code and Codex. |
 | `compose-catalogs` | the m3, wear-m3, remote-m3, glimmer and a2ui catalogs | Catalogs we write ourselves, one per `catalogs/<id>/`, with one output repository. |
 | `compose-preview-imports` | unchanged | It builds third-party code, so it stays isolated. |
 | `compose-preview-vscode` | unchanged | TypeScript, released to its own marketplace. |

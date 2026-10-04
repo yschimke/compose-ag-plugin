@@ -75,7 +75,7 @@ OpenCode's `*` matches any characters, including `/`, so the rule covers the
 server's temporary directories wherever the platform puts them, and nothing
 else outside the project. Reads there are then allowed by the default `read`
 rule. Without it an interactive session can still answer the prompt; an eval
-or scripted run cannot ([#105](https://github.com/yschimke/compose-ag-plugin/issues/105)).
+or scripted run cannot ([#105](https://github.com/yschimke/compose-agent-plugins/issues/105)).
 
 ## Skills
 
@@ -158,6 +158,6 @@ Checked on 2026-09-27 with `opencode-ai@1.18.32` (the npm `latest`, OpenCode v1)
 | Remote catalog config | `opencode mcp list` with the `compose-preview-catalog` entry above and no token | `connected`. |
 | Catalog OAuth discovery | `opencode mcp debug compose-preview-catalog` | Server `compose-preview-catalog` 3.77.0 answered `200 OK`, auth status `not authenticated`. The interactive `opencode mcp auth` browser flow was not exercised. |
 
-A [2026-10-02 smoke run](https://github.com/yschimke/compose-ag-plugin/issues/77#issuecomment-5950589884) on OpenCode 1.18.32 with `compose-preview` 2.32.0 stopped at registration: the user config was `opencode.jsonc`, so `mcp install --opencode` printed the snippet, and the check then flagged v1 as unsupported. The check now accepts 1.18 and prints the snippet.
+A [2026-10-02 smoke run](https://github.com/yschimke/compose-agent-plugins/issues/77#issuecomment-5950589884) on OpenCode 1.18.32 with `compose-preview` 2.32.0 stopped at registration: the user config was `opencode.jsonc`, so `mcp install --opencode` printed the snippet, and the check then flagged v1 as unsupported. The check now accepts 1.18 and prints the snippet.
 
 Not verified: OpenCode v2 (its installer host was unreachable from the test environment), a real `compose-preview mcp serve` session against a Gradle project, and tool calls through either server.

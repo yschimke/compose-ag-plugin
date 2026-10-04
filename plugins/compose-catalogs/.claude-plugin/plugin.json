@@ -12,7 +12,7 @@
   ],
   "license": "Apache-2.0",
   "name": "compose-catalogs",
-  "repository": "https://github.com/yschimke/compose-ag-plugin",
+  "repository": "https://github.com/yschimke/compose-agent-plugins",
   "userConfig": {
     "compose_preview_token": {
       "description": "Optional access token for the hosted preview.coo.ee service. Leave it blank to use the service's interactive access grant.",

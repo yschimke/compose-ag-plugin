@@ -18,7 +18,7 @@ image plus structure, without asking the person to describe it.
 | Visual Editor (UI Builder canvas) | Document renders: `ui_builder_export_document`, export PNG/SVG | No view of the editor *as the person sees it*: viewport, selection, reference overlay, comment pins. [compose-preview-server#1114](https://github.com/yschimke/compose-preview-server/issues/1114) |
 | Reference picture (Figma frame, mock) in the UI Builder | `ui_builder_view` with `include: ["reference"]` draws it as the editor does; `ui_builder_compare_reference` measures the design against it (regions by layer, per-layer move/size/font-size with `ui_builder_apply` operations); `ui_builder_set_reference` attaches one | The stored overlay does not yet record its *fit*, so a component crop attached over MCP is shown contained in the editor; an SVG reference is not measured server-side |
 | `@Preview` renders | `render_preview` (local MCP or remote catalog) | The hosted catalog also returns a signed https PNG link ([compose-preview-server#1258](https://github.com/yschimke/compose-preview-server/pull/1258)); the local server returns inline base64 only, and a file path is [compose-preview-server#1109](https://github.com/yschimke/compose-preview-server/issues/1109) |
-| Chat surfaces (Claude in Slack, Teams) | The https image link in each hosted result (`Image: <url>`, `imageUrl`, `contactSheet.url`), attached or linked | Live behaviour unverified: [#92](https://github.com/yschimke/compose-ag-plugin/issues/92), [compose-preview-server#1262](https://github.com/yschimke/compose-preview-server/issues/1262) |
+| Chat surfaces (Claude in Slack, Teams) | The https image link in each hosted result (`Image: <url>`, `imageUrl`, `contactSheet.url`), attached or linked | Live behaviour unverified: [#92](https://github.com/yschimke/compose-agent-plugins/issues/92), [compose-preview-server#1262](https://github.com/yschimke/compose-preview-server/issues/1262) |
 | Source code | File read; `ui_builder_export` (`compose`) for a design's code | — |
 | Native render | `ui_builder_render_native` (when configured); local previews render natively through the daemon | Not available on every deployment; the agent must say when it is missing |
 
@@ -101,7 +101,7 @@ Behaviour:
 
 ## Enforcement
 
-Adoption is tracked in [#12](https://github.com/yschimke/compose-ag-plugin/issues/12).
+Adoption is tracked in [#12](https://github.com/yschimke/compose-agent-plugins/issues/12).
 
 | Where | What it enforces |
 | --- | --- |

@@ -2,7 +2,7 @@
   "metadata": {
     "description": "Compose @Preview rendering, accessibility checks and remote component catalogs."
   },
-  "name": "compose-ag-plugin",
+  "name": "compose-agent-plugins",
   "owner": {
     "name": "Yuri Schimke"
   },

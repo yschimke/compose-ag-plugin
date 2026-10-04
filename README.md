@@ -71,12 +71,16 @@ install the canonical skills.
 ### Claude Code
 
 ```text
-/plugin marketplace add yschimke/skills
-/plugin install compose-skills@yschimke-skills
 /plugin marketplace add yschimke/compose-ag-plugin
+/plugin install compose-skills@compose-ag-plugin
 /plugin install compose-preview@compose-ag-plugin
 /plugin install compose-catalogs@compose-ag-plugin
 ```
+
+This one marketplace also lists the canonical skill bundles, which it installs straight from
+`yschimke/skills` (`compose-skills`, and optionally `compose-review-skills` and
+`compose-design-skills`). If you installed them earlier from the `yschimke-skills` marketplace,
+uninstall that copy, or each skill loads twice.
 
 Verify: restart, then `/mcp` lists `plugin:compose-preview:compose-preview-mcp`
 as connected. Enabling `compose-catalogs` asks for an optional Compose Preview
@@ -85,10 +89,12 @@ token; Claude Code does not read `COMPOSE_PREVIEW_TOKEN` from the environment.
 ### Codex
 
 ```sh
-codex plugin marketplace add yschimke/skills
 codex plugin marketplace add yschimke/compose-ag-plugin
 # Then enable compose-skills, compose-preview and compose-catalogs from /plugins.
 ```
+
+As in Claude Code, `compose-skills` comes from `yschimke/skills` through this marketplace; drop a
+separate `yschimke/skills` marketplace if you added one before.
 
 Verify: `codex mcp list` shows `compose-preview-mcp` and
 `compose-preview-catalog`. Approve the plugin hooks when Codex marks them

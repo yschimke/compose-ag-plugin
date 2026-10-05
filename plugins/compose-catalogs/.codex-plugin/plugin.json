@@ -1,4 +1,5 @@
 {
+  "apps": "./.app.json",
   "author": {
     "name": "Yuri Schimke"
   },

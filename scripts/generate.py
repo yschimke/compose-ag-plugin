@@ -71,6 +71,7 @@ def render_codex_manifest(
     keywords: list[str],
     skills: list[str],
     mcp: list[object],
+    apps: dict[str, object],
     interface: object,
     hooks: list[object] | None = None,
     onboarding_skill: object = None,
@@ -121,6 +122,8 @@ def render_codex_manifest(
         manifest["skills"] = "./skills/"
     if mcp:
         manifest["mcpServers"] = render_mcp_servers(name, mcp, "codex")
+    if apps:
+        manifest["apps"] = "./.app.json"
     if hooks:
         manifest["hooks"] = f"./{HOOK_MANIFESTS['codex']}"
     if onboarding_skill is not None:
@@ -139,6 +142,29 @@ def onboarding_skill_path(plugin_name: str, skill: object, skills: list[str]) ->
     if name not in skills:
         raise ValueError(f"{plugin_name}.onboardingSkill {name!r} must be one of the plugin's skills")
     return f"./skills/{name}/SKILL.md"
+
+
+def validate_apps(plugin_name: str, value: object) -> dict[str, dict[str, str]]:
+    if not isinstance(value, dict):
+        raise ValueError(f"{plugin_name}.apps must be an object")
+    rendered: dict[str, dict[str, str]] = {}
+    for name, app in value.items():
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError(f"{plugin_name}.apps keys must be non-empty strings")
+        if not isinstance(app, dict):
+            raise ValueError(f"{plugin_name}.apps.{name} must be an object")
+        unknown = set(app) - {"id", "category"}
+        if unknown:
+            raise ValueError(
+                f"{plugin_name}.apps.{name} has unsupported fields: {', '.join(sorted(unknown))}"
+            )
+        rendered_app = {"id": require_string(app.get("id"), f"{plugin_name}.apps.{name}.id")}
+        if "category" in app:
+            rendered_app["category"] = require_string(
+                app.get("category"), f"{plugin_name}.apps.{name}.category"
+            )
+        rendered[name] = rendered_app
+    return rendered
 
 
 def write_skill(plugin_root: Path, skill: str) -> None:
@@ -762,6 +788,7 @@ def main() -> None:
         hooks = plugin.get("hooks", [])
         assets = plugin.get("assets", [])
         mcp = plugin.get("mcp", [])
+        apps = validate_apps(name, plugin.get("apps", {}))
         interface = plugin.get("interface")
         user_config = validate_user_config(name, plugin.get("userConfig", {}))
         if name in names:
@@ -834,6 +861,7 @@ def main() -> None:
                 keywords=keywords,
                 skills=skills,
                 mcp=mcp,
+                apps=apps,
                 interface=interface,
                 hooks=hooks,
                 onboarding_skill=plugin.get("onboardingSkill"),
@@ -860,6 +888,10 @@ def main() -> None:
         else:
             (root / "mcp_config.json").unlink(missing_ok=True)
             (root / ".mcp.json").unlink(missing_ok=True)
+        if apps:
+            write_json(root / ".app.json", {"apps": apps})
+        else:
+            (root / ".app.json").unlink(missing_ok=True)
 
     write_json(
         ROOT / ".claude-plugin" / "marketplace.json",

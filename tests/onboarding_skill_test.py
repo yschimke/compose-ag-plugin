@@ -23,6 +23,7 @@ def manifest(**overrides: object) -> dict[str, object]:
         "keywords": ["compose"],
         "skills": ["harness-notes", "compose-preview-setup"],
         "mcp": [],
+        "apps": {},
         "interface": {
             "displayName": "Compose Preview",
             "shortDescription": "Render previews.",

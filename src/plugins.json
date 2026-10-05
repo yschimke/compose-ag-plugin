@@ -55,7 +55,13 @@
         "harness-notes",
         "compose-catalogs-setup"
       ],
-      "onboardingSkill": "compose-catalogs-setup"
+      "onboardingSkill": "compose-catalogs-setup",
+      "apps": {
+        "compose_preview": {
+          "id": "asdk_app_6ac4168191c081918c4dfce8370e2842",
+          "category": "Developer Tools"
+        }
+      }
     },
     {
       "name": "compose-preview",

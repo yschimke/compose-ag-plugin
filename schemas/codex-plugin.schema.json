@@ -97,6 +97,9 @@
         "type": "object"
       }
     },
+    "apps": {
+      "const": "./.app.json"
+    },
     "hooks": {
       "const": "./hooks/codex-hooks.json"
     },

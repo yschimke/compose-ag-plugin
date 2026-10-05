@@ -50,7 +50,7 @@ def differing_files(left: Path, right: Path) -> list[str]:
     compare = filecmp.dircmp(left, right, ignore=[".generated-assets.json"])
     found = [f"{name} (only in checkout)" for name in compare.left_only]
     found += compare.diff_files
-    for name, sub in compare.subdirs.items():
+    for name in compare.subdirs:
         found += [f"{name}/{item}" for item in differing_files(left / name, right / name)]
     return found
 

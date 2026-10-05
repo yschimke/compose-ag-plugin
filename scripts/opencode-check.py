@@ -6,7 +6,7 @@
                                                     # plus a cold and a warm model turn, timed
 
 Prints one line per check (ok / FIX / info). Command output that didn't parse is
-saved under /tmp/opencode-check/ so it can be shared instead of pasted.
+saved under $TMPDIR/opencode-check/ (default /tmp) so it can be shared instead of pasted.
 """
 
 import argparse

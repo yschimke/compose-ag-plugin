@@ -23,12 +23,13 @@ import os
 import sys
 import tempfile
 from pathlib import Path
+from typing import NoReturn
 
 MAX_STATIC_RESULT_BYTES = 500_000
 VIEWER = Path(__file__).resolve().with_name("compose-preview-viewer.html")
 
 
-def fail(message: str) -> "NoReturn":  # noqa: F821
+def fail(message: str) -> NoReturn:
     print(f"compose-preview-card: {message}; reply without a card", file=sys.stderr)
     sys.exit(2)
 

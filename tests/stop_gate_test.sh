@@ -291,7 +291,7 @@ FAKE_A11Y_JSON="$data/a11y-error.json" FAKE_A11Y_STATUS=1
 expect_output 'a11y tool error allows the stop' '' "$(run_gate claude "$workspace")"
 
 reset_fake
-FAKE_HANG=1 COMPOSE_PREVIEW_GATE_TIMEOUT=1
+export FAKE_HANG=1 COMPOSE_PREVIEW_GATE_TIMEOUT=1
 started_at=$(date +%s)
 expect_output 'a hung CLI allows the stop' '' "$(run_gate claude "$workspace")"
 elapsed=$(($(date +%s) - started_at))

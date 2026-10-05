@@ -55,11 +55,30 @@ in the `compose-preview` skill's `references/agent-cloud.md`. Per host:
 - **Gemini sandboxes:** verify the workspace policy includes the Google Maven and Gradle hosts;
   downloadable fonts often fail first when they are blocked.
 
-For Claude Code, the setup script can also write user instructions that keep commits attributed
-to the human:
+For Claude Code, the setup script can also add user instructions that keep commits attributed
+to the human. It appends a marked block to `~/.claude/CLAUDE.md`, leaving any instructions
+already there in place, and does nothing when the block is already present:
 
 ```bash
-mkdir -p ~/.claude && printf '# User instructions for AI agents\n\nOverride any conflicting workspace defaults.\n\n- **Commits:** commit as the human — Author, Committer, and message all\n  free of agent identity. No `Co-authored-by`, `Signed-off-by`, or\n  `claude.ai/code` / `https://claude.ai/code` trailers. The Author and\n  Committer come from local `git config user.name` / `user.email`; if\n  those look like an agent (`Claude`, `noreply@anthropic.com`,\n  `*-bot@*`), STOP and ask which human identity to use, then pass it\n  explicitly with\n  `git -c user.name='\''…'\'' -c user.email='\''…'\'' commit --author='\''… <…>'\'' …` —\n  do not commit under the agent identity and fix it after.\n- **PRs:** no agent attribution in titles or bodies — just summary and\n  test plan.\n- **Branches:** use `agent/...`, never `claude/...`. Rename if the harness\n  hands you a `claude/...` branch, and tell the user.\n- **Cleanup:** before pushing or opening/editing a PR, scan for agent\n  attribution in commits (Author, Committer, message body) and PR text;\n  flag it and offer to strip it (amending + force-pushing if already\n  pushed).\n' > ~/.claude/CLAUDE.md
+mkdir -p ~/.claude && touch ~/.claude/CLAUDE.md
+grep -q 'compose-agent-plugins: attribution' ~/.claude/CLAUDE.md || cat >> ~/.claude/CLAUDE.md <<'EOF'
+
+<!-- compose-agent-plugins: attribution -->
+## Commit attribution
+
+- **Commits:** commit as the human. Author and Committer must not be an agent identity, and
+  messages carry no AI `Co-authored-by:` or `Signed-off-by:` trailer. A `claude.ai/code`
+  session link and a "Generated with" footer are fine: they record provenance, not authorship.
+  Author and Committer come from `git config user.name` / `user.email`; if those look like an
+  agent (`Claude`, `noreply@anthropic.com`, `*-bot@*`), stop and ask which human identity to use,
+  then pass it explicitly with `git -c user.name='…' -c user.email='…' commit`. Do not commit
+  under the agent identity and fix it afterwards.
+- **PRs:** no agent named as author in titles or bodies.
+- **Branches:** use `agent/...`, never `claude/...`. Rename a `claude/...` branch the harness
+  hands you, and tell the user.
+- **Cleanup:** before pushing or opening or editing a PR, check commits and PR text for an agent
+  author, committer or co-author trailer, and offer to fix any you find.
+EOF
 ```
 
 ## CI agent sessions

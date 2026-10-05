@@ -26,3 +26,11 @@ This repository owns the harness-specific integrations for Compose previews and 
 - Open or update a PR automatically after a completed coding change. Never auto-merge.
 - After opening or updating a PR, subscribe to its GitHub notification thread and verify that the subscription is active where the harness supports it; otherwise say so in the PR. Before pushing and before finishing, check every PR this agent opened or actively drives for unresolved human and Codex review comments.
 - Never hand-edit generated manifests. Edit `src/plugins.json`, run `python3 scripts/generate.py`, and commit the resulting manifest files together.
+
+## Review guidelines
+
+- **Do not report commit author, committer or `Co-authored-by:` findings.** Your review sandbox
+  applies the pull request as a new commit under your own identity (`Codex <codex@openai.com>`),
+  so any identity you read from a local `git log` is yours, not the author's. Every such finding
+  on these repositories has named a commit that exists only in the sandbox. Attribution is a
+  human and CI concern; leave it out of reviews entirely.

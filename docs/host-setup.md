@@ -71,3 +71,14 @@ or PR (or applying a `claude` label) starts a Claude Code session through
 What such a session should do differently (render with Gradle, push renders before linking them,
 reuse CI's preview diff) is generic and stays in the `compose-preview-review` skill's
 `references/ci-agent-sessions.md`.
+
+What a `claude-code-action` session has, which that generic guide asks the session to check for
+itself:
+
+- **No `gh` CLI.** The action provides GitHub MCP tools for comments, reviews and CI status.
+- **Push permission and a working branch.** The workflow's prompt grants pushing renders to the PR
+  branch, or to the `agent/…` branch the action creates for an issue, and nowhere else.
+- **A fresh run per mention.** Each `@claude` mention starts a new run that rereads the whole
+  thread and the branch it pushed before; repeated mentions on a PR stack commits on that branch.
+- **A narrow Bash allowlist**, typically `./gradlew` and read-only `git`, so the
+  `compose-preview` CLI is often unavailable and renders go through the Gradle plugin.

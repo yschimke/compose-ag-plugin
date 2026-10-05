@@ -30,6 +30,7 @@ TARGETS = {
 # Old installs that duplicate a target: every skill, under the root plugin.
 REPLACED = ("yschimke-skills",)
 MAX_UNINSTALLS = 5
+OPTIONS = {"--catalogs", "--dry-run"}
 DRY_RUN = "--dry-run" in sys.argv
 
 
@@ -73,6 +74,10 @@ def remove(name: str) -> None:
 
 
 def main() -> None:
+    # A mistyped --dry-run must not fall through to a real reinstall.
+    unknown = [arg for arg in sys.argv[1:] if arg not in OPTIONS]
+    if unknown:
+        sys.exit(f"unknown option {unknown[0]}; usage: antigravity-install.py [--catalogs] [--dry-run]")
     if not shutil.which("agy"):
         sys.exit("agy is not on PATH")
     installed = names()

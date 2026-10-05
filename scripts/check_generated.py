@@ -9,17 +9,15 @@ import sys
 from pathlib import Path
 
 from generate import (
+    AGENT_LEDGER_NAME,
     ANTIGRAVITY_HOOK_MANIFEST,
+    ASSET_LEDGER_NAME,
     HOOK_MANIFESTS,
+    ROOT,
+    SOURCE,
     hook_script,
     render_antigravity_hooks,
 )
-
-
-ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "src" / "plugins.json"
-AGENT_LEDGER_NAME = ".generated-agents.json"
-ASSET_LEDGER_NAME = ".generated-assets.json"
 
 
 def generated_paths(source: object) -> tuple[list[Path], set[str]]:

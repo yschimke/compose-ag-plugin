@@ -145,10 +145,10 @@ npx skills update        # skills installed with npx
 
 - Claude Code and Codex: update the marketplaces and plugins from `/plugin`
   or `/plugins`.
-- Antigravity copies plugins at install time, and an install over an
-  existing plugin kept its old record in `agy plugin list`. To pick up `main`,
-  run `scripts/antigravity-install.py` again (`curl -fsSL https://raw.githubusercontent.com/yschimke/compose-agent-plugins/main/scripts/antigravity-install.py | python3 - --catalogs`), or
-  `agy plugin uninstall <name>` and then its `agy plugin install` line.
+- Antigravity copies plugins at install time, and installing over an existing
+  plugin keeps its old record in `agy plugin list`. To pick up `main`, rerun
+  the [one-step install](#antigravity), or `agy plugin uninstall <name>` and
+  then its `agy plugin install` line.
 - If renders look out of date after an update, clear the server cache
   (`rm -rf ~/.cache/composeai/preview-mcp`) and restart the harness. This is
   needed until yschimke/compose-ai-tools#5602 ships.
@@ -181,9 +181,10 @@ advertising a local artifact that the remote-catalog plugin does not package.
 
 `compose-preview` also ships the read-only `design-reviewer` agent for Claude
 Code and Antigravity. It uses the `compose-catalogs` tools too when that plugin
-is installed, so it ships once rather than in both plugins. It performs semantic, accessibility, font-scale, and
-device checks in its own context, then returns a short verdict with viewer or
-artifact links so rendered image payloads do not consume the main conversation.
+is installed, so it ships once rather than in both plugins. It runs semantic,
+accessibility, font-scale and device checks in its own context and returns a
+short verdict with viewer or artifact links, so rendered images stay out of the
+main conversation.
 Antigravity 1.2.12 discovered and ran a plugin fixture agent (issue #6 Q20);
 Codex support remains unverified.
 
@@ -218,9 +219,9 @@ prompts that verify the upstream skills together with this wiring live in
 After the agent edits a `*.kt` file that declares a `@Composable` or `@Preview`,
 the `compose-preview` plugin's PostToolUse hook adds one line of context: render
 an affected preview with `render_preview` and look at it before calling the
-change done (agent rule R1). Skills load only when the model picks them, and in
-the Claude Code eval run on #64 agents edited Compose UI without rendering even
-with the skill offered (#86). A hook is always seen.
+change done (agent rule R1). A hook is always seen; a skill is not, and in
+the eval run on #64 agents edited Compose UI without rendering even with the
+skill offered (#86).
 
 It reminds once per file per session, never blocks, and stays silent when the
 edit touched no Compose file or when anything about the hook itself fails. It
@@ -277,10 +278,13 @@ its harness explicitly:
 
 ## Development
 
-Run the repository gate before sending a change:
+Run the repository gate before sending a change; CI also runs the drift
+regression tests and markdownlint:
 
 ```sh
 scripts/check-plugins.sh
+tests/check_plugins_test.sh
+npx markdownlint-cli2 "**/*.md"
 ```
 
 Other scripts:

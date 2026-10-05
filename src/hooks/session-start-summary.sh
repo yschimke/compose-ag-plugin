@@ -116,7 +116,7 @@ status_summary() {
   [ -n "$status_totals" ] || return 1
   status_integer='(0|[1-9][0-9]{0,8})'
   for status_key in unacknowledgedComments unsavedTemporaryCopies unavailable; do
-    printf '%s\n' "$status_totals" | grep -Eq "[{,]\"$status_key\":$status_integer[,}]" || return 1
+    printf '%s\n' "$status_totals" | grep -Eq "[{,]\"$status_key\":${status_integer}[,}]" || return 1
   done
   status_comments=$(printf '%s\n' "$status_totals" | sed -E 's/.*[{,]"unacknowledgedComments":([0-9]+)[,}].*/\1/')
   status_copies=$(printf '%s\n' "$status_totals" | sed -E 's/.*[{,]"unsavedTemporaryCopies":([0-9]+)[,}].*/\1/')

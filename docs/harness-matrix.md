@@ -1,6 +1,10 @@
 # Harness matrix
 
-This matrix records only observed results for the compatibility investigation in [issue #6](https://github.com/yschimke/compose-ag-plugin/issues/6). A blank result has not been inferred from documentation or another harness.
+> Historical evidence below retains the repository and marketplace names used during the run.
+> For current installation and migration instructions, see the
+> [Compose Agent Plugins quick start](../README.md#quick-start).
+
+This matrix records only observed results for the compatibility investigation in [issue #6](https://github.com/yschimke/compose-agent-plugins/issues/6). A blank result has not been inferred from documentation or another harness.
 
 ## Status for launch
 
@@ -10,11 +14,11 @@ verified. Setup: [README quick start](../README.md#quick-start); fixes:
 
 | Harness | Install | Render path | Card / UI | Hooks | Elicitation | Known gaps |
 | --- | --- | --- | --- | --- | --- | --- |
-| Antigravity (`agy` 1.2.12) | ✅ local path and GitHub `/tree/<ref>/<path>` URL (plugins are copied; reinstall to update) | ✅ one `render_preview` call, 53 s on a cold daemon | ✅ static card from the server `embed`; no MCP Apps | Stop and post-tool-use ✅; no SessionStart; Stop gate packaged (`hooks.json`), live block not yet run | ❌ neither mode; text fallback | [#39](https://github.com/yschimke/compose-ag-plugin/issues/39): 30 s budget, Stop gate live run, grant flow |
-| Claude Code (2.1.283) | ✅ GitHub marketplace | ✅ image reaches the model; `inline=false` + Read planned | Print mode only; no MCP Apps in CLI/IDE | ✅ SessionStart, PostToolUse, Stop (cap 9) | Form advertised; URL mode … | [#40](https://github.com/yschimke/compose-ag-plugin/issues/40): URL elicitation, plugin directory |
-| Codex (0.157.1) | ✅ GitHub marketplace | ✅ Desktop: render, a11y/layout details, edit loop, compile-error recovery and `render_matrix` ([#76 run](https://github.com/yschimke/compose-ag-plugin/issues/76#issuecomment-5950380878)); `project` needed when the chat worktree is not the build | Desktop MCP App viewer ✅ shows; chooser, overlay toggle, variant sizing and matrix tiles failed on server 3.91.0 | Registered, `untrusted` until approved; behaviour … | Form ✅ shown; selection rejected ("Check this answer and try again") on server 3.91.0 | [#41](https://github.com/yschimke/compose-ag-plugin/issues/41): column gaps, no `design-reviewer`, MCP Apps |
-| OpenCode (1.18.32) | ✅ skills via npx; server via `mcp install --opencode` | … | None (no MCP Apps) | None | None | [#42](https://github.com/yschimke/compose-ag-plugin/issues/42): v2 and a real render unverified |
-| Claude in Slack (Claude Tag) | … hosted `/mcp` as a connection (no local stdio server) | … signed https image link, attached or linked | None documented (text and attachments only) | None (plugins and skills via access bundle …) | Not documented; a thread reply is the answer | [#92](https://github.com/yschimke/compose-ag-plugin/issues/92): every cell, see [Chat surfaces](#chat-surfaces) |
+| Antigravity (`agy` 1.2.12) | ✅ local path and GitHub `/tree/<ref>/<path>` URL (plugins are copied; reinstall to update) | ✅ one `render_preview` call, 53 s on a cold daemon | ✅ static card from the server `embed`; no MCP Apps | Stop and post-tool-use ✅; no SessionStart; Stop gate packaged (`hooks.json`), live block not yet run | ❌ neither mode; text fallback | [#39](https://github.com/yschimke/compose-agent-plugins/issues/39): 30 s budget, Stop gate live run, grant flow |
+| Claude Code (2.1.283) | ✅ GitHub marketplace | ✅ image reaches the model; `inline=false` + Read planned | Print mode only; no MCP Apps in CLI/IDE | ✅ SessionStart, PostToolUse, Stop (cap 9) | Form advertised; URL mode … | [#40](https://github.com/yschimke/compose-agent-plugins/issues/40): URL elicitation, plugin directory |
+| Codex (0.157.1) | ✅ GitHub marketplace | ✅ Desktop: render, a11y/layout details, edit loop, compile-error recovery and `render_matrix` ([#76 run](https://github.com/yschimke/compose-agent-plugins/issues/76#issuecomment-5950380878)); `project` needed when the chat worktree is not the build | Desktop MCP App viewer ✅ shows; chooser, overlay toggle, variant sizing and matrix tiles failed on server 3.91.0 | Registered, `untrusted` until approved; behaviour … | Form ✅ shown; selection rejected ("Check this answer and try again") on server 3.91.0 | [#41](https://github.com/yschimke/compose-agent-plugins/issues/41): column gaps, no `design-reviewer`, MCP Apps |
+| OpenCode (1.18.32) | ✅ skills via npx; server via `mcp install --opencode` | … | None (no MCP Apps) | None | None | [#42](https://github.com/yschimke/compose-agent-plugins/issues/42): v2 and a real render unverified |
+| Claude in Slack (Claude Tag) | … hosted `/mcp` as a connection (no local stdio server) | … signed https image link, attached or linked | None documented (text and attachments only) | None (plugins and skills via access bundle …) | Not documented; a thread reply is the answer | [#92](https://github.com/yschimke/compose-agent-plugins/issues/92): every cell, see [Chat surfaces](#chat-surfaces) |
 
 ## Fixture baseline
 

@@ -1,5 +1,9 @@
 # Claude Code harness evidence
 
+> Historical evidence below retains the repository and marketplace names used during the run.
+> For current installation and migration instructions, see the
+> [Compose Agent Plugins quick start](../../README.md#quick-start).
+
 This record preserves the observed Claude Code portion of the issue #6 and
 issue #18 compatibility investigation. It distinguishes host behavior from the
 direct JSON-RPC fixture smoke test, and print-mode (`claude -p`) limits from

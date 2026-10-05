@@ -1,5 +1,9 @@
 # Codex install evidence
 
+> Historical evidence below retains the repository and marketplace names used during the run.
+> For current installation and migration instructions, see the
+> [Compose Agent Plugins quick start](../../README.md#quick-start).
+
 This record covers the Codex launch checks (#41) that need no model session
 and no GUI. Nothing here exercises a model turn, the MCP Apps viewer,
 elicitation, prompts, or hook behaviour.

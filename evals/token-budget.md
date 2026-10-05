@@ -1,7 +1,7 @@
 # Token budget evals
 
 These evals check the token budget from
-[#39](https://github.com/yschimke/compose-ag-plugin/issues/39). A routine render
+[#39](https://github.com/yschimke/compose-agent-plugins/issues/39). A routine render
 turn:
 
 - makes **3 or fewer tool calls**;
@@ -56,8 +56,8 @@ bench is well under, the cost is the agent's steps.
 
 | Date | Harness | Version | Server / CLI | Plugin | Case | Tool calls | Wall time | Tokens | Base64 | Result | Evidence |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 2026-09-27 | Antigravity (`agy`) | 1.2.12 | CLI 2.28.0 | #38 | T1 | about 12 | 2 min | not recorded | none | Fail: registered the project (`status`, `register_project`, `list_projects`), found the preview URI (`git grep`, read `MainActivity.kt`), and read docs, the harness-notes skill and the card helper | [#39 comment](https://github.com/yschimke/compose-ag-plugin/issues/39#issuecomment-5855864042) |
-| 2026-09-27 | Antigravity (`agy`) | 1.2.12 | server 3.78.0 | #48 | T1 | 1 `render_preview`; other calls not recorded | 53 s | not recorded | none | Fail on time only: the card came from the server `embed`, and the summary came only from the result. The cold-start and warm split (T2) wasn't measured | [#39 comment](https://github.com/yschimke/compose-ag-plugin/issues/39#issuecomment-5856416678) |
+| 2026-09-27 | Antigravity (`agy`) | 1.2.12 | CLI 2.28.0 | #38 | T1 | about 12 | 2 min | not recorded | none | Fail: registered the project (`status`, `register_project`, `list_projects`), found the preview URI (`git grep`, read `MainActivity.kt`), and read docs, the harness-notes skill and the card helper | [#39 comment](https://github.com/yschimke/compose-agent-plugins/issues/39#issuecomment-5855864042) |
+| 2026-09-27 | Antigravity (`agy`) | 1.2.12 | server 3.78.0 | #48 | T1 | 1 `render_preview`; other calls not recorded | 53 s | not recorded | none | Fail on time only: the card came from the server `embed`, and the summary came only from the result. The cold-start and warm split (T2) wasn't measured | [#39 comment](https://github.com/yschimke/compose-agent-plugins/issues/39#issuecomment-5856416678) |
 
 The first baseline turn, in the 234d10dd transcript, took 6m44s. Its tool
 calls weren't counted. The rows above were recorded before this eval existed,

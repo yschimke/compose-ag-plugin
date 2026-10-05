@@ -1,4 +1,4 @@
-# Compose Antigravity Plugins
+# Compose Agent Plugins
 
 Compose `@Preview` rendering, accessibility checks and remote component
 catalogs for Antigravity, Claude Code, Codex and OpenCode. This repository

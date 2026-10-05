@@ -1,5 +1,9 @@
 # Antigravity git install evidence
 
+> Historical evidence below retains the repository and marketplace names used during the run.
+> For current installation and migration instructions, see the
+> [Compose Agent Plugins quick start](../../README.md#quick-start).
+
 The repository owner ran these commands by hand on 2026-10-02 and reported the
 output; nothing here was inferred from documentation.
 

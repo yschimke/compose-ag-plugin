@@ -1,6 +1,6 @@
 # Harness spike fixture
 
-This fixture supports issue [#6](https://github.com/yschimke/compose-ag-plugin/issues/6). It is deliberately separate from shipping plugins and makes no claim about a harness until that harness has run it.
+This fixture supports issue [#6](https://github.com/yschimke/compose-agent-plugins/issues/6). It is deliberately separate from shipping plugins and makes no claim about a harness until that harness has run it.
 
 The Antigravity root manifests follow the current official schema URL and omit
 the older `version` field. Claude Code uses the adjacent `.claude-plugin`

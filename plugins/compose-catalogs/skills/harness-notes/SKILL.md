@@ -7,7 +7,8 @@ description: Use whenever you change Compose UI code (composables, @Preview func
 
 Use the canonical `compose-preview` and `compose-ui-builder` skills from
 [`yschimke/skills`](https://github.com/yschimke/skills) for workflows. These notes only carry the
-rules that must remain consistent across Antigravity, Claude Code, and Codex.
+rules that must remain consistent across Antigravity, Claude Code, and Codex. Per-host install, MCP registration, cloud sandbox and CI session details are in
+[`docs/host-setup.md`](https://github.com/yschimke/compose-agent-plugins/blob/main/docs/host-setup.md).
 
 - **R1 — See what the user sees:** inspect the surface where the person will judge a visual change. After editing Compose UI source, call `render_preview` for an affected preview and look at the result before calling the change done; an edit you haven't rendered isn't done. If that surface is unavailable, say so and never claim to have seen the result from source or JSON alone. Never fake a render: no hand-built HTML, CSS or SVG mock of a preview; only real renders count, and a failed render is reported as failed.
 - **R2 — Use typed tools with schemas:** prefer validated MCP or CLI operations; if raw JSON is unavoidable, validate it before saving and render it again afterwards.

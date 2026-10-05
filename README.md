@@ -6,6 +6,8 @@ holds only the MCP and harness wiring; the Compose skills stay canonical in
 [`yschimke/skills`](https://github.com/yschimke/skills).
 
 Something not working? See [Troubleshooting](docs/troubleshooting.md).
+Per-host details (MCP registration, skill locations, cloud sandboxes, CI sessions):
+[Host setup notes](docs/host-setup.md).
 What works where: [status for launch](docs/harness-matrix.md#status-for-launch).
 
 ## Quick start

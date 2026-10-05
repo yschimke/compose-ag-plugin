@@ -86,14 +86,9 @@ when it names a host, or configures, installs or works around one.
 | Installing into a host, host detection, host quirks and fallbacks | this repository (`*-setup`, `harness-notes`) |
 | Cloud sandboxes of a particular host, and CI agent sessions such as `claude.yml` | this repository |
 
-Today these sit on the wrong side, in yschimke/skills, and should move here, each leaving a short
-pointer behind:
-
-- `skills/compose-preview/references/agent-cloud.md` and `claude-cloud.md`: cloud sandboxes per
-  host.
-- The host-install and host-detection parts of `skills/compose-preview/references/mcp.md` and
-  `setup.md`: `mcp install --antigravity` and `--codex`, and the `~/.claude/plugins/…` paths.
-- `skills/compose-preview-review/references/ci-agent-sessions.md`: `claude.yml` sessions.
+These moved here on 2026-10-05 into [`host-setup.md`](host-setup.md), each leaving a pointer
+behind in yschimke/skills: the per-host parts of `agent-cloud.md`, `mcp.md` and `setup.md`, and the
+`claude.yml` specifics of `ci-agent-sessions.md`. `claude-cloud.md`, a stub, was deleted.
 
 The skill bundles under yschimke/skills' `plugins/` stay where they are. This repository's
 marketplace and Antigravity's install-by-URL both point at them, so they are distribution output,

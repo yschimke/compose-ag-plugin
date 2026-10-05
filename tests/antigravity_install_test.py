@@ -21,7 +21,9 @@ imports = json.load(open(state))
 args = sys.argv[2:]
 with open(state + ".log", "a") as log:
     log.write(" ".join(args) + "\n")
-if args[0] == "list":
+if args[0] == "list" and not imports:
+    print("No imported plugins.")  # agy 1.2.x prints text, not JSON, when nothing is installed
+elif args[0] == "list":
     print(json.dumps({"imports": imports}, indent=2))
 elif args[0] == "uninstall":
     for i, entry in enumerate(imports):
@@ -44,9 +46,9 @@ BEFORE = [
 ]
 
 
-def run(tmp: Path, *args: str) -> tuple[subprocess.CompletedProcess, list[dict], list[str]]:
+def run(tmp: Path, *args: str, before: list = BEFORE) -> tuple[subprocess.CompletedProcess, list[dict], list[str]]:
     state = tmp / "state.json"
-    state.write_text(json.dumps(BEFORE))
+    state.write_text(json.dumps(before))
     log = tmp / "state.json.log"
     log.unlink(missing_ok=True)
     env = dict(os.environ, AGY_STATE=str(state), PATH=f"{tmp}{os.pathsep}{os.environ['PATH']}")
@@ -87,6 +89,12 @@ def main() -> None:
         assert result.returncode == 0, result.stdout + result.stderr
         assert after == BEFORE and calls == [], calls
         assert "$ agy plugin install https://github.com/yschimke/compose-agent-plugins/tree/main/plugins/compose-preview" in result.stdout
+
+        # A clean machine: `agy plugin list` says "No imported plugins." instead of JSON.
+        result, after, calls = run(tmp, "--catalogs", before=[])
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert sorted(e["name"] for e in after) == ["compose-catalogs", "compose-preview", "compose-skills"], after
+        assert not [c for c in calls if c.startswith("uninstall ")], calls
     print("antigravity install tests passed")
 
 

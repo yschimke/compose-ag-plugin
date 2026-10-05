@@ -50,6 +50,8 @@ def agy(*args: str) -> str:
 
 def imports() -> list[dict]:
     listing = agy("list")
+    if "no imported plugins" in listing.lower():  # agy 1.2.x prints this instead of JSON when empty
+        return []
     try:
         return json.loads(listing[listing.index("{"):]).get("imports", [])
     except (ValueError, AttributeError):

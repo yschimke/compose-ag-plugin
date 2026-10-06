@@ -13,6 +13,9 @@ see that repository's README for install steps in each harness.
 
 - An MCP server entry, `compose-preview-catalog`, for the remote server at
   `https://preview.coo.ee/mcp` (Streamable HTTP).
+- The registered Compose Preview app for Codex and ChatGPT. Its in-chat viewer
+  shows preview-server renders and review controls; the full UI Builder remains
+  the separate editor linked from that viewer.
 - The `harness-notes` skill, which summarizes the
   [agent rules](https://github.com/yschimke/compose-agent-plugins/blob/main/docs/agent-rules.md)
   for the active harness.

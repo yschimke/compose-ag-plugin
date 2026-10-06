@@ -30,9 +30,11 @@ compose-preview mcp install
 ```
 
 `compose-catalogs` (hosted Material 3 and Wear catalogs, UI Builder) needs no
-local toolchain. Then pick your harness. In every harness, open your Compose
-project and try: **"render the `ListScreenPreview`"** (use one of your own
-preview function names).
+local toolchain. In Codex and ChatGPT it also declares the registered Compose
+Preview app: the app hosts the preview/review surface returned by the server,
+while the full UI Builder stays in its dedicated editor. Then pick your harness.
+In every harness, open your Compose project and try: **"render the
+`ListScreenPreview`"** (use one of your own preview function names).
 
 ### Antigravity
 

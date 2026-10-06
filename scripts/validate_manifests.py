@@ -28,6 +28,7 @@ from generate import (
     render_hooks,
     render_mcp_servers,
     render_registry_server,
+    validate_apps,
 )
 
 
@@ -448,6 +449,7 @@ def main() -> None:
             keywords=plugin.get("keywords", []),
             skills=plugin.get("skills", []),
             mcp=plugin.get("mcp", []),
+            apps=validate_apps(name, plugin.get("apps", {})),
             interface=plugin.get("interface"),
             hooks=plugin.get("hooks", []),
             onboarding_skill=plugin.get("onboardingSkill"),
@@ -457,6 +459,13 @@ def main() -> None:
         )
         if codex != expected_codex:
             raise ValueError(f"{root}/.codex-plugin/plugin.json does not match the Codex contract")
+        apps = validate_apps(name, plugin.get("apps", {}))
+        app_manifest = root / ".app.json"
+        if apps:
+            if read_json(app_manifest) != {"apps": apps}:
+                raise ValueError(f"{app_manifest} does not match the app contract")
+        elif app_manifest.exists():
+            raise ValueError(f"{root} contains stale app configuration")
         for skill_path in expected_skills:
             validate_skill(skill_path)
             shared_source = SKILL_SOURCE_ROOT / skill_path.parent.name / "SKILL.md"

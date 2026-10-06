@@ -51,6 +51,8 @@ def generated_paths(source: object) -> tuple[list[Path], set[str]]:
         )
         if plugin.get("mcp"):
             paths.extend((plugin_root / "mcp_config.json", plugin_root / ".mcp.json"))
+        if plugin.get("apps"):
+            paths.append(plugin_root / ".app.json")
         skills = plugin.get("skills", [])
         if not isinstance(skills, list) or not all(isinstance(skill, str) for skill in skills):
             raise ValueError(f"{name}.skills must be a list of strings")
@@ -137,11 +139,22 @@ def previous_asset_paths(source: object) -> list[Path]:
     return paths
 
 
+def previous_app_paths(source: object) -> list[Path]:
+    """Return tracked app manifests so removing an app cannot leave stale generated output."""
+    paths: list[Path] = []
+    for plugin in source["plugins"]:
+        manifest = Path("plugins") / plugin["name"] / ".app.json"
+        if not git("cat-file", "-e", f"HEAD:{manifest}").returncode:
+            paths.append(ROOT / manifest)
+    return paths
+
+
 def main() -> None:
     source = json.loads(SOURCE.read_text(encoding="utf-8"))
     paths, plugin_names = generated_paths(source)
     paths.extend(previous_hook_paths(source))
     paths.extend(previous_asset_paths(source))
+    paths.extend(previous_app_paths(source))
     paths = list(dict.fromkeys(paths))
     errors = []
 

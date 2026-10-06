@@ -449,7 +449,7 @@ def main() -> None:
             keywords=plugin.get("keywords", []),
             skills=plugin.get("skills", []),
             mcp=plugin.get("mcp", []),
-            apps=validate_apps(name, plugin.get("apps", {})),
+            apps=validate_apps(name, plugin.get("apps", {}), plugin.get("mcp", [])),
             interface=plugin.get("interface"),
             hooks=plugin.get("hooks", []),
             onboarding_skill=plugin.get("onboardingSkill"),
@@ -459,7 +459,7 @@ def main() -> None:
         )
         if codex != expected_codex:
             raise ValueError(f"{root}/.codex-plugin/plugin.json does not match the Codex contract")
-        apps = validate_apps(name, plugin.get("apps", {}))
+        apps = validate_apps(name, plugin.get("apps", {}), plugin.get("mcp", []))
         app_manifest = root / ".app.json"
         if apps:
             if read_json(app_manifest) != {"apps": apps}:

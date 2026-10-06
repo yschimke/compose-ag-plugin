@@ -43,6 +43,7 @@ SEMVER = re.compile(
     r"(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?"
     r"(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$"
 )
+APP_ID = re.compile(r"^(?:asdk_app|connector|templated_apps)_[A-Za-z0-9][A-Za-z0-9_-]*$")
 CODEX_INTERFACE_STRINGS = (
     "displayName",
     "shortDescription",
@@ -144,26 +145,53 @@ def onboarding_skill_path(plugin_name: str, skill: object, skills: list[str]) ->
     return f"./skills/{name}/SKILL.md"
 
 
-def validate_apps(plugin_name: str, value: object) -> dict[str, dict[str, str]]:
+def validate_apps(
+    plugin_name: str, value: object, mcp: object = None
+) -> dict[str, dict[str, object]]:
     if not isinstance(value, dict):
         raise ValueError(f"{plugin_name}.apps must be an object")
-    rendered: dict[str, dict[str, str]] = {}
+    rendered: dict[str, dict[str, object]] = {}
     for name, app in value.items():
         if not isinstance(name, str) or not name.strip():
             raise ValueError(f"{plugin_name}.apps keys must be non-empty strings")
         if not isinstance(app, dict):
             raise ValueError(f"{plugin_name}.apps.{name} must be an object")
-        unknown = set(app) - {"id", "category"}
+        unknown = set(app) - {"id", "category", "optional", "required"}
         if unknown:
             raise ValueError(
                 f"{plugin_name}.apps.{name} has unsupported fields: {', '.join(sorted(unknown))}"
             )
-        rendered_app = {"id": require_string(app.get("id"), f"{plugin_name}.apps.{name}.id")}
+        app_id = require_string(app.get("id"), f"{plugin_name}.apps.{name}.id")
+        if APP_ID.fullmatch(app_id) is None:
+            raise ValueError(
+                f"{plugin_name}.apps.{name}.id must use an asdk_app_, connector_, or "
+                "templated_apps_ identifier"
+            )
+        rendered_app: dict[str, object] = {"id": app_id}
         if "category" in app:
             rendered_app["category"] = require_string(
                 app.get("category"), f"{plugin_name}.apps.{name}.category"
             )
+        for field in ("optional", "required"):
+            if field in app:
+                if not isinstance(app[field], bool):
+                    raise ValueError(f"{plugin_name}.apps.{name}.{field} must be a boolean")
+                rendered_app[field] = app[field]
         rendered[name] = rendered_app
+    if mcp is not None:
+        if not isinstance(mcp, list):
+            raise ValueError(f"{plugin_name}.mcp must be a list")
+        mcp_names = {
+            require_string(entry.get("name"), f"{plugin_name}.mcp.name")
+            for entry in mcp
+            if isinstance(entry, dict)
+        }
+        unmatched = set(rendered) - mcp_names
+        if unmatched:
+            raise ValueError(
+                f"{plugin_name}.apps aliases must match declared MCP server names: "
+                f"{', '.join(sorted(unmatched))}"
+            )
     return rendered
 
 
@@ -788,7 +816,7 @@ def main() -> None:
         hooks = plugin.get("hooks", [])
         assets = plugin.get("assets", [])
         mcp = plugin.get("mcp", [])
-        apps = validate_apps(name, plugin.get("apps", {}))
+        apps = validate_apps(name, plugin.get("apps", {}), mcp)
         interface = plugin.get("interface")
         user_config = validate_user_config(name, plugin.get("userConfig", {}))
         if name in names:

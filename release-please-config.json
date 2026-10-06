@@ -1,0 +1,25 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "simple",
+  "include-v-in-tag": true,
+  "versioning": "always-bump-minor",
+  "packages": {
+    ".": {
+      "package-name": "compose-agent-plugins",
+      "include-component-in-tag": false,
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "src/plugins.json",
+          "jsonpath": "$.plugins[*].version"
+        },
+        {
+          "type": "json",
+          "path": "src/plugins.json",
+          "jsonpath": "$.gemini.version"
+        }
+      ]
+    }
+  },
+  "initial-version": "0.4.0"
+}

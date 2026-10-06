@@ -299,3 +299,24 @@ Other scripts:
   `opencode mcp list`, and optionally one timed model turn.
 - `python3 scripts/edit-render-bench.py --help`: time the edit → notify →
   render loop against the local server without a model.
+
+## Releases
+
+Release Please opens a release PR from Conventional Commits on `main`. A human merges it to
+create a `vX.Y.Z` tag and GitHub release; releases always bump the minor version. The baseline
+is the plugins' existing `0.3.0` version. The release PR updates `version.txt`, the release
+manifest, and the local plugin and Gemini versions in `src/plugins.json`, then regenerates the
+harness manifests with `scripts/generate.py`. Do not bump generated manifests by hand.
+
+The validation workflow is explicitly dispatched on the release branch, because PRs and commits
+created with `GITHUB_TOKEN` do not start `pull_request` workflows. The release workflow can also
+be dispatched on `main` to retry an interrupted pass. No PR is automatically merged.
+
+Tags version this repository's plugin packaging. The MCP Registry version still belongs to
+`compose-preview-server` and is published by `mcp-registry.yml`; release-please does not bump it.
+The externally referenced skill bundles keep their own release process in `yschimke/skills`.
+
+Repository setup: enable **Allow GitHub Actions to create and approve pull requests**, keeping
+default workflow permissions read-only. The workflows request write access only in release jobs.
+An optional `RELEASE_PLEASE_TOKEN` can supply a repository-scoped token when GitHub's default
+token cannot create a release containing workflow changes; ordinary runs use `GITHUB_TOKEN`.

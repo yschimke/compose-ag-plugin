@@ -1,16 +1,22 @@
 name: Plugin validation
 
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches:
       - main
+
+permissions:
+  contents: read
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - name: Validate release metadata
+        run: python3 scripts/check-release.py
       - name: Generate manifests and check for drift
         run: python3 scripts/generate.py && git diff --exit-code
       - name: Validate JSON and plugin contracts

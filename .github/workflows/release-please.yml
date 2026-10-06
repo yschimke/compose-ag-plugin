@@ -1,0 +1,82 @@
+name: Release Please
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-please-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      pr: ${{ steps.release.outputs.pr }}
+    steps:
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        id: release
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  regenerate-manifests:
+    needs: release-please
+    if: needs.release-please.outputs.pr != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ fromJSON(needs.release-please.outputs.pr).headBranchName }}
+          persist-credentials: false
+      - name: Regenerate release manifests from the canonical source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_PR: ${{ fromJSON(needs.release-please.outputs.pr).number }}
+          RELEASE_BRANCH: ${{ fromJSON(needs.release-please.outputs.pr).headBranchName }}
+        run: |
+          set -euo pipefail
+          python3 scripts/check-release.py
+          python3 scripts/generate.py
+          python3 scripts/validate_manifests.py
+          git add plugins .claude-plugin .cursor-plugin gemini-extension.json server.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore: regenerate release manifests'
+          git fetch origin main
+          if [ "$(gh pr view "$RELEASE_PR" --json state --jq .state)" != "OPEN" ]; then
+            echo "::error::release PR is no longer open; refusing to push"
+            exit 1
+          fi
+          git -c credential.helper= -c 'credential.helper=!gh auth git-credential' \
+            push origin "HEAD:$RELEASE_BRANCH"
+
+  validate-release-pr:
+    needs: [release-please, regenerate-manifests]
+    if: needs.release-please.outputs.pr != ''
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      # GITHUB_TOKEN-created PRs and commits do not trigger pull_request workflows.
+      - name: Run read-only checks on the release PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_BRANCH: ${{ fromJSON(needs.release-please.outputs.pr).headBranchName }}
+        run: gh workflow run plugins.yml --ref "$RELEASE_BRANCH"

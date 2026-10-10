@@ -5,6 +5,15 @@ The per-host details that the generic skills in
 which tools to use; this page says how each agent host is wired up for them. It moved here from
 yschimke/skills, which keeps a pointer at each place it was.
 
+## Canonical workflow skills
+
+Enable the default `compose-skills` bundle alongside this marketplace's host
+plugins. Per-host installation commands are in the
+[README](../README.md#install); Codex's `/plugins` lists `compose-skills` from
+this marketplace, backed by `yschimke/skills`. Confirm both `compose-preview`
+and `compose-ui-builder` are discoverable before calling design-to-code setup
+complete. Do not add a second copy of the same skills from another marketplace.
+
 ## Registering the local MCP server
 
 `compose-preview mcp install` registers the local MCP server with every agent host it detects,

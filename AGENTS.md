@@ -30,7 +30,14 @@ This repository owns the harness-specific integrations for Compose previews and 
   ask for clarification before merging. A request to implement, fix, review,
   or open a PR does not by itself authorize merging. Honor required checks,
   reviews, and branch protections.
-- After opening or updating a PR, subscribe to its GitHub notification thread and verify that the subscription is active where the harness supports it; otherwise say so in the PR. Before pushing and before finishing, check every PR this agent opened or actively drives for unresolved human and Codex review comments.
+- **Subscribe to PR notifications by default.** After opening or updating a PR,
+  check the signed-in GitHub account's thread subscription. If it is already
+  `SUBSCRIBED`, keep it; otherwise subscribe when the connection supports it,
+  then verify the state. If subscription reads or writes are unavailable, state
+  that limitation in the PR instead of claiming success. Before pushing and
+  before finishing, check every PR you opened or actively drive for unresolved
+  human and automated review comments. A GitHub subscription does not keep an
+  agent session running or provide background monitoring by itself.
 - Never hand-edit generated manifests. Edit `src/plugins.json`, run `python3 scripts/generate.py`, and commit the resulting manifest files together.
 
 ## Review guidelines

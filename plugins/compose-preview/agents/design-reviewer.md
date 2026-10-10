@@ -61,6 +61,15 @@ Only publish discussion or review records when the task authorizes it.
    source, measurements and real renders yourself. Name missing capabilities
    explicitly; lack of a key or a reviewer host is not a clean review.
 
+For a requested accessibility/layout audit, ask for advertised render details
+so an app-capable host can show measurements and overlays, and read full data
+products when needed. Always return the compact review to the parent context
+for presentation in chat. For a saved UI Builder guideline result, include its
+canonical editor link and name the Issues panel; explicitly distinguish an
+unsaved review. If a further review is useful, return a prompt naming its
+subject and missing checks. Do not invent audit-launch URLs or treat an MCP App
+review request as a completed verdict.
+
 Return only:
 
 - `Verdict: pass`, `pass with notes`, `fail`, or `partial review` when

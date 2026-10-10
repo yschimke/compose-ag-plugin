@@ -43,6 +43,21 @@ names and schemas rather than copying Claude's namespace. Review records are
 metadata at the design's home, not node edits or human approval. Missing frames,
 stale results and skipped rules produce partial coverage, not a clean pass.
 
+**Show audit results.** Return the compact verdict, subject/revision, freshness,
+answered/unchecked coverage and evidence links in chat on every host. In
+Codex Desktop or another MCP Apps host, request advertised render `details`
+for a requested accessibility/layout audit so the person can inspect findings
+and overlays in the viewer; fetch full data separately if the tool only returns
+a summary. Guideline verdicts are separate from those measured checks. For a
+UI Builder review saved with `ui_builder_record_guidelines`, return the real
+editor URL and point to its Issues panel. Say when a review could not be saved.
+The server viewer may offer **Review design guidelines**, sending the current
+subject to chat, or a copyable prompt when messages are unavailable. Follow the
+canonical checklist for that request; no paid provider run is implied. In CLI,
+OpenCode, static cards and chat surfaces, show the same findings with real
+artifact links/paths and a concrete follow-up prompt when useful. Never invent
+an audit-launch link or claim a request is a finished review.
+
 **Startup.** The first local render in a session prepares the project: a Gradle bootstrap the first
 time a build is seen (minutes when cold), then the render daemon (about 15–20 s), so a first
 `render_preview` can come back `pending` or take far longer than the next one. When the result is

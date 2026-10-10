@@ -59,3 +59,21 @@ allowlists ship; they do not establish that a host displayed pictures or ran a
 model review. Record each live run there with exact commits and evidence.
 Existing packaged-agent discovery observations remain in the
 [harness matrix](harness-matrix.md); they are not guidelines-review passes.
+
+## Results and review actions
+
+Every host returns the verdict and coverage in chat with subject/revision,
+freshness, model and evidence links. The agent uses the canonical checklist's
+presentation rules; showing a viewer or requesting a review is not a pass.
+
+| Surface | Presentation and next review |
+| --- | --- |
+| Codex Desktop / MCP Apps host | Request supported accessibility/layout render details for that audit. The server viewer can show measurements and overlays. Its Review design guidelines action, when available, requests a keyless agent review in chat; failed or unsupported messaging exposes a copyable prompt. Guideline verdicts still appear in chat. |
+| UI Builder in any host | Save the requested guideline result when permitted. Return the canonical editor URL and point to Issues for the shared model/revision result. Explicitly report unsaved results and stale coverage. |
+| Claude Code, OpenCode, CLI and chat integrations | Return the same compact review and actual images/artifact links or paths. Offer a prompt naming the subject and missing checks when another review is useful. |
+| Antigravity / static viewer | Show the real render/card and findings in chat. A viewer with the new review section provides a selectable request; copied older viewer assets require an update before they show it. |
+
+Do not invent a browser route that runs an audit. The portable viewer packaged
+here is pinned to a released server asset; an unreleased server change does
+not update installed cards. Host messaging and visual results require a live
+host check before claiming they work in Codex or another app host.

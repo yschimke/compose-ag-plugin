@@ -127,7 +127,6 @@ registration rule. For a reachable server's `authorization_required`, use the
 advertised access-grant flow instead. Do not bootstrap a local environment or
 clone the hosted catalog to recover either connection.
 
-
 ### Codex local design-to-code acceptance
 
 Install the default `compose-skills` bundle as well as this marketplace's

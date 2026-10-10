@@ -17,6 +17,8 @@ from generate import (
     HOOK_SOURCE_ROOT,
     LICENSE_SOURCE,
     MARKETPLACE_NAME,
+    OPENCODE_LEDGER_NAME,
+    OPENCODE_ROOT,
     README_SOURCE_ROOT,
     RULES_SOURCE_ROOT,
     RULES_TARGET,
@@ -30,6 +32,7 @@ from generate import (
     render_gemini_extension,
     render_hooks,
     render_mcp_servers,
+    render_opencode_bundle,
     render_registry_server,
     validate_apps,
 )
@@ -649,6 +652,19 @@ def main() -> None:
         raise ValueError("gemini-extension.json does not match the Gemini CLI contract")
     if read_json(ROOT / "server.json") != render_registry_server(source, plugins):
         raise ValueError("server.json does not match the MCP Registry contract")
+    opencode_files = render_opencode_bundle(source, plugins)
+    for relative, content in opencode_files.items():
+        if (OPENCODE_ROOT / relative).read_bytes() != content:
+            raise ValueError(f"opencode/{relative} does not match its source")
+    if read_json(OPENCODE_ROOT / OPENCODE_LEDGER_NAME) != sorted(opencode_files):
+        raise ValueError(f"opencode/{OPENCODE_LEDGER_NAME} does not list the generated bundle")
+    actual = {
+        str(path.relative_to(OPENCODE_ROOT))
+        for path in OPENCODE_ROOT.rglob("*")
+        if path.is_file() and path.name != OPENCODE_LEDGER_NAME
+    }
+    if actual != set(opencode_files):
+        raise ValueError(f"opencode/ has unexpected files: {sorted(actual - set(opencode_files))}")
 
 
 if __name__ == "__main__":

@@ -13,12 +13,15 @@ from generate import (
     ANTIGRAVITY_HOOK_MANIFEST,
     ASSET_LEDGER_NAME,
     HOOK_MANIFESTS,
+    OPENCODE_LEDGER_NAME,
+    OPENCODE_ROOT,
     ROOT,
     RULES_TARGET,
     SOURCE,
     hook_script,
     codex_skill_config,
     render_antigravity_hooks,
+    render_opencode_bundle,
 )
 
 
@@ -31,7 +34,9 @@ def generated_paths(source: object) -> tuple[list[Path], set[str]]:
         ROOT / ".cursor-plugin" / "marketplace.json",
         ROOT / "gemini-extension.json",
         ROOT / "server.json",
+        OPENCODE_ROOT / OPENCODE_LEDGER_NAME,
     ]
+    paths.extend(OPENCODE_ROOT / relative for relative in render_opencode_bundle(source, source["plugins"]))
     plugin_names: set[str] = set()
     for plugin in source["plugins"]:
         if not isinstance(plugin, dict) or not isinstance(plugin.get("name"), str):

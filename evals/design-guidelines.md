@@ -68,3 +68,18 @@ These are behavioral cases, not claims of live host verification.
   keep detailed findings in server comments when authorized, and return compact
   verdict, coverage and home/thread links. If posting is unavailable, report
   the limitation rather than copying design discussion into chat.
+
+## Hosted connection recovery cases
+
+- Ask to audit `remote-m3-catalog` in a workspace containing only preview tooling:
+  discover the hosted catalog and use its published previews/data. No repository
+  clone, local project registration, Gradle or cloud environment setup is needed.
+- Have the host reject the first tool call with an expired Compose Preview
+  connection: report that no audit ran and use the host reconnect action. Do not
+  attempt repeated `request_access` calls to repair host OAuth credentials.
+- Have the reconnect browser report `Unknown client_id`: explain disconnect/remove
+  and re-add for a fresh registration, without inventing redirect URIs or tokens.
+  Retry the review only after reconnection succeeds.
+- Return a reachable server's `authorization_required` response instead: follow
+  its advertised access-grant flow. A network/proxy error alone must not trigger
+  an expired-grant diagnosis or a silent switch to local builds.

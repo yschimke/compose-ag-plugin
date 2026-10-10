@@ -14,6 +14,7 @@ from generate import (
     ASSET_LEDGER_NAME,
     HOOK_MANIFESTS,
     ROOT,
+    RULES_TARGET,
     SOURCE,
     hook_script,
     codex_skill_config,
@@ -54,6 +55,8 @@ def generated_paths(source: object) -> tuple[list[Path], set[str]]:
             paths.extend((plugin_root / "mcp_config.json", plugin_root / ".mcp.json"))
         if plugin.get("apps"):
             paths.append(plugin_root / ".app.json")
+        if plugin.get("rules"):
+            paths.append(plugin_root / RULES_TARGET)
         skills = plugin.get("skills", [])
         if not isinstance(skills, list) or not all(isinstance(skill, str) for skill in skills):
             raise ValueError(f"{name}.skills must be a list of strings")

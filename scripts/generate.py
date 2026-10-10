@@ -17,6 +17,9 @@ HOOK_SOURCE_ROOT = ROOT / "src" / "hooks"
 ASSET_SOURCE_ROOT = ROOT / "src" / "assets"
 ASSET_LEDGER_NAME = ".generated-assets.json"
 README_SOURCE_ROOT = ROOT / "src" / "readmes"
+RULES_SOURCE_ROOT = ROOT / "src" / "rules"
+# Antigravity loads a plugin's rules/AGENTS.md on every turn (harness matrix Q6); Claude Code does not.
+RULES_TARGET = "rules/AGENTS.md"
 LICENSE_SOURCE = ROOT / "LICENSE"
 # Claude Code reads hooks/hooks.json by default. Codex would read that same file,
 # so the Codex manifest names its own copy, whose commands pass --harness=codex.
@@ -241,6 +244,23 @@ def write_agent(plugin_root: Path, agent: str) -> None:
     if not source.is_file():
         raise ValueError(f"missing shared agent source: {source.relative_to(ROOT)}")
     target = plugin_root / "agents" / f"{agent}.md"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+
+
+def write_rules(plugin_root: Path, plugin_name: str, rules: object) -> None:
+    """Copy src/rules/<rules>.md to the plugin's rules/AGENTS.md, or remove a stale copy."""
+    target = plugin_root / RULES_TARGET
+    if rules is None:
+        target.unlink(missing_ok=True)
+        if target.parent.is_dir() and not any(target.parent.iterdir()):
+            target.parent.rmdir()
+        return
+    if not isinstance(rules, str) or not SKILL_NAME.fullmatch(rules):
+        raise ValueError(f"{plugin_name}.rules must name a src/rules/<name>.md file")
+    source = RULES_SOURCE_ROOT / f"{rules}.md"
+    if not source.is_file():
+        raise ValueError(f"missing shared rules source: {source.relative_to(ROOT)}")
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
 
@@ -867,6 +887,7 @@ def main() -> None:
             write_skill(root, skill)
         codex_skills, codex_skills_path = codex_skill_config(plugin)
         write_codex_skills(root, plugin)
+        write_rules(root, name, plugin.get("rules"))
         synchronize_generated_agents(root, agents)
         for agent in agents:
             write_agent(root, agent)

@@ -109,6 +109,7 @@
         "compose-preview-setup"
       ],
       "onboardingSkill": "compose-preview-setup",
+      "rules": "compose-preview",
       "agents": [
         "design-reviewer"
       ],

@@ -330,3 +330,16 @@ Repository setup: enable **Allow GitHub Actions to create and approve pull reque
 default workflow permissions read-only. The workflows request write access only in release jobs.
 An optional `RELEASE_PLEASE_TOKEN` can supply a repository-scoped token when GitHub's default
 token cannot create a release containing workflow changes; ordinary runs use `GITHUB_TOKEN`.
+
+## Repository merge policy
+
+Repository settings and required checks are managed by
+[yschimke/renovate-config](https://github.com/yschimke/renovate-config/tree/main/repo-policy).
+Pull requests use Conventional Commit titles and squash merges. Run
+`scripts/install-git-hooks.sh` to enable the same attribution checks locally.
+
+Release Please starts its first changelog after commit
+`3fba026254eade5fd850916efa08885ed501c4c9`, which established the `0.3.0`
+version manifest. The `bootstrap-sha` setting is ignored after the first release
+PR merges; subsequent notes use the preceding release. This avoids importing
+all pre-baseline history into the first automated release.

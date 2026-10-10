@@ -1,7 +1,65 @@
 ---
-name: design-reviewer
-description: Review Compose previews or UI Builder designs without editing them; run semantic, accessibility, font-scale, device and catalog-guidelines checks and return a compact verdict with viewer links.
-tools: ["Read", "Glob", "Grep", "WebFetch", "Bash(compose-preview --version:*)", "Bash(compose-preview show:*)", "Bash(compose-preview a11y:*)", "Bash(compose-preview --help:*)", "Bash(compose-preview guidelines:*)", "Bash(gh pr view:*)", "Bash(gh pr comment:*)", "Bash(gh issue view:*)", "Bash(gh issue comment:*)", "mcp__plugin_compose-preview_compose-preview-mcp__status", "mcp__plugin_compose-preview_compose-preview-mcp__register_project", "mcp__plugin_compose-preview_compose-preview-mcp__list_projects", "mcp__plugin_compose-preview_compose-preview-mcp__find_previews_for_file", "mcp__plugin_compose-preview_compose-preview-mcp__list_devices", "mcp__plugin_compose-preview_compose-preview-mcp__render_preview", "mcp__plugin_compose-preview_compose-preview-mcp__render_matrix", "mcp__plugin_compose-preview_compose-preview-mcp__diff_semantics", "mcp__plugin_compose-preview_compose-preview-mcp__history_list", "mcp__plugin_compose-preview_compose-preview-mcp__history_diff", "mcp__plugin_compose-preview_compose-preview-mcp__list_data_products", "mcp__plugin_compose-preview_compose-preview-mcp__get_preview_data", "mcp__plugin_compose-preview_compose-preview-mcp__preview_guidelines_prompt", "mcp__plugin_compose-preview_compose-preview-mcp__check_preview_guidelines", "mcp__plugin_compose-catalogs_compose-preview-catalog__status", "mcp__plugin_compose-catalogs_compose-preview-catalog__catalog_list_projects", "mcp__plugin_compose-catalogs_compose-preview-catalog__catalog_list_previews", "mcp__plugin_compose-catalogs_compose-preview-catalog__catalog_list_devices", "mcp__plugin_compose-catalogs_compose-preview-catalog__catalog_render_preview", "mcp__plugin_compose-catalogs_compose-preview-catalog__catalog_render_matrix", "mcp__plugin_compose-catalogs_compose-preview-catalog__catalog_diff_semantics", "mcp__plugin_compose-catalogs_compose-preview-catalog__catalog_history_list", "mcp__plugin_compose-catalogs_compose-preview-catalog__catalog_history_read", "mcp__plugin_compose-catalogs_compose-preview-catalog__catalog_history_diff", "mcp__plugin_compose-catalogs_compose-preview-catalog__catalog_list_data_products", "mcp__plugin_compose-catalogs_compose-preview-catalog__catalog_get_preview_data", "mcp__plugin_compose-catalogs_compose-preview-catalog__ui_builder_list_catalogs", "mcp__plugin_compose-catalogs_compose-preview-catalog__ui_builder_list_designs", "mcp__plugin_compose-catalogs_compose-preview-catalog__ui_builder_get_design", "mcp__plugin_compose-catalogs_compose-preview-catalog__ui_builder_view", "mcp__plugin_compose-catalogs_compose-preview-catalog__ui_builder_compare_reference", "mcp__plugin_compose-catalogs_compose-preview-catalog__ui_builder_check_design", "mcp__plugin_compose-catalogs_compose-preview-catalog__ui_builder_guidelines_prompt", "mcp__plugin_compose-catalogs_compose-preview-catalog__ui_builder_get_guidelines", "mcp__plugin_compose-catalogs_compose-preview-catalog__ui_builder_record_guidelines", "mcp__plugin_compose-catalogs_compose-preview-catalog__ui_builder_render_design_matrix", "mcp__plugin_compose-catalogs_compose-preview-catalog__ui_builder_render_native", "mcp__plugin_compose-catalogs_compose-preview-catalog__ui_builder_list_comments", "mcp__plugin_compose-catalogs_compose-preview-catalog__ui_builder_await_comments", "mcp__plugin_compose-catalogs_compose-preview-catalog__ui_builder_post_comment", "mcp__plugin_compose-catalogs_compose-preview-catalog__ui_builder_acknowledge_comment", "mcp__plugin_compose-catalogs_compose-preview-catalog__ui_builder_react_to_comment"]
+description: "Review Compose previews or UI Builder designs without editing them; run semantic, accessibility, font-scale, device and catalog-guidelines checks and return a compact verdict with viewer links."
+mode: subagent
+permission:
+  edit: deny
+  webfetch: allow
+  bash:
+    "*": deny
+    "compose-preview --version*": allow
+    "compose-preview show*": allow
+    "compose-preview a11y*": allow
+    "compose-preview --help*": allow
+    "compose-preview guidelines*": allow
+    "gh pr view*": allow
+    "gh pr comment*": allow
+    "gh issue view*": allow
+    "gh issue comment*": allow
+tools:
+  "compose-preview-catalog_*": false
+  "compose-preview-mcp_*": false
+  "compose-preview-mcp_status": true
+  "compose-preview-mcp_register_project": true
+  "compose-preview-mcp_list_projects": true
+  "compose-preview-mcp_find_previews_for_file": true
+  "compose-preview-mcp_list_devices": true
+  "compose-preview-mcp_render_preview": true
+  "compose-preview-mcp_render_matrix": true
+  "compose-preview-mcp_diff_semantics": true
+  "compose-preview-mcp_history_list": true
+  "compose-preview-mcp_history_diff": true
+  "compose-preview-mcp_list_data_products": true
+  "compose-preview-mcp_get_preview_data": true
+  "compose-preview-mcp_preview_guidelines_prompt": true
+  "compose-preview-mcp_check_preview_guidelines": true
+  "compose-preview-catalog_status": true
+  "compose-preview-catalog_catalog_list_projects": true
+  "compose-preview-catalog_catalog_list_previews": true
+  "compose-preview-catalog_catalog_list_devices": true
+  "compose-preview-catalog_catalog_render_preview": true
+  "compose-preview-catalog_catalog_render_matrix": true
+  "compose-preview-catalog_catalog_diff_semantics": true
+  "compose-preview-catalog_catalog_history_list": true
+  "compose-preview-catalog_catalog_history_read": true
+  "compose-preview-catalog_catalog_history_diff": true
+  "compose-preview-catalog_catalog_list_data_products": true
+  "compose-preview-catalog_catalog_get_preview_data": true
+  "compose-preview-catalog_ui_builder_list_catalogs": true
+  "compose-preview-catalog_ui_builder_list_designs": true
+  "compose-preview-catalog_ui_builder_get_design": true
+  "compose-preview-catalog_ui_builder_view": true
+  "compose-preview-catalog_ui_builder_compare_reference": true
+  "compose-preview-catalog_ui_builder_check_design": true
+  "compose-preview-catalog_ui_builder_guidelines_prompt": true
+  "compose-preview-catalog_ui_builder_get_guidelines": true
+  "compose-preview-catalog_ui_builder_record_guidelines": true
+  "compose-preview-catalog_ui_builder_render_design_matrix": true
+  "compose-preview-catalog_ui_builder_render_native": true
+  "compose-preview-catalog_ui_builder_list_comments": true
+  "compose-preview-catalog_ui_builder_await_comments": true
+  "compose-preview-catalog_ui_builder_post_comment": true
+  "compose-preview-catalog_ui_builder_acknowledge_comment": true
+  "compose-preview-catalog_ui_builder_react_to_comment": true
 ---
 
 # Design reviewer

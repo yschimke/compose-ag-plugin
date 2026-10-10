@@ -1,13 +1,13 @@
 ---
 name: harness-notes
-description: Use whenever you change Compose UI code (composables, @Preview functions, themes) or render Compose previews, catalog components or UI Builder designs. Carries the mandatory cross-harness agent rules for compose-agent-plugins's tools, alongside the canonical yschimke/skills workflows.
+description: Use whenever you change Compose UI code (composables, @Preview functions, themes) or render or review Compose previews, catalog components or UI Builder designs. Carries the mandatory cross-harness agent rules for compose-agent-plugins's tools, alongside the canonical yschimke/skills workflows.
 ---
 
 # Harness notes
 
 Use the canonical `compose-preview` and `compose-ui-builder` skills from
 [`yschimke/skills`](https://github.com/yschimke/skills) for workflows. These notes only carry the
-rules that must remain consistent across Antigravity, Claude Code, and Codex. Per-host install, MCP registration, cloud sandbox and CI session details are in
+rules that must remain consistent across Antigravity, Claude Code, Codex and OpenCode. Per-host install, MCP registration, cloud sandbox and CI session details are in
 [`docs/host-setup.md`](https://github.com/yschimke/compose-agent-plugins/blob/main/docs/host-setup.md).
 
 - **R1 — See what the user sees:** inspect the surface where the person will judge a visual change. After editing Compose UI source, call `render_preview` for an affected preview and look at the result before calling the change done; an edit you haven't rendered isn't done. If that surface is unavailable, say so and never claim to have seen the result from source or JSON alone. Never fake a render: no hand-built HTML, CSS or SVG mock of a preview; only real renders count, and a failed render is reported as failed.
@@ -32,6 +32,16 @@ Pick the server by what is being rendered: the person's own `@Preview`s come fro
 apply to UI Builder designs, not to plain preview renders. Keep a simple render short: in Antigravity,
 follow `antigravity-viewer-card` (`render_preview preview=<Name>`, look at the PNG, a few bullets); elsewhere, one
 render call and a short reply.
+
+**Requested design review.** Load the canonical `compose-preview` skill's
+[catalog guidelines checklist](https://github.com/yschimke/skills/blob/main/skills/compose-preview/references/design-guidelines.md).
+In Claude Code or Antigravity, use the packaged `design-reviewer` when it is
+discoverable and the task allows delegation. In Codex, OpenCode, a catalog-only
+install or any host without that agent, run the same checklist in the current
+context; never stop at a failed agent lookup. Use this host's advertised tool
+names and schemas rather than copying Claude's namespace. Review records are
+metadata at the design's home, not node edits or human approval. Missing frames,
+stale results and skipped rules produce partial coverage, not a clean pass.
 
 **Startup.** The first local render in a session prepares the project: a Gradle bootstrap the first
 time a build is seen (minutes when cold), then the render daemon (about 15–20 s), so a first

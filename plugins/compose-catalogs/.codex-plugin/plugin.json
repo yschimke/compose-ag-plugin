@@ -15,18 +15,21 @@
     ],
     "category": "Developer Tools",
     "defaultPrompt": [
-      "Show the available Compose component catalogs."
+      "Show the available Compose component catalogs.",
+      "Review this UI Builder design against its catalog design guidelines."
     ],
     "developerName": "Yuri Schimke",
     "displayName": "Compose Catalogs",
-    "longDescription": "Discover Compose components, inspect their properties, and render catalog variants through Compose Preview.",
+    "longDescription": "Discover Compose components, render catalog variants, and review UI Builder designs against catalog guidelines through Compose Preview.",
     "shortDescription": "Discover and render Compose component catalogs."
   },
   "keywords": [
     "compose",
     "catalog",
     "material3",
-    "wear"
+    "wear",
+    "design-review",
+    "guidelines"
   ],
   "license": "Apache-2.0",
   "mcpServers": {

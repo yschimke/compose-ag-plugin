@@ -8,7 +8,9 @@
     "compose",
     "catalog",
     "material3",
-    "wear"
+    "wear",
+    "design-review",
+    "guidelines"
   ],
   "license": "Apache-2.0",
   "name": "compose-catalogs",

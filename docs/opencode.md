@@ -93,6 +93,16 @@ preview rendering, and UI Builder operations, remain in `yschimke/skills` so
 all harnesses use one source of truth. Do not install a same-named local copy on
 top of them.
 
+For a design review, the default skills include the
+[catalog guidelines checklist](https://github.com/yschimke/skills/blob/main/skills/compose-preview/references/design-guidelines.md).
+Run it in the current context: OpenCode does not install this repository's
+packaged reviewer agent. Discover the tools on the configured server; direct
+tool names use its prefix (for example
+`compose-preview-mcp_preview_guidelines_prompt`), or use the advertised Code
+Mode interface when enabled. The checklist needs neither MCP Apps nor
+elicitation nor a provider key for agent judgment. See
+[review setup and fallbacks](design-guidelines-review.md).
+
 Alternatively, from a checkout of `yschimke/skills`, symlink the two skill
 directories into OpenCode's global skill directory:
 

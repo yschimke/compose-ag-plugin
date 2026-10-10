@@ -28,16 +28,25 @@ download or install it.
   `COMPOSE_PREVIEW_GATE=1`. When enabled, it runs `git`, `compose-preview show`
   and `compose-preview a11y` on previews in changed Kotlin files, and keeps the
   agent working only when one fails to render or has accessibility errors.
-- The `harness-notes` and `antigravity-viewer-card` skills, the read-only
+- The `harness-notes` and `antigravity-viewer-card` skills, the
   `design-reviewer` agent, and the preview viewer bundle in `assets/`. The
   viewer is the unmodified `compose-preview-viewer.html` from a
   compose-preview-server release; its provenance file pins the tag and SHA-256.
 
+For requested design reviews, install the canonical `compose-skills` bundle
+from `yschimke/skills`. Its catalog guidelines checklist runs in every supported
+harness, with the packaged reviewer when available or in the current context
+otherwise. Rules remain in the catalogs. The reviewer preserves source and
+design nodes and may record requested review metadata at a design's home.
+See [review setup and fallbacks](https://github.com/yschimke/compose-agent-plugins/blob/main/docs/design-guidelines-review.md).
+
 ## Data it sends
 
-The plugin itself sends nothing over the network. Rendering runs on your
-machine. Gradle may download your project's own dependencies, as any build of
-that project would.
+Rendering runs on your machine. Gradle may download your project's own
+dependencies, as any build of that project would. A keyless guidelines prompt
+returns source, accessibility data and pictures to the agent's model. An
+explicit provider check (`check_preview_guidelines` or the CLI's `guidelines`
+command) sends that evidence and rules to OpenRouter using the configured key.
 
 ## License
 

@@ -13,6 +13,9 @@ an eval as passed from static inspection alone.
   rule.
 - [`compose-catalog.md`](compose-catalog.md) covers catalog discovery and renders.
 - [`compose-ui-builder.md`](compose-ui-builder.md) covers semantic design authoring.
+- [`design-guidelines.md`](design-guidelines.md) covers catalog rule review,
+  keyless prompts, shared results, evidence coverage and all four harnesses'
+  current-context fallbacks, including catalog-only installs.
 - [`rich-harness-integration.md`](rich-harness-integration.md) covers the viewer,
   interactive protocol features, reviewer agent, lifecycle summary, deep links,
   and complete text fallbacks from issue #18. Each case has a "no MCP Apps, no

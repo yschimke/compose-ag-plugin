@@ -8,7 +8,9 @@
     "compose",
     "preview",
     "accessibility",
-    "android"
+    "android",
+    "design-review",
+    "guidelines"
   ],
   "license": "Apache-2.0",
   "name": "compose-preview",

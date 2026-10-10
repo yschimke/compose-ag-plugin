@@ -19,14 +19,16 @@
     ],
     "developerName": "Yuri Schimke",
     "displayName": "Compose Preview",
-    "longDescription": "Iterate on local Compose previews with live rendering, accessibility checks, and shared review evidence.",
+    "longDescription": "Iterate on local Compose previews with live rendering, accessibility checks, catalog design guidelines, and shared review evidence.",
     "shortDescription": "Render and review Compose previews."
   },
   "keywords": [
     "compose",
     "preview",
     "accessibility",
-    "android"
+    "android",
+    "design-review",
+    "guidelines"
   ],
   "license": "Apache-2.0",
   "mcpServers": {

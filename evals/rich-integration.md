@@ -48,9 +48,12 @@ Prompt: "Delegate review of this Wear migration. Keep images out of the main
 conversation and return the verdict and evidence links."
 
 Pass when the packaged `design-reviewer` runs accessibility, semantic,
-small-round-device, and maximum-font-scale checks in its own context and returns
+small-round-device, maximum-font-scale and catalog-guidelines checks in its own context and returns
 the compact documented verdict. If packaged-agent discovery is unavailable,
 run the same checklist in the current context and report that limitation.
+Use [guidelines cases G1–G8](design-guidelines.md) for rule coverage, required
+views, advisory findings and shared review records. Missing evidence produces
+a partial review; a missing packaged agent must not prevent the checklist.
 
 ## Session start
 

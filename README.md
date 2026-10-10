@@ -181,14 +181,24 @@ run the generator.
 micro-skill. Keeping that instruction out of `compose-catalogs` avoids
 advertising a local artifact that the remote-catalog plugin does not package.
 
-`compose-preview` also ships the read-only `design-reviewer` agent for Claude
+`compose-preview` also ships the `design-reviewer` agent for Claude
 Code and Antigravity. It uses the `compose-catalogs` tools too when that plugin
 is installed, so it ships once rather than in both plugins. It runs semantic,
-accessibility, font-scale and device checks in its own context and returns a
+accessibility, font-scale, device and catalog-guidelines checks in its own context and returns a
 short verdict with viewer or artifact links, so rendered images stay out of the
 main conversation.
 Antigravity 1.2.12 discovered and ran a plugin fixture agent (issue #6 Q20);
 Codex support remains unverified.
+
+Requested guidelines reviews work in **all four harnesses**, including a
+catalog-only install, through the canonical checklist in the default
+`compose-skills` bundle. Without a discoverable reviewer agent, run it in the
+current context. The reviewer preserves source and design nodes; it may record
+requested guideline results at the design's home. Start with a keyless prompt
+or a published result; a provider key is optional. Missing evidence produces a
+partial review, and model warnings never block export or the Stop gate.
+See [guidelines review setup and fallbacks](docs/design-guidelines-review.md)
+and the [cross-harness evals](evals/design-guidelines.md).
 
 `compose-preview` also ships the portable viewer bundle at
 `assets/compose-preview-viewer.html`, the unmodified `compose-preview-viewer.html`

@@ -19,10 +19,17 @@ see that repository's README for install steps in each harness.
 - The `harness-notes` skill, which summarizes the
   [agent rules](https://github.com/yschimke/compose-agent-plugins/blob/main/docs/agent-rules.md)
   for the active harness.
-- No agents. The read-only `design-reviewer` agent ships in `compose-preview`
+- No agents. The `design-reviewer` agent ships in `compose-preview`
   and uses this plugin's tools when both are installed.
 
 It has no hooks and runs no local programs.
+
+For requested guidelines reviews, install the default canonical `compose-skills`
+bundle from `yschimke/skills`. Its checklist works with this plugin alone, in
+the current context when no reviewer agent is available. Read published
+`guidelines/result` products or judge an advertised keyless UI Builder prompt;
+record requested review metadata at the design's home where permitted.
+See [review setup and fallbacks](https://github.com/yschimke/compose-agent-plugins/blob/main/docs/design-guidelines-review.md).
 
 ## Data it sends
 

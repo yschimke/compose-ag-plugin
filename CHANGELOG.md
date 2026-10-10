@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/yschimke/compose-agent-plugins/compare/v0.4.0...v0.5.0) (2026-10-10)
+
+
+### Features
+
+* present audit results consistently across agents ([#132](https://github.com/yschimke/compose-agent-plugins/issues/132)) ([a94e0fb](https://github.com/yschimke/compose-agent-plugins/commit/a94e0fb3b7d882141259ce5ab103fde5cecac67e))
+
 ## [0.4.0](https://github.com/yschimke/compose-agent-plugins/compare/v0.3.0...v0.4.0) (2026-10-10)
 
 

@@ -396,7 +396,12 @@ def agent_tools(path: Path) -> list[str]:
 
 
 def validate_agent_tools(path: Path, plugins: list[dict[str, object]]) -> None:
-    """Every MCP tool an agent names must be one its plugin server actually advertises."""
+    """Reject agent MCP tools that name an undeclared server or one a server is known not to advertise.
+
+    This is a denylist of names known to be wrong (the hosted catalog's pre-prefix names, tools the
+    local server lacks), not a full allowlist: the servers' tool lists change with each
+    compose-preview-server release, which this repository does not pin.
+    """
     servers = {
         (plugin["name"], entry["name"]): entry
         for plugin in plugins

@@ -70,9 +70,15 @@ def merge_config(config: dict, bundle: dict) -> list[str]:
         if name not in existing:
             servers[name] = {k: v for k, v in server.items() if k != "codemode"} if v1 else server
             changes.append(f"added MCP server {name}")
+    # A scalar permission ("ask", "deny") becomes a pattern map that keeps it as the `*` default and
+    # adds the PNG rule after it; OpenCode applies the last matching rule. "allow" already covers it.
     permission = config.setdefault("permission", {})
+    if isinstance(permission, str) and permission != "allow":
+        permission = config["permission"] = {"*": permission, "external_directory": permission}
     if isinstance(permission, dict):
-        rules = permission.setdefault("external_directory", {})
+        rules = permission.setdefault("external_directory", permission.get("*", {}))
+        if isinstance(rules, str) and rules != "allow":
+            rules = permission["external_directory"] = {"*": rules}
         for pattern, action in bundle["permission"]["external_directory"].items():
             if isinstance(rules, dict) and pattern not in rules:
                 rules[pattern] = action

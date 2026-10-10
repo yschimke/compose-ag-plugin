@@ -44,6 +44,21 @@ class MergeConfigTest(unittest.TestCase):
         self.assertIs(config["mcp"]["compose-preview-mcp"], mine)
         self.assertNotIn("codemode", config["mcp"]["compose-preview-catalog"])
 
+    def test_scalar_permissions_keep_their_default_and_gain_the_png_rule(self) -> None:
+        cases = (
+            ({"external_directory": "ask"}, {"external_directory": {"*": "ask", PNG_RULE: "allow"}}),
+            ({"bash": "ask", "external_directory": "deny"},
+             {"bash": "ask", "external_directory": {"*": "deny", PNG_RULE: "allow"}}),
+            ("ask", {"*": "ask", "external_directory": {"*": "ask", PNG_RULE: "allow"}}),
+            ({"*": "deny"}, {"*": "deny", "external_directory": {"*": "deny", PNG_RULE: "allow"}}),
+        )
+        for permission, expected in cases:
+            with self.subTest(permission=permission):
+                config = {"permission": json.loads(json.dumps(permission))}
+                changes = installer.merge_config(config, BUNDLE)
+                self.assertEqual(config["permission"], expected)
+                self.assertIn(f"allowed reading rendered PNGs ({PNG_RULE})", changes)
+
     def test_leaves_blanket_permissions_alone(self) -> None:
         for permission in ("allow", {"external_directory": "allow"}):
             config = {"permission": json.loads(json.dumps(permission))}

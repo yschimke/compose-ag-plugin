@@ -152,12 +152,23 @@ def previous_app_paths(source: object) -> list[Path]:
     return paths
 
 
+def previous_codex_skill_paths() -> list[Path]:
+    """Include generated deletions even when a skill is no longer selected."""
+    tracked = git("ls-tree", "-r", "--name-only", "HEAD", "--", "plugins")
+    if tracked.returncode:
+        raise ValueError(f"could not inspect tracked Codex skills: {tracked.stderr.strip()}")
+    return [ROOT / path for path in tracked.stdout.splitlines()
+            if len(Path(path).parts) >= 5
+            and Path(path).parts[2:4] == (".codex-plugin", "skills")]
+
+
 def main() -> None:
     source = json.loads(SOURCE.read_text(encoding="utf-8"))
     paths, plugin_names = generated_paths(source)
     paths.extend(previous_hook_paths(source))
     paths.extend(previous_asset_paths(source))
     paths.extend(previous_app_paths(source))
+    paths.extend(previous_codex_skill_paths())
     paths = list(dict.fromkeys(paths))
     errors = []
 

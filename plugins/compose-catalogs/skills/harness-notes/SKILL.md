@@ -107,5 +107,17 @@ requested design edits, code adaptation and application preview verification;
 a model review record is not a person's approval. Never claim real Codex
 acceptance from a simulated MCP host test.
 
+In a chat surface (Claude in Slack, Teams), the person sees only text and attachments. Each render from
+the hosted catalog carries a signed https PNG (an `Image: <url>` line, `imageUrl`, `contactSheet.url`)
+that is valid for 10 minutes: attach or link that, and never describe an image from memory. To offer
+alternatives, call `catalog_render_matrix` with `observe=png`, post its numbered contact sheet with the
+options, and take the person's reply ("2") as the choice. Reactions and buttons are not input there. For
+R4, post the design link and a summary of unacknowledged comments rather than treating thread replies as
+design comments. No server event wakes a chat agent, so follow up through a PR subscription or by polling
+`ui_builder_await_comments` / `ui_builder_await_decision` with `waitSeconds: 0`.
+
+Claude Code ≥2.1.281 supports URL elicitation only on 2026-07-28-protocol connections; otherwise use the text fallback for the access grant.
+Claude Code does not load a plugin's `rules/AGENTS.md`; guidance it must always see belongs in a skill or the SessionStart message.
+
 The full, authoritative contract and current tooling gaps are in
 [`docs/agent-rules.md`](https://github.com/yschimke/compose-agent-plugins/blob/main/docs/agent-rules.md).

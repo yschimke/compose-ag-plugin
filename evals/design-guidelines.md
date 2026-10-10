@@ -63,3 +63,8 @@ the evidence. Catalog-only and no-viewer runs need complete text/file results.
   artifact links/paths and a concrete follow-up prompt; invent no launch URL.
 
 These are behavioral cases, not claims of live host verification.
+
+- Review a server-homed design through a non-interactive or chat-only client:
+  keep detailed findings in server comments when authorized, and return compact
+  verdict, coverage and home/thread links. If posting is unavailable, report
+  the limitation rather than copying design discussion into chat.

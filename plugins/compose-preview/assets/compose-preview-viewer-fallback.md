@@ -91,6 +91,10 @@ occurred merely because it was requested.
 
 For a requested audit, also show the verdict, reviewed subject/revision or
 render, freshness, answered/unchecked coverage and evidence links in chat.
+Detailed findings can appear directly for subjects without a recorded home.
+For designs with a home, keep findings and discussion there when authorized
+and return home/thread links. Report unavailable posting rather than moving
+the discussion into the fallback.
 Measured accessibility/layout details are separate from model guideline
 verdicts. A saved UI Builder guideline result can be read in the canonical
 editor's Issues panel; say when it could not be saved.

@@ -56,8 +56,13 @@ subject to chat, or a copyable prompt when messages are unavailable. For UI
 Builder subjects, **Show saved review** can display the recorded model,
 revision, coverage and findings when the tool is advertised. Follow the
 canonical checklist for that request; no paid provider run is implied. In CLI,
-OpenCode, static cards and chat surfaces, show the same findings with real
-artifact links/paths and a concrete follow-up prompt when useful. Never invent
+OpenCode, static cards and chat surfaces, return the same compact verdict and
+coverage with real artifact links/paths and a follow-up prompt when useful.
+Include detailed findings directly only for subjects without a recorded home.
+For server-homed designs, keep findings and discussion in server comments when
+authorized; for repo-homed designs, use the linked PR or issue. Chat returns
+home/thread links instead of duplicating that discussion. If posting is
+unavailable, report the limitation and intended destination. Never invent
 an audit-launch link or claim a request is a finished review.
 
 **Startup.** The first local render in a session prepares the project: a Gradle bootstrap the first

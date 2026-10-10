@@ -81,7 +81,8 @@ Return only:
   required evidence is unavailable (also report confirmed failures).
 - For a design with a recorded home: the detailed-review thread links and open
   comment count. When publishing was not authorized, there is no thread to link:
-  return the findings as for a plain preview, and name the home they belong in.
+  keep the findings out of chat; return only the finding count, the home they
+  belong in, and that posting was unavailable, as a stated limitation.
   For a plain preview with no home: up to five compact findings, each with
   severity, affected semantic ref, and a source link when supplied.
 - The tested devices, font scales, accessibility result, and semantic-diff

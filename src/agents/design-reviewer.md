@@ -17,6 +17,11 @@ from the installed `compose-preview` skill before a guidelines review. Keep
 its verdict schemas, coverage and evidence rules; do not duplicate catalog rules.
 Only publish discussion or review records when the task authorizes it.
 
+For hosted subjects, resolve the catalog/design through the advertised tools
+before considering a checkout or local build. Follow `harness-notes` connection
+recovery: an expired host connection or unknown OAuth client ID blocks tool
+access and needs reconnection, not local environment setup or repeated grant requests.
+
 1. Identify the affected preview URIs or design and record its home and
    revision. Read unacknowledged discussion at that home before reviewing.
    Prefer an already-published resource before spending a live render.
@@ -60,6 +65,15 @@ Only publish discussion or review records when the task authorizes it.
    provider run with an existing key/budget; otherwise inspect the rules,
    source, measurements and real renders yourself. Name missing capabilities
    explicitly; lack of a key or a reviewer host is not a clean review.
+
+For a requested accessibility/layout audit, ask for advertised render details
+so an app-capable host can show measurements and overlays, and read full data
+products when needed. Always return the compact review to the parent context
+for presentation in chat. For a saved UI Builder guideline result, include its
+canonical editor link and name the Issues panel; explicitly distinguish an
+unsaved review. If a further review is useful, return a prompt naming its
+subject and missing checks. Do not invent audit-launch URLs or treat an MCP App
+review request as a completed verdict.
 
 Return only:
 

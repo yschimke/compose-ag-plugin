@@ -14,6 +14,6 @@
 * bootstrap release notes and adopt shared merge policy ([7b6e854](https://github.com/yschimke/compose-agent-plugins/commit/7b6e854056573d5cac2011ef3ef10dd23142f596))
 * bootstrap release notes and adopt shared merge policy ([79b565b](https://github.com/yschimke/compose-agent-plugins/commit/79b565b39b4120b8743561e3bd5fd5b84de23005))
 
-## Changelog
+## Baseline
 
 Release notes are maintained by release-please after this baseline.

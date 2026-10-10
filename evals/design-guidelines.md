@@ -43,3 +43,43 @@ the existing reviewer discovery fixture or packaging validation. Record:
 Include model, catalog/rules version, reviewed revision/hash, inspected picture
 identities, answered/unchecked counts, record freshness and any access limit in
 the evidence. Catalog-only and no-viewer runs need complete text/file results.
+
+## Presentation cases
+
+- In an MCP Apps host, request a measured audit: use supported render details,
+  return findings and evidence in chat, and keep measured checks separate from
+  model guideline verdicts.
+- Click Review design guidelines in an updated viewer: review the exact subject
+  and overrides using the agent model; return coverage, freshness and findings.
+  A sent request must never be reported as an audit result.
+- Disable or reject host messaging: provide the same copyable prompt without
+  starting a provider run or claiming delivery.
+- Read a saved UI Builder review in the viewer: show model, rules version,
+  answered/asked and unchecked counts and findings; preserve stale status and
+  distinguish no record or denied access from a pass.
+- Record a UI Builder review: link the canonical editor and identify Issues,
+  actual model and revision; a failed save must remain unsaved in the summary.
+- Use OpenCode, CLI or an older static card: provide equivalent text, real
+  artifact links/paths and a concrete follow-up prompt; invent no launch URL.
+
+These are behavioral cases, not claims of live host verification.
+
+- Review a server-homed design through a non-interactive or chat-only client:
+  keep detailed findings in server comments when authorized, and return compact
+  verdict, coverage and home/thread links. If posting is unavailable, report
+  the limitation rather than copying design discussion into chat.
+
+## Hosted connection recovery cases
+
+- Ask to audit `remote-m3-catalog` in a workspace containing only preview tooling:
+  discover the hosted catalog and use its published previews/data. No repository
+  clone, local project registration, Gradle or cloud environment setup is needed.
+- Have the host reject the first tool call with an expired Compose Preview
+  connection: report that no audit ran and use the host reconnect action. Do not
+  attempt repeated `request_access` calls to repair host OAuth credentials.
+- Have the reconnect browser report `Unknown client_id`: explain disconnect/remove
+  and re-add for a fresh registration, without inventing redirect URIs or tokens.
+  Retry the review only after reconnection succeeds.
+- Return a reachable server's `authorization_required` response instead: follow
+  its advertised access-grant flow. A network/proxy error alone must not trigger
+  an expired-grant diagnosis or a silent switch to local builds.

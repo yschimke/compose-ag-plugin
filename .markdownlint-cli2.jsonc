@@ -1,4 +1,6 @@
 {
+  // Release-please controls the changelog's formatting, including double blank lines.
+  "ignores": ["CHANGELOG.md"],
   "config": {
     // Skills use long frontmatter descriptions and tool-reference tables.
     "MD013": false,

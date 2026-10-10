@@ -86,3 +86,20 @@ alone. Do not claim that the person or agent saw the render unless the available
 surface was actually inspected. Keep viewer actions equivalent to their typed
 tool calls or stable identifiers in the fallback; do not claim an action
 occurred merely because it was requested.
+
+## Requested audits
+
+For a requested audit, also show the verdict, reviewed subject/revision or
+render, freshness, answered/unchecked coverage and evidence links in chat.
+Detailed findings can appear directly for subjects without a recorded home.
+For designs with a home, keep findings and discussion there when authorized
+and return home/thread links. Report unavailable posting rather than moving
+the discussion into the fallback.
+Measured accessibility/layout details are separate from model guideline
+verdicts. A saved UI Builder guideline result can be read in the canonical
+editor's Issues panel; say when it could not be saved.
+
+If another review is useful, offer a prompt naming the subject, applicable
+catalog and missing checks. Older copied cards do not have an audit action.
+Do not invent an audit-launch link, call a sent request a verdict, or start a
+provider run merely to populate a card.

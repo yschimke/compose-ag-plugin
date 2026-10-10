@@ -65,7 +65,20 @@ home/thread links instead of duplicating that discussion. If posting is
 unavailable, report the limitation and intended destination. Never invent
 an audit-launch link or claim a request is a finished review.
 
-**Startup.** The first local render in a session prepares the project: a Gradle bootstrap the first
+**Hosted reviews and connection recovery.** For a published catalog or a
+server-homed design, start with advertised catalog/design tools. Resolve a named
+catalog from the hosted listing; do not clone it, register a local project,
+start Gradle or provision a cloud environment just because its checkout is
+absent. Request source only when the review needs unavailable source evidence
+or the task explicitly includes code changes. If Codex/ChatGPT or another host
+shows an expired app connection, stop and use its reconnect action. If the
+browser reports an unknown `client_id`, disconnect/remove and add Compose
+Preview again to force fresh registration; retrying the old link cannot work.
+Use `request_access` only for a reachable server's `authorization_required`
+response, not to repair host OAuth. Network/proxy failures do not prove a grant
+expired. Report blocked evidence and resume after reconnection.
+
+**Local startup.** The first local render in a session prepares the project: a Gradle bootstrap the first
 time a build is seen (minutes when cold), then the render daemon (about 15–20 s), so a first
 `render_preview` can come back `pending` or take far longer than the next one. When the result is
 `pending`, call `render_preview` again with the same arguments; don't treat it as a failure or switch

@@ -101,3 +101,15 @@ itself:
   thread and the branch it pushed before; repeated mentions on a PR stack commits on that branch.
 - **A narrow Bash allowlist**, typically `./gradlew` and read-only `git`, so the
   `compose-preview` CLI is often unavailable and renders go through the Gradle plugin.
+
+### Expired hosted Compose Preview connection
+
+In Codex/ChatGPT, use the Compose Preview connection card's reconnect action.
+If authorization instead says **Unknown client_id**, disconnect/remove the app
+and add it again so the host performs dynamic client registration. A lost ID
+cannot be recovered by retrying the same authorization URL. Server deployments
+with durable OAuth client registration retain new IDs across restarts; grants
+and approval sessions still require renewal. Other OAuth hosts follow the same
+registration rule. For a reachable server's `authorization_required`, use the
+advertised access-grant flow instead. Do not bootstrap a local environment or
+clone the hosted catalog to recover either connection.

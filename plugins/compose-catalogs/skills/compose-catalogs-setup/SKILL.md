@@ -11,7 +11,15 @@ and report each step in one line.
 1. **Reach the server.** Call `list_projects` on the `compose-preview-catalog` server once; it lists
    the catalogs.
    If the server is unreachable, say so with the error text and stop; do not retry in a loop.
-2. **Access.** If the server asks for access:
+2. **Access.** Distinguish the host connection from server access:
+   - If the host reports an expired Compose Preview connection, show its reconnect action
+     and stop tool retries. If the authorization page reports an unknown `client_id`, tell
+     the person to disconnect/remove and add the app again to force fresh registration.
+     Neither repeating that link nor `request_access` repairs a missing registration.
+   - Only a reachable server's `authorization_required` response starts the grant flow below.
+     A network/proxy error alone does not establish that a grant expired.
+   - Do not clone catalogs, start Gradle or provision a cloud environment for this hosted flow.
+   If the server asks for access:
    - Where the host supports URL elicitation, follow the access link it opens.
    - Otherwise use the text fallback: call `request_access`, show the person the link it returns,
      then call `poll_access` once they say they have approved it.

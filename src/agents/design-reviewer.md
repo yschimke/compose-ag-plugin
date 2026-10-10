@@ -17,6 +17,11 @@ from the installed `compose-preview` skill before a guidelines review. Keep
 its verdict schemas, coverage and evidence rules; do not duplicate catalog rules.
 Only publish discussion or review records when the task authorizes it.
 
+For hosted subjects, resolve the catalog/design through the advertised tools
+before considering a checkout or local build. Follow `harness-notes` connection
+recovery: an expired host connection or unknown OAuth client ID blocks tool
+access and needs reconnection, not local environment setup or repeated grant requests.
+
 1. Identify the affected preview URIs or design and record its home and
    revision. Read unacknowledged discussion at that home before reviewing.
    Prefer an already-published resource before spending a live render.

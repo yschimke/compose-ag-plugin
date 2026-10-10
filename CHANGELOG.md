@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/yschimke/compose-agent-plugins/compare/v0.5.0...v0.6.0) (2026-10-10)
+
+
+### Features
+
+* **codex:** streamline local design-to-code workflows ([#136](https://github.com/yschimke/compose-agent-plugins/issues/136)) ([f64506e](https://github.com/yschimke/compose-agent-plugins/commit/f64506e2275938cf6cc0e3df1a3de2d808600769))
+
 ## [0.5.0](https://github.com/yschimke/compose-agent-plugins/compare/v0.4.0...v0.5.0) (2026-10-10)
 
 

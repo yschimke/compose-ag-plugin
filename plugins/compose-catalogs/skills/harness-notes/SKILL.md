@@ -52,7 +52,9 @@ a summary. Guideline verdicts are separate from those measured checks. For a
 UI Builder review saved with `ui_builder_record_guidelines`, return the real
 editor URL and point to its Issues panel. Say when a review could not be saved.
 The server viewer may offer **Review design guidelines**, sending the current
-subject to chat, or a copyable prompt when messages are unavailable. Follow the
+subject to chat, or a copyable prompt when messages are unavailable. For UI
+Builder subjects, **Show saved review** can display the recorded model,
+revision, coverage and findings when the tool is advertised. Follow the
 canonical checklist for that request; no paid provider run is implied. In CLI,
 OpenCode, static cards and chat surfaces, show the same findings with real
 artifact links/paths and a concrete follow-up prompt when useful. Never invent

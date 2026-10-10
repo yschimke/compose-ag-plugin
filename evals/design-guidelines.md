@@ -54,6 +54,9 @@ the evidence. Catalog-only and no-viewer runs need complete text/file results.
   A sent request must never be reported as an audit result.
 - Disable or reject host messaging: provide the same copyable prompt without
   starting a provider run or claiming delivery.
+- Read a saved UI Builder review in the viewer: show model, rules version,
+  answered/asked and unchecked counts and findings; preserve stale status and
+  distinguish no record or denied access from a pass.
 - Record a UI Builder review: link the canonical editor and identify Issues,
   actual model and revision; a failed save must remain unsaved in the summary.
 - Use OpenCode, CLI or an older static card: provide equivalent text, real

@@ -68,7 +68,7 @@ presentation rules; showing a viewer or requesting a review is not a pass.
 
 | Surface | Presentation and next review |
 | --- | --- |
-| Codex Desktop / MCP Apps host | Request supported accessibility/layout render details for that audit. The server viewer can show measurements and overlays. Its Review design guidelines action, when available, requests a keyless agent review in chat; failed or unsupported messaging exposes a copyable prompt. Guideline verdicts still appear in chat. |
+| Codex Desktop / MCP Apps host | Request supported accessibility/layout render details for that audit. The server viewer can show measurements and overlays. Its Review design guidelines action, when available, requests a keyless agent review in chat; failed or unsupported messaging exposes a copyable prompt. For UI Builder subjects, Show saved review reads an advertised shared-result tool and displays model, rules version, coverage, revisions and findings. Missing, stale or denied records remain explicit. The compact verdict still appears in chat. |
 | UI Builder in any host | Save the requested guideline result when permitted. Return the canonical editor URL and point to Issues for the shared model/revision result. Explicitly report unsaved results and stale coverage. |
 | Claude Code, OpenCode, CLI and chat integrations | Return the same compact review and actual images/artifact links or paths. Offer a prompt naming the subject and missing checks when another review is useful. |
 | Antigravity / static viewer | Show the real render/card and findings in chat. A viewer with the new review section provides a selectable request; copied older viewer assets require an update before they show it. |

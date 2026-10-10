@@ -104,7 +104,11 @@ itself:
 
 ### Expired hosted Compose Preview connection
 
-In Codex/ChatGPT, use the Compose Preview connection card's reconnect action.
+In Codex/ChatGPT, explain the Compose Preview connection card's reconnect
+action once. Stop repeated tool calls when it requires reauthentication. If
+the person declines reconnecting, investigate source and deployment evidence
+or continue local work without triggering another connection prompt. State
+what a live confirmation would establish before requesting one.
 If authorization instead says **Unknown client_id**, disconnect/remove the app
 and add it again so the host performs dynamic client registration. A lost ID
 cannot be recovered by retrying the same authorization URL. Server deployments
@@ -113,3 +117,20 @@ and approval sessions still require renewal. Other OAuth hosts follow the same
 registration rule. For a reachable server's `authorization_required`, use the
 advertised access-grant flow instead. Do not bootstrap a local environment or
 clone the hosted catalog to recover either connection.
+
+
+### Codex local design-to-code acceptance
+
+Install the default `compose-skills` bundle as well as this marketplace's
+`compose-preview` plugin. Codex loads its generated skill subset: harness
+notes and onboarding. The Antigravity viewer-card skill remains packaged for
+that host and is excluded from the Codex manifest's skill directory.
+
+A real Codex acceptance run should open a checked-in `.uid` through the host's
+file entrypoint, select a node, send a comment, edit the canonical document,
+observe the editor reload, render against a reference, then change application
+code and inspect its previews. Exercise a simultaneous user edit and resolve
+the revision conflict without overwriting it. Record host/build, file revision,
+render artifacts and each failed or unavailable capability. The UI Builder's
+simulated MCP host tests prove protocol behavior; they do not prove this real
+Codex flow or popup lifecycle. No real Codex acceptance run is recorded here.

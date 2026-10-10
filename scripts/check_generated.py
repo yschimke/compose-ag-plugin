@@ -16,6 +16,7 @@ from generate import (
     ROOT,
     SOURCE,
     hook_script,
+    codex_skill_config,
     render_antigravity_hooks,
 )
 
@@ -57,6 +58,8 @@ def generated_paths(source: object) -> tuple[list[Path], set[str]]:
         if not isinstance(skills, list) or not all(isinstance(skill, str) for skill in skills):
             raise ValueError(f"{name}.skills must be a list of strings")
         paths.extend(plugin_root / "skills" / skill / "SKILL.md" for skill in skills)
+        codex_skills, codex_path = codex_skill_config(plugin)
+        paths.extend(plugin_root / codex_path / skill / "SKILL.md" for skill in codex_skills)
         agents = plugin.get("agents", [])
         if not isinstance(agents, list) or not all(isinstance(agent, str) for agent in agents):
             raise ValueError(f"{name}.agents must be a list of strings")
